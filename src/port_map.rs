@@ -17,6 +17,10 @@ pub struct PortMap {
     pub ports: Vec<Port>,
     pub not_ported: Vec<Unported>,
     pub glue: Vec<Glue>,
+    /// Crate folders under `rust/` whose manifest could not be read. `map` has to skip them, and a
+    /// skipped port is not a missing port: the file says so instead of listing the unit as unported.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub crate_errors: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analyze_error: Option<String>,
 }
@@ -70,9 +74,19 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
     crate_dirs.dedup();
 
     let mut ports = Vec::new();
+    let mut crate_errors = Vec::new();
     for dir in crate_dirs {
-        let Ok(m) = Manifest::load(&dir) else {
-            continue;
+        let m = match Manifest::load(&dir) {
+            Ok(m) => m,
+            Err(e) => {
+                let shown = dir
+                    .strip_prefix(&root)
+                    .unwrap_or(&dir)
+                    .display()
+                    .to_string();
+                crate_errors.push(format!("`{shown}`: {e:#}"));
+                continue;
+            }
         };
         if std::fs::canonicalize(&m.root).ok().as_deref() != Some(root.as_path()) {
             continue;
@@ -120,6 +134,7 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
         root,
         ports,
         not_ported,
+        crate_errors,
         analyze_error,
     })
 }
@@ -218,6 +233,18 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
             out,
             "; **{n} changed upstream** since they were recorded: re-record them and run `diff`.\n"
         )?,
+    }
+
+    if !map.crate_errors.is_empty() {
+        writeln!(out, "## Crate folders that could not be read\n")?;
+        writeln!(
+            out,
+            "A folder under `rust/` is skipped when its manifest does not parse, so the unit it covers is listed as ported nowhere:\n"
+        )?;
+        for e in &map.crate_errors {
+            writeln!(out, "- {e}")?;
+        }
+        writeln!(out)?;
     }
 
     writeln!(out, "## Ports\n")?;

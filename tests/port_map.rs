@@ -93,3 +93,39 @@ fn map_lists_ports_and_marks_upstream_changes() {
     std::fs::remove_dir_all(&repo).unwrap();
     std::fs::remove_dir_all(&outside).unwrap();
 }
+
+#[test]
+fn map_names_a_crate_folder_whose_manifest_does_not_parse() {
+    let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/mini");
+    let repo = std::env::temp_dir().join(format!("rust-anything-map-bad-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    copy_dir(&fixture, &repo);
+    let crate_dir = repo.join("rust/util-rs");
+    bridge::bridge(&bridge::Options {
+        root: &repo,
+        unit: "packages/a/src/util.ts",
+        kind: None,
+        out: Some(crate_dir.clone()),
+        name: None,
+        force: false,
+        keep: Vec::new(),
+        lang: None,
+        batch: Vec::new(),
+        as_json: Vec::new(),
+        allocator: Default::default(),
+    })
+    .unwrap();
+
+    // A manifest that does not parse used to be skipped in silence: the map then says the unit has
+    // no port, which is wrong — the crate folder is right there.
+    std::fs::write(
+        crate_dir.join("rust-anything.json"),
+        "{\"schema\": \"rust-anything/bridge@1\"}\n",
+    )
+    .unwrap();
+    let map = port_map::map(&repo, &[]).unwrap();
+    let md = port_map::markdown(&map);
+    assert!(md.contains("could not be read"), "{md}");
+    assert!(md.contains("rust/util-rs"), "{md}");
+    let _ = std::fs::remove_dir_all(&repo);
+}
