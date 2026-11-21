@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use serde::Serialize;
 
 use crate::bridge::{MANIFEST, Manifest, SCHEMA};
@@ -73,10 +73,15 @@ impl PortMap {
 }
 
 pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
-    let root = std::fs::canonicalize(root)?;
+    // Name the path: `analyze`, `diff` and `record` all do, and a bare `os error 2` from `map` is
+    // the one place a reader has to guess which argument was wrong.
+    let root =
+        std::fs::canonicalize(root).with_context(|| format!("reading {}", root.display()))?;
     let mut crate_dirs = manifests(&root);
     for dir in extra {
-        crate_dirs.extend(manifests(&std::fs::canonicalize(dir)?));
+        let dir =
+            std::fs::canonicalize(dir).with_context(|| format!("reading {}", dir.display()))?;
+        crate_dirs.extend(manifests(&dir));
     }
     crate_dirs.sort();
     crate_dirs.dedup();

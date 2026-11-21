@@ -184,3 +184,14 @@ fn a_broken_manifest_with_an_unresolved_root_is_reported() {
     assert!(md.contains("rust/util-rs"), "{md}");
     let _ = std::fs::remove_dir_all(&repo);
 }
+
+#[test]
+fn map_says_which_path_it_could_not_read() {
+    let missing = std::env::temp_dir().join("rust-anything-map-missing-dir");
+    let _ = std::fs::remove_dir_all(&missing);
+    let err = port_map::map(&missing, &[]).unwrap_err().to_string();
+    assert!(
+        err.contains(&missing.display().to_string()),
+        "the error should name the path it could not read: {err}"
+    );
+}
