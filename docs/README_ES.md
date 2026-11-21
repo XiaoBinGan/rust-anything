@@ -209,6 +209,7 @@ rust-anything bridge . src/fuzzy.ts --batch fuzzyScore:text
 # escribe src/port.rs (o deja que lo haga tu agente), y después:
 rust-anything record rust/fuzzy-rs && rust-anything build rust/fuzzy-rs
 rust-anything diff rust/fuzzy-rs                       # cada caso registrado debe coincidir
+rust-anything fuzz rust/fuzzy-rs --time 60 --keep      # entradas nuevas: lo que el registro no cubrió
 rust-anything bench rust/fuzzy-rs                      # ¿más rápido? el veredicto lo dice
 rust-anything gate rust/fuzzy-rs                       # terminado significa que esto pasa
 ```
@@ -285,6 +286,7 @@ P/Invoke viene después.
 ## Saber más
 
 - [Cómo funciona](how-it-works.md): el ciclo, lo que deciden `bridge` y `analyze`, rutas calientes, qué no puede detectar, qué cuesta un porte real y cómo seguir al original (`map`)
+- [Publicar un porte como paquete](packaging.md): wheels de maturin y paquetes npm por plataforma de napi-rs, con el CI que los construye
 - [Portar una aplicación completa](whole-apps.md): servidores, CLIs y bibliotecas, desde la puerta delantera hasta `app lift`
 - [Ejemplos y casos de estudio](examples.md): x18n y código real en seis lenguajes
 - [Portes reales](real-world.md): json-server, Fuse.js, vercel/ms, con benchmarks

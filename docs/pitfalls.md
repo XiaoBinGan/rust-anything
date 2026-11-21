@@ -249,8 +249,10 @@ CONTRIBUTING.md).
 a separate worktree and bring the change over when its files do not overlap.
 
 **The Ruby tests failed on a clean macOS shell.** `/usr/bin/ruby` is Ruby 2.6, which rb-sys's
-stable API does not support (`Stable API is needed but could not find a candidate`). Put a current
-Ruby first on `PATH` (Homebrew's `/opt/homebrew/opt/ruby/bin`) before `cargo test`.
+stable API does not support (`Stable API is needed but could not find a candidate`). A test that
+builds a Ruby extension checks for Ruby 3 with `common::have_ruby_3()`, not `common::have("ruby")`,
+and skips without it; to run those tests, put a current Ruby first on `PATH` (Homebrew's
+`/opt/homebrew/opt/ruby/bin`) before `cargo test`.
 
 **A test failed on Linux CI with "Text file busy".** It wrote a fake `nm` script and ran it while
 other tests were starting processes; a child forked during the write still held the file open for

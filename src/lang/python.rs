@@ -947,31 +947,94 @@ fn entry_calls<'s>(root: Node, source: &'s str, main_module: bool) -> Vec<&'s st
     out
 }
 
+/// The names a module's `__all__` lists, when its top level sets it from string literals only:
+/// `__all__ = [...]` (with or without a type; the last one wins) and `__all__ += [...]`. `None`
+/// when there is no `__all__`, or when it is built or changed any other way (`+ other.__all__`,
+/// `sorted(...)`, `__all__.extend(...)`, inside an `if` or `try` block), so the caller falls
+/// back to the names without a leading underscore instead of trusting a partial list.
 fn dunder_all(root: Node, source: &str) -> Option<Vec<String>> {
+    let mut names: Option<Vec<String>> = None;
     for statement in named_children(root) {
-        let assignment = named_children(statement)
-            .into_iter()
-            .find(|n| n.kind() == "assignment")?;
-        if assignment
-            .child_by_field_name("left")
-            .map(|l| text(l, source))
-            == Some("__all__")
-        {
-            let right = assignment.child_by_field_name("right")?;
-            return Some(
-                named_children(right)
-                    .into_iter()
-                    .filter(|n| n.kind() == "string")
-                    .map(|n| {
-                        text(n, source)
-                            .trim_matches(|c| c == '"' || c == '\'')
-                            .to_string()
-                    })
-                    .collect(),
-            );
+        match statement.kind() {
+            "expression_statement" => {}
+            // Their bodies are not the module's top level.
+            "function_definition" | "class_definition" | "decorated_definition" => continue,
+            // A change inside a block (`if sys.platform == ...: __all__ += [...]`) cannot be
+            // followed.
+            _ if mentions_all(statement, source) => return None,
+            _ => continue,
+        }
+        for node in named_children(statement) {
+            let left = node.child_by_field_name("left").map(|l| text(l, source));
+            match node.kind() {
+                "assignment" | "augmented_assignment" if left == Some("__all__") => {
+                    // `__all__: list[str]` alone declares it without a value.
+                    let Some(right) = node.child_by_field_name("right") else {
+                        continue;
+                    };
+                    let listed = string_literals(right, source)?;
+                    match node
+                        .child_by_field_name("operator")
+                        .map(|o| text(o, source))
+                    {
+                        None => names = Some(listed),
+                        Some("+=") => names.get_or_insert_with(Vec::new).extend(listed),
+                        Some(_) => return None,
+                    }
+                }
+                _ if mentions_all(node, source) => return None,
+                _ => {}
+            }
         }
     }
-    None
+    names
+}
+
+/// The values of a list or tuple made only of plain string literals (comments allowed).
+fn string_literals(node: Node, source: &str) -> Option<Vec<String>> {
+    if !matches!(node.kind(), "list" | "tuple" | "expression_list") {
+        return None;
+    }
+    let mut out = Vec::new();
+    for item in named_children(node) {
+        match item.kind() {
+            "comment" => {}
+            "string" => {
+                let mut content = String::new();
+                for part in named_children(item) {
+                    match part.kind() {
+                        // Bytes are not names.
+                        "string_start" if text(part, source).contains(['b', 'B']) => return None,
+                        "string_start" | "string_end" => {}
+                        // Escape sequences would need decoding.
+                        "string_content" if part.named_child_count() > 0 => return None,
+                        "string_content" => content.push_str(text(part, source)),
+                        _ => return None,
+                    }
+                }
+                out.push(content);
+            }
+            _ => return None,
+        }
+    }
+    Some(out)
+}
+
+/// Whether the module's own `__all__` appears inside `node`; `other.__all__` and a keyword
+/// argument named `__all__` do not count.
+fn mentions_all(node: Node, source: &str) -> bool {
+    match node.kind() {
+        "identifier" => text(node, source) == "__all__",
+        "attribute" => node
+            .child_by_field_name("object")
+            .is_some_and(|object| mentions_all(object, source)),
+        "keyword_argument" => node
+            .child_by_field_name("value")
+            .is_some_and(|value| mentions_all(value, source)),
+        _ => named_children(node)
+            .into_iter()
+            .any(|child| mentions_all(child, source)),
+    }
 }
 
 fn unwrap_decorated<'t>(node: Node<'t>, source: &str) -> (Vec<String>, Node<'t>) {
@@ -1476,6 +1539,69 @@ mod tests {
                 .unwrap()
                 .contains("public attribute `x`")
         );
+    }
+
+    #[test]
+    fn reads_all_after_a_docstring_and_imports() {
+        let source = "\"\"\"Text helpers.\"\"\"\n\
+            from os import path\n\
+            import re\n\n\
+            __all__ = ['slug', '_kept']\n\n\
+            def slug(text: str) -> str:\n    return text\n\n\
+            def helper(x: int) -> int:\n    return x\n\n\
+            def _kept(x: int) -> int:\n    return x\n";
+        let (functions, _) = exports("m.py", source);
+        let names: Vec<&str> = functions.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, ["slug", "_kept"]);
+    }
+
+    fn exported(source: &str) -> Vec<String> {
+        let defs = "\ndef a(x: int) -> int:\n    return x\n\n\
+            def b(x: int) -> int:\n    return x\n\n\
+            def _c(x: int) -> int:\n    return x\n";
+        exports("m.py", &format!("{source}{defs}"))
+            .0
+            .into_iter()
+            .map(|f| f.name)
+            .collect()
+    }
+
+    #[test]
+    fn later_changes_to_all_are_followed() {
+        assert_eq!(
+            exported("__all__ = ['a']\n__all__ += ['_c']\n"),
+            ["a", "_c"]
+        );
+        assert_eq!(exported("__all__ = ['a']\n__all__ = ['b']\n"), ["b"]);
+    }
+
+    #[test]
+    fn annotated_prefixed_and_commented_all_is_read() {
+        let source =
+            "__all__: list[str]\n__all__: list[str] = [\n    r'a',  # first\n    \"_c\",\n]\n";
+        assert_eq!(exported(source), ["a", "_c"]);
+    }
+
+    #[test]
+    fn an_all_built_any_other_way_falls_back_to_public_names() {
+        for source in [
+            "import other\n__all__ = ['a'] + other.__all__\n",
+            "__all__ = sorted(['a'])\n",
+            "__all__ = ['a']\n__all__.extend(['_c'])\n",
+            "__all__ = [f'{1}']\n",
+            "import sys\n__all__ = ['a']\nif sys.platform == 'win32':\n    __all__ += ['_c']\n",
+            "__all__ = ['\\x61']\n",
+            "__all__ = [b'a']\n",
+        ] {
+            assert_eq!(exported(source), ["a", "b"], "{source}");
+        }
+    }
+
+    #[test]
+    fn another_module_all_and_reads_in_functions_keep_the_list() {
+        let source = "import other\n__all__ = ['a']\nnames = other.__all__\n\n\
+            def __dir__():\n    return __all__\n";
+        assert_eq!(exported(source), ["a"]);
     }
 
     #[test]
