@@ -94,12 +94,13 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                 let raw: Option<serde_json::Value> = std::fs::read_to_string(dir.join(MANIFEST))
                     .ok()
                     .and_then(|t| serde_json::from_str(&t).ok());
+                // Foreign only when the root actually resolves somewhere else: a `root` that does
+                // not exist says nothing about ownership, and its unit still belongs here.
                 let foreign = raw
                     .as_ref()
                     .and_then(|v| v["root"].as_str())
-                    .is_some_and(|r| {
-                        std::fs::canonicalize(dir.join(r)).ok().as_deref() != Some(root.as_path())
-                    });
+                    .and_then(|r| std::fs::canonicalize(dir.join(r)).ok())
+                    .is_some_and(|resolved| resolved != root);
                 if foreign {
                     continue;
                 }
@@ -122,7 +123,7 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
     }
     ports.sort_by(|a, b| a.unit.cmp(&b.unit).then(a.crate_dir.cmp(&b.crate_dir)));
 
-    let (not_ported, analyze_error) = match crate::analyze::analyze(&root) {
+    let (not_ported, broken_units, analyze_error) = match crate::analyze::analyze(&root) {
         Ok(report) => {
             let order = |id: &str| {
                 report
@@ -131,16 +132,18 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                     .position(|s| s == id)
                     .unwrap_or(usize::MAX)
             };
-            let mut units: Vec<_> = report
+            let unported: Vec<_> = report
                 .units
                 .iter()
-                .filter(|u| {
-                    !ports.iter().any(|p| covers(&p.unit, &u.id, &u.files))
-                        && !covered_by_broken
-                            .iter()
-                            .any(|unit| covers(unit, &u.id, &u.files))
-                })
+                .filter(|u| !ports.iter().any(|p| covers(&p.unit, &u.id, &u.files)))
                 .collect();
+            // A unit a broken manifest still names is covered, but it is still a unit of this
+            // repository: the report counts it, or the summary reads as if it did not exist.
+            let (covered, mut units): (Vec<_>, Vec<_>) = unported.into_iter().partition(|u| {
+                covered_by_broken
+                    .iter()
+                    .any(|unit| covers(unit, &u.id, &u.files))
+            });
             units.sort_by(|a, b| {
                 order(&a.id)
                     .cmp(&order(&b.id))
@@ -156,9 +159,9 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                     exports: u.exports,
                 })
                 .collect();
-            (units, None)
+            (units, covered.len(), None)
         }
-        Err(e) => (Vec::new(), Some(format!("{e:#}"))),
+        Err(e) => (Vec::new(), 0, Some(format!("{e:#}"))),
     };
 
     Ok(PortMap {
@@ -167,7 +170,7 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
         ports,
         not_ported,
         crate_errors,
-        covered_by_broken: covered_by_broken.len(),
+        covered_by_broken: broken_units,
         analyze_error,
     })
 }
