@@ -98,8 +98,8 @@ fn random_seed() -> u64 {
     splitmix((nanos as u64) ^ u64::from(std::process::id())) % 1_000_000_000
 }
 
-/// Numbers compared by value and object keys sorted, so the same value from two runtimes — `1`
-/// and `1.0`, or the keys of one object in a different order — is one key.
+/// Numbers compared by value and object keys sorted, so the same value from two runtimes (`1`
+/// and `1.0`, or the keys of one object in a different order) is one key.
 fn norm(v: &Value) -> Value {
     match v {
         Value::Number(n) => n

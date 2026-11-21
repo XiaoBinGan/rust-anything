@@ -388,4 +388,43 @@ mod tests {
             None
         );
     }
+
+    #[test]
+    fn python_service_libraries_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("redis", "redis", Fit::Good),
+            ("websockets", "tokio-tungstenite", Fit::Good),
+            ("websocket", "tokio-tungstenite", Fit::Good),
+            ("pyjwt", "jsonwebtoken", Fit::Good),
+            ("jwt", "jsonwebtoken", Fit::Good),
+            ("jose", "jsonwebtoken", Fit::Good),
+            ("authlib", "-", Fit::None),
+            ("bcrypt", "argon2, bcrypt", Fit::Good),
+            ("grpcio", "tonic", Fit::Good),
+            ("grpc", "tonic", Fit::Good),
+            ("protobuf", "prost", Fit::Good),
+            ("google.protobuf", "prost", Fit::Good),
+            ("tenacity", "backon", Fit::Good),
+            ("structlog", "tracing", Fit::Good),
+            ("aiofiles", "tokio::fs", Fit::Good),
+            ("motor", "mongodb", Fit::Good),
+            ("boto3", "aws-sdk-* (per service)", Fit::Partial),
+            ("celery", "apalis", Fit::Partial),
+            ("paramiko", "russh", Fit::Partial),
+            ("scipy", "ndarray, statrs", Fit::Partial),
+            ("scikit-learn", "linfa", Fit::Partial),
+            ("matplotlib", "plotters", Fit::Partial),
+            ("uvicorn", "axum", Fit::None),
+        ] {
+            let m = find("python", name).unwrap_or_else(|| panic!("python: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "python: {name}");
+        }
+        // Rows that already answered keep answering.
+        assert_eq!(
+            find("python", "requests").map(|m| m.crates),
+            Some("reqwest")
+        );
+        assert_eq!(find("python", "pillow").map(|m| m.crates), Some("image"));
+        assert!(find("python", "left-pad").is_none());
+    }
 }

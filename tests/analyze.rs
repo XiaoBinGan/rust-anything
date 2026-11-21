@@ -861,3 +861,25 @@ fn a_kotlin_import_and_its_gradle_coordinates_are_one_dependency() {
         "{plan}"
     );
 }
+
+#[test]
+fn a_unit_importing_another_workspace_package_is_not_a_leaf() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/monorepo");
+    let report = analyze(&root).unwrap();
+    let b = report
+        .units
+        .iter()
+        .find(|u| u.id == "packages/b/src/titles.ts")
+        .unwrap();
+    assert_eq!(b.workspace_deps, ["@m/a"]);
+    assert!(
+        !b.notes.iter().any(|n| n.starts_with("Leaf:")),
+        "a workspace import is an import: {:?}",
+        b.notes
+    );
+    assert!(
+        b.notes.iter().any(|n| n.contains("@m/a")),
+        "the note should name the package: {:?}",
+        b.notes
+    );
+}
