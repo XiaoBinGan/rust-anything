@@ -139,4 +139,51 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+
+    #[test]
+    fn go_and_java_libraries_a_module_imports_map_or_are_kept() {
+        for (lang, name, crates, fit) in [
+            (
+                "go",
+                "gorm.io/gorm/clause",
+                "sqlx, diesel, sea-orm",
+                Fit::Partial,
+            ),
+            ("go", "github.com/redis/go-redis/v9", "redis", Fit::Good),
+            (
+                "go",
+                "github.com/golang-jwt/jwt/v5",
+                "jsonwebtoken",
+                Fit::Good,
+            ),
+            (
+                "go",
+                "github.com/go-playground/validator/v10",
+                "validator",
+                Fit::Good,
+            ),
+            ("go", "github.com/go-chi/chi/v5", "axum", Fit::Partial),
+            ("java", "io.grpc.ManagedChannel", "tonic", Fit::Good),
+            ("java", "com.google.protobuf.Message", "prost", Fit::Good),
+            (
+                "java",
+                "org.apache.kafka.clients.producer.KafkaProducer",
+                "rdkafka",
+                Fit::Partial,
+            ),
+            ("java", "redis.clients.jedis.Jedis", "redis", Fit::Good),
+        ] {
+            let m = find(lang, name).unwrap_or_else(|| panic!("{lang}: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "{lang}: {name}");
+        }
+        // The tables that were already right keep answering the same way.
+        assert_eq!(
+            find("go", "github.com/spf13/cobra").map(|m| m.crates),
+            Some("clap")
+        );
+        assert_eq!(
+            find("java", "com.squareup.okhttp3:okhttp").map(|m| m.crates),
+            Some("reqwest")
+        );
+    }
 }
