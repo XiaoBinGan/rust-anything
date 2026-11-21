@@ -139,4 +139,41 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+
+    #[test]
+    fn a_go_subpackage_import_maps_to_the_module_row() {
+        // A Go import names a package, and one module holds many: the module path is a prefix.
+        for (name, crates, fit) in [
+            (
+                "golang.org/x/text/cases",
+                "unicode-normalization, icu",
+                Fit::Partial,
+            ),
+            (
+                "golang.org/x/text/language",
+                "unicode-normalization, icu",
+                Fit::Partial,
+            ),
+            ("github.com/spf13/cobra/doc", "clap", Fit::Good),
+            (
+                "github.com/jackc/pgx/v5/pgxpool",
+                "sqlx, tokio-postgres",
+                Fit::Good,
+            ),
+            ("github.com/pkg/errors", "anyhow, thiserror", Fit::Good),
+        ] {
+            let m = find("go", name).unwrap_or_else(|| panic!("go: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "go: {name}");
+        }
+        // The module roots keep answering the same way.
+        assert_eq!(
+            find("go", "golang.org/x/text").map(|m| m.crates),
+            Some("unicode-normalization, icu")
+        );
+        assert_eq!(
+            find("go", "github.com/google/uuid").map(|m| m.crates),
+            Some("uuid")
+        );
+        assert!(find("go", "github.com/not-a-module/x").is_none());
+    }
 }
