@@ -75,10 +75,29 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
 
     let mut ports = Vec::new();
     let mut crate_errors = Vec::new();
+    let mut covered_by_broken: Vec<String> = Vec::new();
     for dir in crate_dirs {
         let m = match Manifest::load(&dir) {
             Ok(m) => m,
             Err(e) => {
+                // The manifest did not load, but its JSON can still say what it covers and where:
+                // a folder that belongs to another repository stays skipped without a word, and a
+                // local one still covers its unit, so the unit is not reported as unported.
+                let raw: Option<serde_json::Value> = std::fs::read_to_string(dir.join(MANIFEST))
+                    .ok()
+                    .and_then(|t| serde_json::from_str(&t).ok());
+                let foreign = raw
+                    .as_ref()
+                    .and_then(|v| v["root"].as_str())
+                    .is_some_and(|r| {
+                        std::fs::canonicalize(dir.join(r)).ok().as_deref() != Some(root.as_path())
+                    });
+                if foreign {
+                    continue;
+                }
+                if let Some(unit) = raw.as_ref().and_then(|v| v["unit"].as_str()) {
+                    covered_by_broken.push(unit.to_string());
+                }
                 let shown = dir
                     .strip_prefix(&root)
                     .unwrap_or(&dir)
@@ -107,7 +126,12 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
             let mut units: Vec<_> = report
                 .units
                 .iter()
-                .filter(|u| !ports.iter().any(|p| covers(&p.unit, &u.id, &u.files)))
+                .filter(|u| {
+                    !ports.iter().any(|p| covers(&p.unit, &u.id, &u.files))
+                        && !covered_by_broken
+                            .iter()
+                            .any(|unit| covers(unit, &u.id, &u.files))
+                })
                 .collect();
             units.sort_by(|a, b| {
                 order(&a.id)

@@ -116,16 +116,25 @@ fn map_names_a_crate_folder_whose_manifest_does_not_parse() {
     })
     .unwrap();
 
-    // A manifest that does not parse used to be skipped in silence: the map then says the unit has
-    // no port, which is wrong — the crate folder is right there.
-    std::fs::write(
-        crate_dir.join("rust-anything.json"),
-        "{\"schema\": \"rust-anything/bridge@1\"}\n",
-    )
-    .unwrap();
+    // A manifest that does not parse used to be skipped in silence: the map then said the unit had
+    // no port, which is wrong — the crate folder is right there. Break it the way a hand edit does:
+    // valid JSON, one required field missing.
+    let path = crate_dir.join("rust-anything.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    manifest["exports"][0]["params"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("optional");
+    std::fs::write(&path, manifest.to_string()).unwrap();
     let map = port_map::map(&repo, &[]).unwrap();
     let md = port_map::markdown(&map);
     assert!(md.contains("could not be read"), "{md}");
     assert!(md.contains("rust/util-rs"), "{md}");
+    assert!(
+        map.not_ported.iter().all(|u| u.unit != "packages/a/src/util.ts"),
+        "the folder still covers its unit: {:?}",
+        map.not_ported.iter().map(|u| &u.unit).collect::<Vec<_>>()
+    );
     let _ = std::fs::remove_dir_all(&repo);
 }
