@@ -473,6 +473,18 @@ pub fn resolve(from: &str, spec: &str, index: &HashMap<&str, usize>, ws: &Worksp
         // A local package imported by a shorter path than its files: still local.
         Resolution::Unresolved
     } else {
+        // The table can answer a dotted import (`google.protobuf`), which the top segment cannot:
+        // try the spec and each parent before settling on the top-level name.
+        let mut candidate = spec.to_lowercase().replace('_', "-");
+        loop {
+            if crate::crates::find("python", &candidate).is_some() {
+                return Resolution::External(candidate);
+            }
+            match candidate.rsplit_once('.') {
+                Some((parent, _)) => candidate = parent.to_string(),
+                None => break,
+            }
+        }
         Resolution::External(top.to_lowercase().replace('_', "-"))
     }
 }
@@ -1439,6 +1451,36 @@ fn split_top(text: &str, sep: char) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_dotted_import_the_table_knows_stays_dotted() {
+        // `from google.protobuf import json_format` reduces to `google` without this: the table
+        // answers the dotted name, so the dependency keeps it.
+        let ws = Workspace {
+            packages: vec![Package {
+                name: "acme".into(),
+                dir: String::new(),
+                src_root: "src".into(),
+                deps: Vec::new(),
+                dev_deps: Vec::new(),
+                namespaces: Vec::new(),
+            }],
+            files: Vec::new(),
+        };
+        let index: HashMap<&str, usize> = HashMap::new();
+        assert!(matches!(
+            resolve("app.py", "google.protobuf.json_format", &index, &ws),
+            super::Resolution::External(n) if n == "google.protobuf"
+        ));
+        assert!(matches!(
+            resolve("app.py", "requests.adapters", &index, &ws),
+            super::Resolution::External(n) if n == "requests"
+        ));
+        assert!(matches!(
+            resolve("app.py", "google.cloud.storage", &index, &ws),
+            super::Resolution::External(n) if n == "google"
+        ));
+    }
 
     #[test]
     fn maps_type_hints() {
