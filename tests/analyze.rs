@@ -554,6 +554,92 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
         .unwrap();
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
+    assert!(
+        w.dependencies
+            .iter()
+            .all(|d| d.name != "com.example:legacy"),
+        "a commented-out dependency is not declared: {:?}",
+        w.dependencies
+    );
+}
+
+#[test]
+fn a_comment_inside_a_require_block_is_not_a_module() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/go-reqs");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Go);
+    for name in [
+        "github.com/spf13/cobra",
+        "github.com/google/uuid",
+        "github.com/mattn/go-sqlite3",
+    ] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+    for bogus in ["//", "pinned", "until"] {
+        assert!(
+            !declared.contains(bogus),
+            "{bogus} is not a module: {declared:?}"
+        );
+    }
+}
+
+#[test]
+fn a_gem_group_ends_at_its_own_end() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ruby-gems");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Ruby);
+    assert!(
+        declared.contains("rack"),
+        "a Gemfile gem is a runtime dependency: {declared:?}"
+    );
+    assert!(
+        !declared.contains("rspec"),
+        "a gem inside `group :test do` is not: {declared:?}"
+    );
+    assert!(
+        !declared.contains("debug"),
+        "a gem inside a nested block in a group is not: {declared:?}"
+    );
+}
+
+#[test]
+fn a_commented_out_maven_dependency_is_not_declared() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/java-pom");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Java);
+    assert!(
+        declared.contains("com.google.guava:guava"),
+        "a live dependency is declared: {declared:?}"
+    );
+    for commented in ["com.example:legacy", "com.example:older"] {
+        assert!(
+            !declared.contains(commented),
+            "{commented} is commented out: {declared:?}"
+        );
+    }
+    assert!(
+        !declared.iter().any(|d| d.contains("junit")),
+        "a test-scope dependency is not a runtime one: {declared:?}"
+    );
+}
+
+#[test]
+fn a_commented_out_test_package_does_not_hide_a_csharp_project() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/csharp-comments");
+    let text = std::fs::read_to_string(root.join("App.csproj")).unwrap();
+    assert!(
+        !rust_anything::lang::csharp::is_test_project(&text),
+        "a project whose test package is commented out is not a test project"
+    );
+    let declared = rust_anything::whole_app::declared(&root, Lang::Csharp);
+    for name in ["Newtonsoft.Json", "Serilog"] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+    assert!(
+        !declared.iter().any(|d| d.to_lowercase().contains("xunit")),
+        "a commented-out package is not declared: {declared:?}"
+    );
 }
 
 #[test]

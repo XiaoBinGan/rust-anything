@@ -139,9 +139,36 @@ timed run covered as many files as the list it was given.
 `config-` to leave out the config cases, and four real files (`vitest.config.ts`, ...) went with
 them. Match the exact prefix you mean, and check a group's total against the corpus.
 
+**A harvester dropped whole rules.** ESLint's tests for no-unused-vars, prefer-const and
+no-useless-assignment give their `RuleTester` a test-only plugin, and the script that turned
+RuleTester cases into CLI runs skipped every case of a tester with plugins: 715 cases of three
+of the most used rules were missing, and the rules showed "0 cases" instead of an error. Skip
+only the cases that use what you cannot express, and check every unit's case count after
+harvesting.
+
+**A copy of a crate built into the same target folder replaced it.** A scratch copy of the port,
+with the same package name and version, was built with the same `CARGO_TARGET_DIR`; cargo gave
+both the same artifact name, and examples of the real crate linked the copy's library and
+reported stale numbers. Give a copy its own package name or its own target folder.
+
 **A grep hid the bug it was meant to show.** Filtering diffs with a pattern that drops comment-like
 lines removed the one line that differed (`/* name */ value`). Write the expected and actual
 output to files and diff them whole.
+
+**An exhaustive check covered a different input set from the one the port builds.** The Prettier
+doc printer was checked on every doc up to size 5, read from JSON through `from_value`, which
+turns `align: ""` into a no-op as Prettier does. The YAML and Markdown printers build
+`Align::Text("")` directly, and the printer indented for it. Enumerate the values the code really
+passes (native `Doc` values), not a serialised form of them.
+
+**Mutation jobs tested each other's binaries.** With `CARGO_TARGET_DIR` set, every
+`cargo mutants -j N` job built into one target dir, so 401 of 693 logs ran a binary another job
+had built. Run cargo-mutants with `CARGO_TARGET_DIR` unset, and check that every log under
+`mutants.out/log` compiles the mutated crate.
+
+**Recorded crash messages held Prettier's install path.** Prettier prints a stack trace when it
+crashes, so cases recorded with one copy of Prettier fail when the front door falls back to
+another. Record with the copy the front door's `ROOT` resolves to.
 
 **Sorting cannot pair lines that are matched loosely.** An `unordered` output was compared by
 sorting both sides as text and pairing the lines by position, while the lines were then matched
