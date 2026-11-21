@@ -403,6 +403,7 @@ mod tests {
             ("grpcio", "tonic", Fit::Good),
             ("grpc", "tonic", Fit::Good),
             ("protobuf", "prost", Fit::Good),
+            ("google.protobuf", "prost", Fit::Good),
             ("tenacity", "backon", Fit::Good),
             ("structlog", "tracing", Fit::Good),
             ("aiofiles", "tokio::fs", Fit::Good),

@@ -488,7 +488,7 @@ crates = "tonic"
 fit = "good"
 
 [[python]]
-names = ["protobuf"]
+names = ["protobuf", "google.protobuf"]
 crates = "prost"
 fit = "good"
 
