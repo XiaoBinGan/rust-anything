@@ -139,4 +139,35 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+
+    #[test]
+    fn kotlin_libraries_a_gradle_module_imports_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("kotlinx.datetime.Clock", "jiff", Fit::Good),
+            ("com.squareup.moshi.JsonAdapter", "serde_json", Fit::Partial),
+            ("retrofit2.Retrofit", "reqwest", Fit::Partial),
+            ("androidx.room.RoomDatabase", "rusqlite", Fit::Partial),
+            ("org.jetbrains.exposed.sql.Database", "sqlx", Fit::Partial),
+            (
+                "com.google.dagger.hilt.android.HiltAndroidApp",
+                "-",
+                Fit::None,
+            ),
+            ("androidx.compose.runtime.Composable", "-", Fit::None),
+            ("android.telephony.TelephonyManager", "-", Fit::None),
+        ] {
+            let m = find("kotlin", name).unwrap_or_else(|| panic!("kotlin: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "kotlin: {name}");
+        }
+        // The broad `androidx.` entry is a fallback: the specific ones above it win.
+        assert_eq!(
+            find("kotlin", "androidx.room.Room").map(|m| m.crates),
+            Some("rusqlite")
+        );
+        // A Kotlin module that predates the entry still maps the way it did.
+        assert_eq!(
+            find("kotlin", "kotlinx.coroutines.flow.Flow").map(|m| m.crates),
+            Some("tokio, rayon")
+        );
+    }
 }

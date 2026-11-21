@@ -950,3 +950,50 @@ fit = "good"
 prefixes = ["io.ktor", "com.squareup.okhttp3"]
 crates = "axum, reqwest"
 fit = "partial"
+
+[[kotlin]]
+prefixes = ["kotlinx.datetime"]
+crates = "jiff"
+fit = "good"
+note = "Kotlin's own date and time API carries over; the `java.time` type behind it does not."
+
+[[kotlin]]
+prefixes = ["com.squareup.moshi"]
+crates = "serde_json"
+fit = "partial"
+note = "Moshi's reflection adapters become serde derives."
+
+[[kotlin]]
+prefixes = ["retrofit2", "com.squareup.retrofit2"]
+crates = "reqwest"
+fit = "partial"
+note = "The interface annotations describe each call; every service becomes a hand-written client."
+
+[[kotlin]]
+prefixes = ["androidx.room", "android.arch.persistence"]
+crates = "rusqlite"
+fit = "partial"
+note = "The SQLite access carries; the annotation processor and the DAO it generates do not."
+
+[[kotlin]]
+prefixes = ["org.jetbrains.exposed"]
+crates = "sqlx"
+fit = "partial"
+
+[[kotlin]]
+prefixes = ["com.google.dagger", "dagger.hilt"]
+crates = "-"
+fit = "none"
+note = "A dependency-injection container: keep the wiring in Kotlin, or pass the objects in."
+
+[[kotlin]]
+prefixes = ["androidx.compose", "androidx.lifecycle", "androidx.activity"]
+crates = "-"
+fit = "none"
+note = "UI and lifecycle: an application rewrite, not a port."
+
+[[kotlin]]
+prefixes = ["androidx.", "android."]
+crates = "-"
+fit = "none"
+note = "The Android framework is the platform the port runs under, not a library it replaces."
