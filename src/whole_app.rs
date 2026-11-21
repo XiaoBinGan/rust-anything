@@ -316,6 +316,15 @@ fn normalize(lang: Lang, name: &str) -> String {
     }
 }
 
+/// Whether a Ruby line opens a block that its own `end` closes.
+fn opens_a_block(line: &str) -> bool {
+    line.ends_with(" do")
+        || line.contains(" do |")
+        || ["if ", "unless ", "while ", "until ", "case "]
+            .iter()
+            .any(|kw| line.starts_with(kw))
+}
+
 /// Dependencies the manifests declare (runtime ones, not dev or test).
 pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
@@ -399,15 +408,26 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                     text += &std::fs::read_to_string(entry.path()).unwrap_or_default();
                 }
             }
-            let mut group = false;
+            // A gem belongs to the runtime dependencies unless a `group` block encloses it. Blocks
+            // nest (`platform :mri do ... end`), so the group ends at its own `end`, not at the
+            // first one: otherwise every gem after a nested block is read as a runtime dependency.
+            let mut depth = 0usize;
+            let mut group_at: Option<usize> = None;
             for line in text.lines() {
                 let t = line.trim();
                 if t.starts_with("group ") {
-                    group = true;
-                } else if t == "end" {
-                    group = false;
+                    group_at = Some(depth);
                 }
-                if let Some(c) = gem.captures(line).filter(|_| !group) {
+                if opens_a_block(t) {
+                    depth += 1;
+                }
+                if t == "end" || t.starts_with("end ") {
+                    depth = depth.saturating_sub(1);
+                    if group_at.is_some_and(|at| depth <= at) {
+                        group_at = None;
+                    }
+                }
+                if let Some(c) = gem.captures(line).filter(|_| group_at.is_none()) {
                     out.insert(c[1].to_string());
                 }
                 if let Some(c) = spec.captures(line) {

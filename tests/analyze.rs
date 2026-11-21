@@ -555,3 +555,22 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
 }
+
+#[test]
+fn a_gem_group_ends_at_its_own_end() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ruby-gems");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Ruby);
+    assert!(
+        declared.contains("rack"),
+        "a Gemfile gem is a runtime dependency: {declared:?}"
+    );
+    assert!(
+        !declared.contains("rspec"),
+        "a gem inside `group :test do` is not: {declared:?}"
+    );
+    assert!(
+        !declared.contains("debug"),
+        "a gem inside a nested block in a group is not: {declared:?}"
+    );
+}
