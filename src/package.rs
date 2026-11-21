@@ -323,12 +323,12 @@ fn validate_npm_name(name: &str) -> Result<()> {
     // refused at publish time, so they are refused here instead of in the generated package.
     let (scope, bare) = match name.strip_prefix('@') {
         Some(rest) => match rest.split_once('/') {
-            Some((scope, pkg)) if !pkg.contains('/') => (Some(scope), pkg),
-            _ => (None, ""),
+            Some((scope, pkg)) => (Some(scope), pkg),
+            None => (None, ""),
         },
         None => (None, name),
     };
-    let segment = |s: &str| !s.is_empty() && !s.starts_with(['.', '_']);
+    let segment = |s: &str| !s.is_empty() && !s.starts_with(['.', '_']) && !s.contains(['/', '@']);
     let ok = segment(bare)
         && scope.is_none_or(segment)
         && name.len() <= 214
@@ -1082,6 +1082,9 @@ mod tests {
         assert!(validate_npm_name("@x18n/fuzzy/extra").is_err());
         assert!(validate_npm_name("@x18n").is_err());
         assert!(validate_npm_name("@/fuzzy").is_err());
+        assert!(validate_npm_name("fuzzy/extra").is_err());
+        assert!(validate_npm_name("fuzzy@1").is_err());
+        assert!(validate_npm_name("@x18n/fuzzy@1").is_err());
     }
 
     #[test]

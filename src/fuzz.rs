@@ -5,7 +5,7 @@
 //! its fresh cases there, diffs them, and puts the recording back. Whatever happens, the file
 //! the round started from is restored before anything is kept.
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -98,7 +98,8 @@ fn random_seed() -> u64 {
     splitmix((nanos as u64) ^ u64::from(std::process::id())) % 1_000_000_000
 }
 
-/// Numbers compared by value, so `1` and `1.0` from different drivers' JSON are one key.
+/// Numbers compared by value and object keys sorted, so the same value from two runtimes (`1`
+/// and `1.0`, or the keys of one object in a different order) is one key.
 fn norm(v: &Value) -> Value {
     match v {
         Value::Number(n) => n
@@ -106,7 +107,13 @@ fn norm(v: &Value) -> Value {
             .and_then(serde_json::Number::from_f64)
             .map_or_else(|| v.clone(), Value::Number),
         Value::Array(a) => Value::Array(a.iter().map(norm).collect()),
-        Value::Object(o) => Value::Object(o.iter().map(|(k, x)| (k.clone(), norm(x))).collect()),
+        Value::Object(o) => Value::Object(
+            o.iter()
+                .map(|(k, x)| (k.clone(), norm(x)))
+                .collect::<BTreeMap<_, _>>()
+                .into_iter()
+                .collect(),
+        ),
         other => other.clone(),
     }
 }
@@ -269,6 +276,18 @@ mod tests {
         assert_eq!(
             case_keys(&class),
             vec![key(&reported["fn"], &reported["args"])]
+        );
+    }
+
+    #[test]
+    fn a_case_key_ignores_the_order_of_object_keys() {
+        // The original and the port are different runtimes: the same value comes back with its
+        // keys in a different order, and a case must still match its own report.
+        let left = json!({ "fn": "f", "args": [{ "a": 1, "b": [2, { "c": 3, "d": 4 }] }] });
+        let right = json!({ "fn": "f", "args": [{ "b": [2, { "d": 4, "c": 3 }], "a": 1 }] });
+        assert_eq!(
+            key(&left["fn"], &left["args"]),
+            key(&right["fn"], &right["args"])
         );
     }
 

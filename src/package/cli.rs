@@ -314,15 +314,50 @@ fn license_files(app: &Path) -> Result<Vec<(String, PathBuf)>> {
 /// The words the front door runs the original with, from the `RUN` its `original.rs` was
 /// generated with.
 fn run_words(app: &Path) -> Result<Vec<String>> {
+    const HEAD: &str = "const RUN: &[&str] = &[";
     let path = app.join("src/original.rs");
     let text =
         std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
-    let line = text
+    let start = text
+        .find(HEAD)
+        .with_context(|| format!("no `const RUN` in {}", path.display()))?
+        + HEAD.len();
+    // `gate` formats generated code, and rustfmt wraps an array longer than the line width, so the
+    // list can span lines: take everything up to the `]` that is not inside a string literal.
+    let rest = &text[start..];
+    let mut end = None;
+    let mut in_string = false;
+    let mut chars = rest.char_indices();
+    while let Some((i, c)) = chars.next() {
+        if in_string {
+            match c {
+                '\\' => {
+                    chars.next();
+                }
+                '"' => in_string = false,
+                _ => {}
+            }
+            continue;
+        }
+        match c {
+            '"' => in_string = true,
+            ']' => {
+                end = Some(i);
+                break;
+            }
+            _ => {}
+        }
+    }
+    let end = end.with_context(|| format!("no `const RUN` in {}", path.display()))?;
+    let list = rest[..end]
         .lines()
-        .find_map(|l| l.trim().strip_prefix("const RUN: &[&str] = &["))
-        .and_then(|l| l.strip_suffix("];"))
-        .with_context(|| format!("no `const RUN` in {}", path.display()))?;
-    serde_json::from_str(&format!("[{line}]"))
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    // The slice stops at the `]`, so a trailing comma from the last element is still there.
+    let list = list.trim_end_matches(',').trim_end();
+    serde_json::from_str(&format!("[{list}]"))
         .with_context(|| format!("reading `const RUN` in {}", path.display()))
 }
 
@@ -706,6 +741,36 @@ mod tests {
         )
         .unwrap();
         assert!(original(&dir, Some("tool@1.0.0")).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn reads_the_original_from_a_run_list_rustfmt_wrapped() {
+        // `gate` runs `cargo fmt` on generated code, and rustfmt wraps an array longer than the
+        // line width: the front door then holds `const RUN` over several lines.
+        let dir = std::env::temp_dir().join(format!("ra-pkg-cli-fmt-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(
+            dir.join("src/original.rs"),
+            "const RUN: &[&str] = &[\n    \"node\",\n    \
+             \"node_modules/@acme/some-quite-long-package-name/bin/cli.js\",\n    \"--flag\",\n    \
+             \"a value with spaces\",\n    \"]\",\n];\n",
+        )
+        .unwrap();
+        let o = original(&dir, Some("@acme/some-quite-long-package-name@2.0.0")).unwrap();
+        assert_eq!(o.bin, "bin/cli.js");
+        assert_eq!(o.version, "2.0.0");
+        let words = run_words(&dir).unwrap();
+        assert_eq!(
+            words,
+            [
+                "node",
+                "node_modules/@acme/some-quite-long-package-name/bin/cli.js",
+                "--flag",
+                "a value with spaces",
+                "]",
+            ]
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
