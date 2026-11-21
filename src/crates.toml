@@ -345,7 +345,7 @@ crates = "flate2"
 fit = "good"
 
 [[c]]
-names = ["<openssl/ssl.h>", "<openssl/evp.h>"]
+prefixes = ["<openssl/"]
 crates = "rustls, ring"
 fit = "partial"
 
@@ -438,6 +438,37 @@ names = ["<lame/lame.h>", "<lame.h>"]
 crates = "rusty_mp3"
 fit = "partial"
 note = "Pure-Rust MP3 encoder and decoder; young, so test it on your files. symphonia decodes MP3 if you only need to read."
+
+[[c]]
+prefixes = ["<json-c/"]
+crates = "serde_json"
+fit = "good"
+
+[[c]]
+prefixes = ["<libxml/", "<libxslt/"]
+crates = "quick-xml"
+fit = "partial"
+note = "parsing carries; DOM and XPath need rewriting"
+
+[[c]]
+names = ["<png.h>", "<jpeglib.h>"]
+crates = "png, jpeg-decoder"
+fit = "good"
+
+[[c]]
+names = ["<pq-fe.h>", "<libpq-fe.h>"]
+crates = "tokio-postgres, sqlx"
+fit = "good"
+
+[[c]]
+prefixes = ["<hiredis/"]
+crates = "redis"
+fit = "good"
+
+[[c]]
+names = ["<uuid/uuid.h>"]
+crates = "uuid"
+fit = "good"
 
 [[go]]
 names = ["github.com/spf13/cobra", "github.com/urfave/cli", "github.com/urfave/cli/v2"]

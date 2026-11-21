@@ -139,4 +139,28 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+
+    #[test]
+    fn c_headers_map_by_library_not_by_the_one_header_a_file_includes() {
+        for (header, crates, fit) in [
+            ("<openssl/sha.h>", "rustls, ring", Fit::Partial),
+            ("<openssl/hmac.h>", "rustls, ring", Fit::Partial),
+            ("<json-c/json.h>", "serde_json", Fit::Good),
+            ("<libxml/parser.h>", "quick-xml", Fit::Partial),
+            ("<png.h>", "png, jpeg-decoder", Fit::Good),
+            ("<pq-fe.h>", "tokio-postgres, sqlx", Fit::Good),
+            ("<hiredis/hiredis.h>", "redis", Fit::Good),
+            ("<uuid/uuid.h>", "uuid", Fit::Good),
+        ] {
+            let m = find("c", header).unwrap_or_else(|| panic!("c: {header}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "c: {header}");
+        }
+        // The headers that were already mapped keep answering the same way.
+        assert_eq!(find("c", "<zlib.h>").map(|m| m.crates), Some("flate2"));
+        assert_eq!(
+            find("c", "<openssl/ssl.h>").map(|m| m.crates),
+            Some("rustls, ring")
+        );
+        assert!(find("c", "<not-a-header.h>").is_none());
+    }
 }
