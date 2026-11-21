@@ -70,7 +70,20 @@ by the original and never the other way round, and callbacks stay in the source 
 anywhere. Cargo downloads crates as usual, and your agent's model provider sees what your agent
 sends it, under its own policy.
 
-**What does it need installed?** Rust, plus the runtime of the language you port (see
-[Install](install.md#install)).
+**What does it need installed?** Rust, plus the runtime of the language you port — and a few extras
+that only matter for some languages, which `rust-anything doctor` lists with the command that
+installs each one:
+
+| Piece | Needed for |
+| --- | --- |
+| Ruby 3.0+ (not macOS's 2.6), Java 17+ | the Ruby and Java bridges; magnus and JNI do not build on older ones |
+| `kotlinc` | Kotlin units, and `record`/`diff` on a host JVM |
+| Android NDK, `adb`, `d8`, `kotlinc` and the three Rust Android targets | `build`/`record`/`diff --profile android` |
+| `wasm32-unknown-unknown` and the matching `wasm-bindgen` CLI | `bridge --kind wasm`, and the wasm demo |
+| Node 24 | `profile` (22.6+ runs everything else on the JS side) |
+| PHP, the .NET SDK | the PHP and C# whole-app paths |
+
+A missing optional runtime skips its tests instead of failing them; `RUST_ANYTHING_REQUIRE` makes
+them fail. See [Install](install.md#install).
 
 **Something broke.** Open an issue with the command, its output and your platform.
