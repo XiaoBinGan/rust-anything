@@ -555,3 +555,23 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
 }
+
+#[test]
+fn a_comment_inside_a_require_block_is_not_a_module() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/go-reqs");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Go);
+    for name in [
+        "github.com/spf13/cobra",
+        "github.com/google/uuid",
+        "github.com/mattn/go-sqlite3",
+    ] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+    for bogus in ["//", "pinned", "until"] {
+        assert!(
+            !declared.contains(bogus),
+            "{bogus} is not a module: {declared:?}"
+        );
+    }
+}

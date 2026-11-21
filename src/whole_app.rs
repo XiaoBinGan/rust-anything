@@ -380,9 +380,12 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                 } else {
                     line.strip_prefix("require ")
                 };
+                // A comment line inside `require ( ... )` is not a module; `lang::go`'s own
+                // `requirements()` already skips it, and this copy is what `analyze` reports.
                 if let Some(spec) = spec
                     && !spec.contains("// indirect")
                     && let Some(module) = spec.split_whitespace().next()
+                    && !module.starts_with("//")
                 {
                     out.insert(module.to_string());
                 }
