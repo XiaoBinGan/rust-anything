@@ -121,17 +121,26 @@ fn render(out: &mut String, r: &Report, title: &str) -> std::fmt::Result {
     if s.parse_errors > 0 {
         writeln!(
             out,
-            "> {} had parse errors; their units are marked partial.\n",
+            "> {} had parse errors; their units are marked caution.\n",
             count(s.parse_errors, "file")
         )?;
     }
 
     writeln!(out, "## Start here\n")?;
     if r.start_here.is_empty() {
-        writeln!(
-            out,
-            "No unit is a safe first port yet. See the blocked units and dependencies below.\n"
-        )?;
+        // Two different reasons, and the reader needs the one that is true: blocked units, or no
+        // unit that exports something a bridge can carry.
+        if s.blocked > 0 {
+            writeln!(
+                out,
+                "No unit is a safe first port yet. See the blocked units and dependencies below.\n"
+            )?;
+        } else {
+            writeln!(
+                out,
+                "No unit exports anything a bridge can carry yet: the units below expose constants, types or nothing a port could call.\n"
+            )?;
+        }
     } else {
         writeln!(
             out,
