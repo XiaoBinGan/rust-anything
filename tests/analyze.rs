@@ -555,3 +555,26 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
 }
+
+#[test]
+fn a_java_import_names_the_library_the_table_knows() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/java-guava");
+    let report = analyze(&root).unwrap();
+    assert_eq!(report.language, Lang::Java);
+    let unit = &report.units[0];
+    for library in ["com.google.common", "org.apache.commons"] {
+        assert!(
+            unit.external_deps.contains(&library.to_string()),
+            "{library}: {:?}",
+            unit.external_deps
+        );
+    }
+    for prefix in ["com.google", "org.apache"] {
+        assert!(
+            !unit.external_deps.contains(&prefix.to_string()),
+            "a two-segment prefix is not a library: {:?}",
+            unit.external_deps
+        );
+    }
+}

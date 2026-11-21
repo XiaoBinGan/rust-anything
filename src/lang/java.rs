@@ -311,7 +311,13 @@ pub fn resolve(spec: &str, index: &HashMap<&str, usize>, ws: &Workspace) -> supe
             return super::Resolution::File(*i);
         }
     }
-    super::Resolution::External(spec.split('.').take(2).collect::<Vec<_>>().join("."))
+    // The table's Java rows are keyed by import prefix (`com.google.common` for Guava), so the
+    // longest configured prefix is the library; two bare segments (`com.google`) name nothing.
+    // `lang/kotlin.rs` already resolves this way.
+    let external = crate::crates::longest_prefix("java", spec)
+        .map(str::to_string)
+        .unwrap_or_else(|| spec.split('.').take(2).collect::<Vec<_>>().join("."));
+    super::Resolution::External(external)
 }
 
 /// Rust counterparts of common Java libraries, by import prefix or Maven coordinates.
