@@ -209,6 +209,17 @@ pub fn run() -> Report {
     Report { checks }
 }
 
+/// The command `doctor` gives on this platform to install or update a runtime, by its name.
+pub(crate) fn install_command(name: &str) -> Option<String> {
+    let r = RUNTIMES.iter().find(|r| r.name == name)?;
+    runtime_fix(r, Status::Outdated, Platform::HERE)
+}
+
+/// The oldest version of a runtime that `doctor` accepts, by its name.
+pub(crate) fn minimum(name: &str) -> Option<Version> {
+    RUNTIMES.iter().find(|r| r.name == name)?.minimum
+}
+
 struct Runtime {
     name: &'static str,
     program: &'static str,
@@ -922,6 +933,18 @@ pub fn text(r: &Report) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn install_command_is_doctor_fix_for_a_runtime() {
+        let ruby = RUNTIMES.iter().find(|r| r.name == "ruby").unwrap();
+        assert_eq!(
+            install_command("ruby"),
+            runtime_fix(ruby, Status::Outdated, Platform::HERE)
+        );
+        assert!(install_command("cobol").is_none());
+        assert_eq!(minimum("ruby"), ruby.minimum);
+        assert!(minimum("cobol").is_none());
+    }
 
     #[test]
     fn versions_are_read_from_every_banner() {
