@@ -735,7 +735,20 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
         ));
     }
     if unit.deps.is_empty() && !keep {
-        notes.push("Leaf: imports no other unit.".into());
+        if unit.workspace_deps.is_empty() {
+            notes.push("Leaf: imports no other unit.".into());
+        } else {
+            // `deps` holds units of this package; an import of another workspace package is an
+            // edge the plan has to name, or the port order reads as if the unit stood alone.
+            notes.push(format!(
+                "Imports {} from another workspace package: port that package first.",
+                unit.workspace_deps
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ));
+        }
     }
     if unit.direct_tests > 0 {
         notes.push(if unit.direct_tests == 1 {
