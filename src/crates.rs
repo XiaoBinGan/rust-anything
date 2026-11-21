@@ -139,4 +139,40 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+    #[test]
+    fn ts_libraries_a_node_service_imports_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("joi", "garde, validator", Fit::Partial),
+            ("graphql", "async-graphql", Fit::Partial),
+            ("mongoose", "mongodb", Fit::Partial),
+            ("ioredis", "redis", Fit::Good),
+            ("rxjs", "futures, tokio-stream", Fit::Partial),
+            ("socket.io", "socketioxide", Fit::Partial),
+            ("playwright", "chromiumoxide", Fit::Partial),
+            ("sharp", "image", Fit::Good),
+            ("bcrypt", "argon2, bcrypt", Fit::Good),
+            ("jsonwebtoken", "jsonwebtoken", Fit::Good),
+            ("execa", "std::process, tokio::process", Fit::Good),
+            ("pg", "tokio-postgres, sqlx", Fit::Good),
+            ("mysql2", "mysql_async, sqlx", Fit::Partial),
+            ("better-sqlite3", "rusqlite", Fit::Good),
+            ("papaparse", "csv", Fit::Good),
+            ("cheerio", "scraper", Fit::Partial),
+            ("marked", "pulldown-cmark, comrak", Fit::Good),
+            ("helmet", "tower-http", Fit::Good),
+            ("inquirer", "dialoguer", Fit::Good),
+            ("@prisma/client", "sqlx, diesel, sea-orm", Fit::Partial),
+        ] {
+            let m = find("ts", name).unwrap_or_else(|| panic!("ts: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "ts: {name}");
+        }
+        // Neighbours that already answered keep answering.
+        assert_eq!(find("ts", "zod").map(|m| m.crates), Some("serde, garde"));
+        assert_eq!(find("ts", "express").map(|m| m.crates), Some("axum"));
+        assert_eq!(
+            find("ts", "ws").map(|m| m.crates),
+            Some("tokio-tungstenite")
+        );
+        assert!(find("ts", "left-pad-but-new").is_none());
+    }
 }

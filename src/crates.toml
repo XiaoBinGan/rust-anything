@@ -223,6 +223,117 @@ crates = "rusty_mp3"
 fit = "partial"
 note = "Pure-Rust MP3 encoder and decoder; young, so test it on your files. symphonia decodes MP3 if you only need to read."
 
+[[ts]]
+names = ["joi", "@hapi/joi"]
+crates = "garde, validator"
+fit = "partial"
+
+[[ts]]
+names = ["graphql", "@apollo/server", "graphql-yoga", "apollo-server"]
+crates = "async-graphql"
+fit = "partial"
+note = "the schema carries; the resolvers are rewritten"
+
+[[ts]]
+names = ["mongoose"]
+crates = "mongodb"
+fit = "partial"
+note = "an ODM: schemas, middleware and populate do not carry"
+
+[[ts]]
+names = ["ioredis", "redis"]
+crates = "redis"
+fit = "good"
+
+[[ts]]
+names = ["rxjs"]
+crates = "futures, tokio-stream"
+fit = "partial"
+note = "operators become stream combinators"
+
+[[ts]]
+names = ["socket.io", "socket.io-client"]
+crates = "socketioxide"
+fit = "partial"
+
+[[ts]]
+names = ["puppeteer", "puppeteer-core", "playwright", "playwright-core"]
+crates = "chromiumoxide"
+fit = "partial"
+note = "drives Chrome over CDP; the page API differs"
+
+[[ts]]
+names = ["sharp"]
+crates = "image"
+fit = "good"
+
+[[ts]]
+names = ["bcrypt", "bcryptjs"]
+crates = "argon2, bcrypt"
+fit = "good"
+
+[[ts]]
+names = ["jsonwebtoken", "jose"]
+crates = "jsonwebtoken"
+fit = "good"
+
+[[ts]]
+names = ["execa", "cross-spawn"]
+crates = "std::process, tokio::process"
+fit = "good"
+
+[[ts]]
+names = ["pg", "postgres"]
+crates = "tokio-postgres, sqlx"
+fit = "good"
+
+[[ts]]
+names = ["mysql2", "mysql"]
+crates = "mysql_async, sqlx"
+fit = "partial"
+
+[[ts]]
+names = ["better-sqlite3", "sqlite3"]
+crates = "rusqlite"
+fit = "good"
+
+[[ts]]
+names = ["csv-parse", "papaparse"]
+crates = "csv"
+fit = "good"
+
+[[ts]]
+names = ["cheerio", "node-html-parser"]
+crates = "scraper"
+fit = "partial"
+
+[[ts]]
+names = ["marked", "markdown-it", "remark"]
+crates = "pulldown-cmark, comrak"
+fit = "good"
+
+[[ts]]
+names = ["helmet", "cors", "multer", "compression"]
+crates = "tower-http"
+fit = "good"
+note = "middleware moves into the axum layer stack"
+
+[[ts]]
+names = ["inquirer", "prompts", "enquirer"]
+crates = "dialoguer"
+fit = "good"
+
+[[ts]]
+names = ["ora", "listr2", "cli-progress"]
+crates = "indicatif"
+fit = "good"
+
+[[ts]]
+names = ["@prisma/client", "knex", "drizzle-orm", "sequelize", "typeorm"]
+crates = "sqlx, diesel, sea-orm"
+fit = "partial"
+note = "an ORM's dynamic queries need redesign"
+
 [[python]]
 names = ["requests", "httpx", "urllib3", "aiohttp"]
 crates = "reqwest"
