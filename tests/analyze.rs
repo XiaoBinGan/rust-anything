@@ -555,3 +555,13 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
 }
+
+#[test]
+fn a_requirements_include_is_followed_once() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/python-includes");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Python);
+    for name in ["flask", "six", "pytest", "ruff"] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+}

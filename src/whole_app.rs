@@ -4,7 +4,7 @@
 //! to the user in the grilling round.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::Serialize;
@@ -316,6 +316,44 @@ fn normalize(lang: Lang, name: &str) -> String {
     }
 }
 
+/// The packages a requirements file names, following `-r` / `--requirement` includes: a file that
+/// is reached twice is read once, and a cycle stops instead of recursing. `pip` resolves an include
+/// against the directory of the file that names it, not the project root.
+fn requirements_from(file: &Path, out: &mut BTreeSet<String>, seen: &mut BTreeSet<PathBuf>) {
+    let key = std::fs::canonicalize(file).unwrap_or_else(|_| file.to_path_buf());
+    if !seen.insert(key) {
+        return;
+    }
+    let Ok(text) = std::fs::read_to_string(file) else {
+        return;
+    };
+    let dir = file.parent().unwrap_or(Path::new(""));
+    for line in text.lines() {
+        let line = line.trim();
+        if let Some(rest) = line
+            .strip_prefix("--requirement")
+            .or_else(|| line.strip_prefix("-r"))
+        {
+            let included = rest.trim_start_matches(['=', ' ', '\t']);
+            if !included.is_empty() {
+                requirements_from(&dir.join(included), out, seen);
+            }
+            continue;
+        }
+        if line.is_empty() || line.starts_with(['#', '-']) {
+            continue;
+        }
+        let name = line
+            .trim()
+            .chars()
+            .take_while(|c| c.is_alphanumeric() || "-_.".contains(*c))
+            .collect::<String>();
+        if !name.is_empty() {
+            out.insert(name);
+        }
+    }
+}
+
 /// Dependencies the manifests declare (runtime ones, not dev or test).
 pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
@@ -355,12 +393,11 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                     );
                 }
             }
-            for line in read(root, "requirements.txt").lines() {
-                let line = line.trim();
-                if !line.is_empty() && !line.starts_with(['#', '-']) {
-                    out.insert(name_of(line));
-                }
-            }
+            requirements_from(
+                &root.join("requirements.txt"),
+                &mut out,
+                &mut BTreeSet::new(),
+            );
         }
         Lang::Go => {
             let gomod = read(root, "go.mod");
