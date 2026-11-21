@@ -87,6 +87,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             dir: dir.clone(),
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            namespaces: Vec::new(),
         })
         .collect();
     if !packages.iter().any(|p| p.dir.is_empty()) {
@@ -102,6 +103,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             },
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            namespaces: Vec::new(),
         });
     }
     packages.sort_by(|a, b| a.dir.cmp(&b.dir));

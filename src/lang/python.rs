@@ -96,6 +96,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             },
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            namespaces: Vec::new(),
         });
     }
     packages.sort_by(|a, b| a.dir.cmp(&b.dir));
@@ -171,6 +172,7 @@ fn read_package(root: &Path, dir: &str) -> Package {
         dir: dir.to_string(),
         deps,
         dev_deps: Vec::new(),
+        namespaces: Vec::new(),
     }
 }
 

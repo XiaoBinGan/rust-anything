@@ -45,8 +45,9 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
     Some(tag[start..start + end].to_string())
 }
 
-/// `Include` of each `<PackageReference>` in a project file.
+/// `Include` of each `<PackageReference>` in a project file, outside `<!-- -->` comments.
 pub fn package_references(text: &str) -> Vec<String> {
+    let text = super::syntax::without_xml_comments(text);
     text.split("<PackageReference")
         .skip(1)
         .filter_map(|tag| attribute(tag.split('>').next().unwrap_or(""), "Include"))
@@ -65,10 +66,11 @@ fn element(text: &str, tag: &str) -> Option<String> {
 
 /// A project of tests: it references a test framework or says `IsTestProject`.
 pub fn is_test_project(text: &str) -> bool {
-    package_references(text)
+    let text = super::syntax::without_xml_comments(text);
+    package_references(&text)
         .iter()
         .any(|d| TEST_PACKAGES.iter().any(|t| d.starts_with(t)))
-        || element(text, "IsTestProject").as_deref() == Some("true")
+        || element(&text, "IsTestProject").as_deref() == Some("true")
 }
 
 pub fn discover(root: &Path) -> Result<Workspace> {
@@ -112,6 +114,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
                 dir,
                 deps,
                 dev_deps,
+                namespaces: Vec::new(),
             });
         } else if name.ends_with(".cs") {
             files.push(rel);
@@ -126,6 +129,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             src_root: String::new(),
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            namespaces: Vec::new(),
         });
     }
     packages.sort_by(|a, b| a.dir.cmp(&b.dir));

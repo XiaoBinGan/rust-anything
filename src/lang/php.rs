@@ -66,6 +66,20 @@ fn composer(text: &str) -> (Option<String>, Vec<String>, Vec<String>, Option<Str
     )
 }
 
+/// The PSR-4 namespaces of `autoload` and `autoload-dev`: the project's own code.
+fn own_namespaces(text: &str) -> Vec<String> {
+    let Ok(doc) = serde_json::from_str::<Value>(text) else {
+        return Vec::new();
+    };
+    ["autoload", "autoload-dev"]
+        .iter()
+        .filter_map(|key| doc[key]["psr-4"].as_object())
+        .flat_map(|o| o.keys())
+        .map(|ns| ns.trim_matches('\\').to_string())
+        .filter(|ns| !ns.is_empty())
+        .collect()
+}
+
 pub fn discover(root: &Path) -> Result<Workspace> {
     let mut packages: Vec<Package> = Vec::new();
     let mut files = Vec::new();
@@ -89,8 +103,8 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             .rsplit_once('/')
             .map_or(String::new(), |(d, _)| d.to_string());
         if name == "composer.json" {
-            let (pkg_name, deps, dev, src) =
-                composer(&std::fs::read_to_string(entry.path()).unwrap_or_default());
+            let text = std::fs::read_to_string(entry.path()).unwrap_or_default();
+            let (pkg_name, deps, dev, src) = composer(&text);
             packages.push(Package {
                 name: pkg_name.unwrap_or_else(|| {
                     if dir.is_empty() {
@@ -107,6 +121,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
                 dir,
                 deps,
                 dev_deps: dev,
+                namespaces: own_namespaces(&text),
             });
         } else if name.ends_with(".php") {
             let is_test = name.ends_with("Test.php")
@@ -137,6 +152,7 @@ pub fn discover(root: &Path) -> Result<Workspace> {
             },
             deps: Vec::new(),
             dev_deps: Vec::new(),
+            namespaces: Vec::new(),
         });
     }
     packages.sort_by(|a, b| a.dir.cmp(&b.dir));
@@ -475,18 +491,17 @@ pub fn resolve(
             }
         }
     }
+    let own = |ns: &String| {
+        let spec = spec.trim_start_matches('\\');
+        spec == ns || spec.starts_with(&format!("{ns}\\"))
+    };
+    if ws.packages.iter().flat_map(|p| &p.namespaces).any(own) {
+        return super::Resolution::Unresolved;
+    }
     if parts.len() <= 1 {
         return super::Resolution::Stdlib;
     }
-    let package = package_of(spec);
-    // A Composer package name is `vendor/package`. An import that resolved to no file and names a
-    // single namespace root is the project's own namespace (or a vendor namespace the table cannot
-    // place); reporting `Acme` as a dependency would send the crate lookup after a package that
-    // cannot exist on Packagist.
-    if !package.contains('/') {
-        return super::Resolution::Unresolved;
-    }
-    super::Resolution::External(package)
+    super::Resolution::External(package_of(spec))
 }
 
 fn normalize(path: &str) -> Option<String> {
@@ -952,13 +967,14 @@ use Other\Three;
 
     #[test]
     fn reads_composer() {
-        let (name, deps, dev, src) = composer(
-            r#"{"name": "acme/tool", "require": {"php": ">=8.1", "ext-json": "*", "guzzlehttp/guzzle": "^7"},
-               "require-dev": {"phpunit/phpunit": "^10"}, "autoload": {"psr-4": {"Acme\\": "src/"}}}"#,
-        );
+        let text = r#"{"name": "acme/tool", "require": {"php": ">=8.1", "ext-json": "*", "guzzlehttp/guzzle": "^7"},
+               "require-dev": {"phpunit/phpunit": "^10"}, "autoload": {"psr-4": {"Acme\\": "src/"}},
+               "autoload-dev": {"psr-4": {"Acme\\Tests\\": "tests/"}}}"#;
+        let (name, deps, dev, src) = composer(text);
         assert_eq!(name.as_deref(), Some("acme/tool"));
         assert_eq!(deps, ["guzzlehttp/guzzle"]);
         assert_eq!(dev, ["phpunit/phpunit"]);
         assert_eq!(src.as_deref(), Some("src"));
+        assert_eq!(own_namespaces(text), ["Acme", "Acme\\Tests"]);
     }
 }
