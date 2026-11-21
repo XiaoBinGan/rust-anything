@@ -554,4 +554,11 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
         .unwrap();
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
+    assert!(
+        w.dependencies
+            .iter()
+            .all(|d| d.name != "com.example:legacy"),
+        "a commented-out dependency is not declared: {:?}",
+        w.dependencies
+    );
 }

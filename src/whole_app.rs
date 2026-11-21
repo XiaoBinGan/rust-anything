@@ -316,6 +316,30 @@ fn normalize(lang: Lang, name: &str) -> String {
     }
 }
 
+/// A build file with its comments removed, so a commented-out `implementation("a:b:1")` is not
+/// read as a dependency the project declares. `//` counts only at the start of a line: a trailing
+/// one follows code the project does declare.
+fn without_comments(text: &str) -> String {
+    let mut unblocked = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(start) = rest.find("/*") {
+        unblocked.push_str(&rest[..start]);
+        match rest[start..].find("*/") {
+            Some(end) => rest = &rest[start + end + 2..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    unblocked.push_str(rest);
+    unblocked
+        .lines()
+        .filter(|line| !line.trim_start().starts_with("//"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Dependencies the manifests declare (runtime ones, not dev or test).
 pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
@@ -432,6 +456,8 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                 }
             }
             let gradle = read(root, "build.gradle") + &read(root, "build.gradle.kts");
+            // A commented-out `implementation("a:b:1")` is not a dependency the project declares.
+            let gradle = without_comments(&gradle);
             let line =
                 Regex::new(r#"\b(?:implementation|api|compile)\s*\(?\s*['"]([^:'"]+:[^:'"]+)"#)
                     .expect("valid regex");
