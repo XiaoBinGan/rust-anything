@@ -130,9 +130,13 @@ fn map_names_a_crate_folder_whose_manifest_does_not_parse() {
     let map = port_map::map(&repo, &[]).unwrap();
     let md = port_map::markdown(&map);
     assert!(md.contains("could not be read"), "{md}");
+    // The unit is still counted, so the summary does not claim the repository has none.
+    assert!(md.contains("0 of 6 units"), "{md}");
     assert!(md.contains("rust/util-rs"), "{md}");
     assert!(
-        map.not_ported.iter().all(|u| u.unit != "packages/a/src/util.ts"),
+        map.not_ported
+            .iter()
+            .all(|u| u.unit != "packages/a/src/util.ts"),
         "the folder still covers its unit: {:?}",
         map.not_ported.iter().map(|u| &u.unit).collect::<Vec<_>>()
     );

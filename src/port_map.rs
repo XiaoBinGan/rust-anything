@@ -21,8 +21,16 @@ pub struct PortMap {
     /// skipped port is not a missing port: the file says so instead of listing the unit as unported.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub crate_errors: Vec<String>,
+    /// Units a broken manifest still names: they are covered, so they belong in the total even
+    /// though no `Port` could be built for them.
+    #[serde(skip_serializing_if = "is_zero")]
+    pub covered_by_broken: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub analyze_error: Option<String>,
+}
+
+fn is_zero(n: &usize) -> bool {
+    *n == 0
 }
 
 #[derive(Debug, Serialize)]
@@ -159,6 +167,7 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
         ports,
         not_ported,
         crate_errors,
+        covered_by_broken: covered_by_broken.len(),
         analyze_error,
     })
 }
@@ -239,7 +248,7 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
         |n| n.to_string_lossy().into(),
     );
     writeln!(out, "# Port map: {name}\n")?;
-    let total = map.ports.len() + map.not_ported.len();
+    let total = map.ports.len() + map.not_ported.len() + map.covered_by_broken;
     write!(
         out,
         "{} of {} units have a Rust port",
@@ -263,7 +272,7 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
         writeln!(out, "## Crate folders that could not be read\n")?;
         writeln!(
             out,
-            "A folder under `rust/` is skipped when its manifest does not parse, so the unit it covers is listed as ported nowhere:\n"
+            "A folder under `rust/` whose manifest does not parse: fix its `rust-anything.json` and run `map` again. A unit the file still names is not listed as unported, so it does not read as work to do:\n"
         )?;
         for e in &map.crate_errors {
             writeln!(out, "- {e}")?;
