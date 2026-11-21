@@ -141,6 +141,67 @@ mod tests {
     }
 
     #[test]
+    fn ruby_require_names_map_to_the_gem_that_serves_them() {
+        // `require "active_support/core_ext/..."` names `active_support`; the gem is
+        // `activesupport`, and the Rails components are separate gems again.
+        for (required, crates, fit) in [
+            ("active_support", "chrono, heck, inflector", Fit::Partial),
+            ("active_record", "sqlx, diesel", Fit::Partial),
+            ("action_controller", "axum", Fit::None),
+            ("action_view", "axum", Fit::None),
+            ("action_mailer", "axum", Fit::None),
+            ("active_job", "axum", Fit::None),
+            ("active_storage", "axum", Fit::None),
+            ("railties", "axum", Fit::None),
+        ] {
+            let m = find("ruby", required).unwrap_or_else(|| panic!("ruby: {required}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "ruby: {required}");
+        }
+        // The gem names themselves keep answering the same way.
+        assert_eq!(
+            find("ruby", "activesupport").map(|m| m.crates),
+            Some("chrono, heck, inflector")
+        );
+        assert_eq!(
+            find("ruby", "sequel").map(|m| m.crates),
+            Some("sqlx, diesel")
+        );
+        assert!(find("ruby", "railsx").is_none());
+    }
+
+    #[test]
+    fn csharp_libraries_a_project_references_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("StackExchange.Redis", "redis", Fit::Good),
+            ("MongoDB.Driver", "mongodb", Fit::Good),
+            ("RabbitMQ.Client", "lapin", Fit::Good),
+            ("Grpc.Net.Client", "tonic", Fit::Partial),
+            ("Google.Protobuf", "prost", Fit::Good),
+            ("Microsoft.Data.SqlClient", "tiberius", Fit::Partial),
+            ("FluentValidation", "validator", Fit::Good),
+        ] {
+            let m = find("csharp", name).unwrap_or_else(|| panic!("csharp: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "csharp: {name}");
+        }
+        // Neighbours that were already mapped keep answering the same way.
+        assert_eq!(
+            find("csharp", "Newtonsoft.Json").map(|m| m.crates),
+            Some("serde_json")
+        );
+        assert_eq!(
+            find("csharp", "Microsoft.Extensions.Logging").map(|m| m.crates),
+            Some("tracing")
+        );
+        // `AutoMapper` and the DI container were already answered; a second row for either would
+        // never be reached, since `find` takes the first match.
+        assert!(find("csharp", "AutoMapper").is_some_and(|m| m.fit == Fit::Good));
+        assert!(
+            find("csharp", "Microsoft.Extensions.DependencyInjection")
+                .is_some_and(|m| m.fit == Fit::None)
+        );
+    }
+
+    #[test]
     fn a_go_subpackage_import_maps_to_the_module_row() {
         // A Go import names a package, and one module holds many: the module path is a prefix.
         for (name, crates, fit) in [
