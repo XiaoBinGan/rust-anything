@@ -35,7 +35,7 @@ Hecho en Türkiye 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yam
 <p align="center">Nuevo en 2.0: <a href="real-world.md#prettier">Prettier, portado a Rust</a>. 19 veces más rápido · 15.861 de 17.224 ejecuciones registradas enteramente en Rust · cada ejecución idéntica byte a byte</p>
 
 <p align="center">
-  <img src="assets/prettier.gif" alt="Prettier and its Rust port format the same 59 real files, one process per file: Prettier takes 3.63 s, the Rust port 0.20 s, with the same output byte for byte." width="820">
+  <img src="assets/prettier.gif" alt="Prettier y su porte en Rust formatean los mismos 59 archivos reales, un proceso por archivo: Prettier tarda 3,63 s y el porte en Rust 0,20 s, con la misma salida byte a byte." width="820">
   <br>
   <sub>Prettier frente a su porte en Rust sobre 59 archivos reales de ms, Fuse.js y json-server (Apple M4). La misma salida, byte a byte. <a href="real-world.md#prettier">Cómo se midió</a>.</sub>
 </p>
@@ -91,7 +91,7 @@ las 226.447 llamadas registradas y corre a la velocidad de C (18 de 42 benchmark
 rápidos y 16 más lentos entre un 3 y un 40 %).
 
 <p align="center">
-  <img src="assets/json-server.gif" alt="json-server as a Node server and as one Rust binary: memory at idle 74 MB and 3.5 MB, start to first response 79 to 85 ms and 8 to 10 ms, and 514 of 514 recorded HTTP cases match." width="820">
+  <img src="assets/json-server.gif" alt="json-server como servidor Node y como un único binario Rust: memoria en reposo 74 MB y 3,5 MB, del arranque a la primera respuesta 79 a 85 ms y 8 a 10 ms, y 514 de 514 casos HTTP registrados coinciden." width="820">
   <br>
   <sub>json-server, un servidor Node completo, elevado a un binario de Rust puro (Apple M4). <a href="real-world.md#json-server">Cómo se midió</a>.</sub>
 </p>
@@ -223,7 +223,7 @@ La misma salida no basta. Registra también lo que envía la aplicación, y una 
 el correo dos veces falla:
 
 <p align="center">
-  <img src="assets/effects.gif" alt="app record with --effects smtp records one welcome email per signup; app replay of a rewrite that prints the same output but mails twice reports 0/2 cases passed, failing on effects, and the report shows the extra email." width="820">
+  <img src="assets/effects.gif" alt="app record con --effects smtp registra un correo de bienvenida por alta; app replay de una reescritura que imprime la misma salida pero envía el correo dos veces informa 0/2 casos superados, falla por los efectos y el informe muestra el correo de más." width="820">
   <br>
   <sub>Una ejecución real de <code>app record --effects</code> y <code>app replay</code>. Ver <a href="whole-apps.md#side-effects-email-webhooks-and-databases">Efectos secundarios</a>.</sub>
 </p>
