@@ -316,15 +316,28 @@ fn normalize(lang: Lang, name: &str) -> String {
     }
 }
 
+/// The package a requirement line names, or `None` when the line points at a VCS checkout, an
+/// archive URL or a local file. Those are not packages a registry serves: reading the first run of
+/// letters names `git+https://...` as `git` and `./vendor/foo.whl` as `.`.
+fn requirement_name(spec: &str) -> Option<String> {
+    let spec = spec.trim();
+    let name: String = spec
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || "-_.".contains(*c))
+        .collect();
+    if !name.starts_with(|c: char| c.is_ascii_alphanumeric()) {
+        return None;
+    }
+    let rest = spec[name.len()..].trim_start();
+    // A trailing `# comment` after the name leaves the name intact.
+    let carried = rest.is_empty()
+        || rest.starts_with(['[', '(', '=', '<', '>', '!', '~', ';', ',', '@', '#']);
+    carried.then_some(name)
+}
+
 /// Dependencies the manifests declare (runtime ones, not dev or test).
 pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
-    let name_of = |spec: &str| -> String {
-        spec.trim()
-            .chars()
-            .take_while(|c| c.is_alphanumeric() || "-_.".contains(*c))
-            .collect()
-    };
     match lang {
         Lang::Ts => {
             if let Ok(pkg) = serde_json::from_str::<Value>(&read(root, "package.json"))
@@ -340,7 +353,11 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                     .and_then(|p| p.get("dependencies"))
                     .and_then(|d| d.as_array())
                 {
-                    out.extend(list.iter().filter_map(|v| v.as_str()).map(name_of));
+                    out.extend(
+                        list.iter()
+                            .filter_map(|v| v.as_str())
+                            .filter_map(requirement_name),
+                    );
                 }
                 if let Some(t) = doc
                     .get("tool")
@@ -357,8 +374,11 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
             }
             for line in read(root, "requirements.txt").lines() {
                 let line = line.trim();
-                if !line.is_empty() && !line.starts_with(['#', '-']) {
-                    out.insert(name_of(line));
+                if !line.is_empty()
+                    && !line.starts_with(['#', '-'])
+                    && let Some(name) = requirement_name(line)
+                {
+                    out.insert(name);
                 }
             }
         }
