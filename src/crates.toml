@@ -440,91 +440,96 @@ fit = "partial"
 note = "Pure-Rust MP3 encoder and decoder; young, so test it on your files. symphonia decodes MP3 if you only need to read."
 
 [[go]]
-names = ["github.com/spf13/cobra", "github.com/urfave/cli", "github.com/urfave/cli/v2"]
+prefixes = ["github.com/spf13/cobra", "github.com/urfave/cli", "github.com/urfave/cli/v2"]
 crates = "clap"
 fit = "good"
 
 [[go]]
-names = ["github.com/spf13/viper"]
+prefixes = ["github.com/spf13/viper"]
 crates = "config, figment"
 fit = "partial"
 
 [[go]]
-names = ["github.com/sirupsen/logrus", "go.uber.org/zap", "github.com/rs/zerolog"]
+prefixes = ["github.com/sirupsen/logrus", "go.uber.org/zap", "github.com/rs/zerolog"]
 crates = "tracing"
 fit = "good"
 
 [[go]]
-names = ["github.com/stretchr/testify"]
+prefixes = ["github.com/stretchr/testify"]
 crates = "std test, pretty_assertions"
 fit = "good"
 
 [[go]]
-names = ["github.com/google/uuid"]
+prefixes = ["github.com/google/uuid"]
 crates = "uuid"
 fit = "good"
 
 [[go]]
-names = ["github.com/gorilla/mux", "github.com/gin-gonic/gin", "github.com/labstack/echo/v4", "github.com/go-chi/chi", "github.com/go-chi/chi/v5"]
+prefixes = ["github.com/gorilla/mux", "github.com/gin-gonic/gin", "github.com/labstack/echo/v4", "github.com/go-chi/chi"]
 crates = "axum"
 fit = "partial"
 note = "routing and middleware differ"
 
 [[go]]
-names = ["gopkg.in/yaml.v3", "gopkg.in/yaml.v2", "sigs.k8s.io/yaml"]
+prefixes = ["gopkg.in/yaml.v3", "gopkg.in/yaml.v2", "sigs.k8s.io/yaml"]
 crates = "serde_yaml_ng"
 fit = "good"
 
 [[go]]
-names = ["github.com/BurntSushi/toml", "github.com/pelletier/go-toml/v2"]
+prefixes = ["github.com/BurntSushi/toml", "github.com/pelletier/go-toml/v2"]
 crates = "toml"
 fit = "good"
 
 [[go]]
-names = ["golang.org/x/text"]
+prefixes = ["golang.org/x/text"]
 crates = "unicode-normalization, icu"
 fit = "partial"
 
 [[go]]
-names = ["golang.org/x/sync"]
+prefixes = ["golang.org/x/sync"]
 crates = "tokio, rayon"
 fit = "partial"
 
 [[go]]
-names = ["github.com/jackc/pgx/v5", "github.com/lib/pq"]
+prefixes = ["github.com/jackc/pgx/v5", "github.com/lib/pq"]
 crates = "sqlx, tokio-postgres"
 fit = "good"
 
 [[go]]
-names = ["github.com/mattn/go-sqlite3"]
+prefixes = ["github.com/mattn/go-sqlite3"]
 crates = "rusqlite"
 fit = "good"
 
 [[go]]
-names = ["github.com/prometheus/client_golang"]
+prefixes = ["github.com/prometheus/client_golang"]
 crates = "prometheus"
 fit = "good"
 
 [[go]]
-names = ["google.golang.org/grpc"]
+prefixes = ["google.golang.org/grpc"]
 crates = "tonic"
 fit = "good"
 
 [[go]]
-names = ["google.golang.org/protobuf", "github.com/golang/protobuf"]
+prefixes = ["google.golang.org/protobuf", "github.com/golang/protobuf"]
 crates = "prost"
 fit = "good"
 
 [[go]]
-names = ["github.com/dlclark/regexp2"]
+prefixes = ["github.com/dlclark/regexp2"]
 crates = "fancy-regex"
 fit = "good"
 
 [[go]]
-names = ["github.com/u2takey/ffmpeg-go", "github.com/asticode/go-astiav", "github.com/giorgisio/goav"]
+prefixes = ["github.com/u2takey/ffmpeg-go", "github.com/asticode/go-astiav", "github.com/giorgisio/goav"]
 crates = "ffmpeg-next"
 fit = "partial"
 note = "Binds the C libraries. For pure Rust, remade-ffmpeg covers a subset of codecs (and has an ffmpeg-compatible CLI): check its codec table."
+
+[[go]]
+prefixes = ["github.com/pkg/errors", "go.uber.org/multierr"]
+crates = "anyhow, thiserror"
+fit = "good"
 
 [[go]]
 prefixes = ["gorm.io/gorm", "gorm.io/driver"]
@@ -548,19 +553,19 @@ crates = "validator"
 fit = "good"
 
 [[ruby]]
-names = ["rails", "sinatra", "roda", "hanami"]
+names = ["rails", "sinatra", "roda", "hanami", "action_controller", "action_view", "action_mailer", "action_cable", "action_dispatch", "active_job", "active_storage", "railties"]
 crates = "axum"
 fit = "none"
 note = "a web framework is an application rewrite, not a port"
 
 [[ruby]]
-names = ["activesupport"]
+names = ["activesupport", "active_support"]
 crates = "chrono, heck, inflector"
 fit = "partial"
 note = "core extensions have no single counterpart"
 
 [[ruby]]
-names = ["activerecord", "sequel"]
+names = ["activerecord", "active_record", "sequel"]
 crates = "sqlx, diesel"
 fit = "partial"
 note = "an ORM's dynamic queries need redesign"
@@ -964,6 +969,43 @@ fit = "partial"
 [[csharp]]
 prefixes = ["Microsoft.Extensions.Configuration"]
 crates = "config, figment"
+fit = "good"
+
+[[csharp]]
+prefixes = ["StackExchange.Redis"]
+crates = "redis"
+fit = "good"
+
+[[csharp]]
+prefixes = ["MongoDB.Driver"]
+crates = "mongodb"
+fit = "good"
+
+[[csharp]]
+prefixes = ["RabbitMQ.Client"]
+crates = "lapin"
+fit = "good"
+
+[[csharp]]
+prefixes = ["Grpc.Net.Client", "Grpc.AspNetCore", "Grpc.Core"]
+crates = "tonic"
+fit = "partial"
+note = "the gRPC surface carries; ASP.NET hosting does not"
+
+[[csharp]]
+prefixes = ["Google.Protobuf"]
+crates = "prost"
+fit = "good"
+
+[[csharp]]
+prefixes = ["Microsoft.Data.SqlClient"]
+crates = "tiberius"
+fit = "partial"
+note = "TDS from scratch; connection pooling differs"
+
+[[csharp]]
+prefixes = ["FluentValidation"]
+crates = "validator"
 fit = "good"
 
 [[kotlin]]
