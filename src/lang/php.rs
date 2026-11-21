@@ -478,7 +478,15 @@ pub fn resolve(
     if parts.len() <= 1 {
         return super::Resolution::Stdlib;
     }
-    super::Resolution::External(package_of(spec))
+    let package = package_of(spec);
+    // A Composer package name is `vendor/package`. An import that resolved to no file and names a
+    // single namespace root is the project's own namespace (or a vendor namespace the table cannot
+    // place); reporting `Acme` as a dependency would send the crate lookup after a package that
+    // cannot exist on Packagist.
+    if !package.contains('/') {
+        return super::Resolution::Unresolved;
+    }
+    super::Resolution::External(package)
 }
 
 fn normalize(path: &str) -> Option<String> {
