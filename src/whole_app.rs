@@ -316,22 +316,56 @@ fn normalize(lang: Lang, name: &str) -> String {
     }
 }
 
-/// A `pom.xml` with its `<!-- -->` comments removed.
-fn without_xml_comments(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    let mut rest = text;
-    while let Some(start) = rest.find("<!--") {
-        out.push_str(&rest[..start]);
-        match rest[start..].find("-->") {
-            Some(end) => rest = &rest[start + end + 3..],
-            None => {
-                rest = "";
-                break;
+/// A build file with its comments removed, so a commented-out `implementation("a:b:1")` is not
+/// read as a dependency the project declares. `//` counts only at the start of a line: a trailing
+/// one follows code the project does declare.
+fn without_comments(text: &str) -> String {
+    let mut unblocked = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+    let mut quote = None;
+    while let Some(c) = chars.next() {
+        match quote {
+            Some(q) => {
+                unblocked.push(c);
+                if c == '\\' {
+                    if let Some(escaped) = chars.next() {
+                        unblocked.push(escaped);
+                    }
+                } else if c == q || c == '\n' {
+                    quote = None;
+                }
             }
+            None if c == '"' || c == '\'' => {
+                quote = Some(c);
+                unblocked.push(c);
+            }
+            None if c == '/' && chars.peek() == Some(&'*') => {
+                chars.next();
+                let mut last = ' ';
+                for c in chars.by_ref() {
+                    if last == '*' && c == '/' {
+                        break;
+                    }
+                    last = c;
+                }
+            }
+            None => unblocked.push(c),
         }
     }
-    out.push_str(rest);
-    out
+    unblocked
+        .lines()
+        .filter(|line| !line.trim_start().starts_with("//"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Whether a Ruby line opens a block that its own `end` closes.
+fn opens_a_block(line: &str) -> bool {
+    line.ends_with(" do")
+        || line.contains(" do |")
+        || ["if ", "unless ", "while ", "until ", "case "]
+            .iter()
+            .any(|kw| line.starts_with(kw))
 }
 
 /// Dependencies the manifests declare (runtime ones, not dev or test).
@@ -398,9 +432,12 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                 } else {
                     line.strip_prefix("require ")
                 };
+                // A comment line inside `require ( ... )` is not a module; `lang::go`'s own
+                // `requirements()` already skips it, and this copy is what `analyze` reports.
                 if let Some(spec) = spec
                     && !spec.contains("// indirect")
                     && let Some(module) = spec.split_whitespace().next()
+                    && !module.starts_with("//")
                 {
                     out.insert(module.to_string());
                 }
@@ -417,15 +454,26 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                     text += &std::fs::read_to_string(entry.path()).unwrap_or_default();
                 }
             }
-            let mut group = false;
+            // A gem belongs to the runtime dependencies unless a `group` block encloses it. Blocks
+            // nest (`platform :mri do ... end`), so the group ends at its own `end`, not at the
+            // first one: otherwise every gem after a nested block is read as a runtime dependency.
+            let mut depth = 0usize;
+            let mut group_at: Option<usize> = None;
             for line in text.lines() {
                 let t = line.trim();
                 if t.starts_with("group ") {
-                    group = true;
-                } else if t == "end" {
-                    group = false;
+                    group_at = Some(depth);
                 }
-                if let Some(c) = gem.captures(line).filter(|_| !group) {
+                if opens_a_block(t) {
+                    depth += 1;
+                }
+                if t == "end" || t.starts_with("end ") {
+                    depth = depth.saturating_sub(1);
+                    if group_at.is_some_and(|at| depth <= at) {
+                        group_at = None;
+                    }
+                }
+                if let Some(c) = gem.captures(line).filter(|_| group_at.is_none()) {
                     out.insert(c[1].to_string());
                 }
                 if let Some(c) = spec.captures(line) {
@@ -437,7 +485,7 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
             let pom = read(root, "pom.xml");
             // A commented-out `<!-- <dependency> ... </dependency> -->` is not one the project
             // declares; the block regex below would otherwise match inside the comment.
-            let pom = without_xml_comments(&pom);
+            let pom = crate::lang::syntax::without_xml_comments(&pom);
             let dep = Regex::new(r"(?s)<dependency>(.*?)</dependency>").expect("valid regex");
             let tag = |block: &str, name: &str| -> Option<String> {
                 let re = Regex::new(&format!(r"<{name}>\s*([^<]+?)\s*</{name}>")).ok()?;
@@ -453,6 +501,8 @@ pub fn declared(root: &Path, lang: Lang) -> BTreeSet<String> {
                 }
             }
             let gradle = read(root, "build.gradle") + &read(root, "build.gradle.kts");
+            // A commented-out `implementation("a:b:1")` is not a dependency the project declares.
+            let gradle = without_comments(&gradle);
             let line =
                 Regex::new(r#"\b(?:implementation|api|compile)\s*\(?\s*['"]([^:'"]+:[^:'"]+)"#)
                     .expect("valid regex");
@@ -857,6 +907,19 @@ mod tests {
                 ("mytool".to_string(), "mytool.cli:main".to_string())
             ]
         );
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_glob_in_a_gradle_string_does_not_open_a_comment() {
+        let dir = repo(&[(
+            "build.gradle.kts",
+            "android {\n    packaging { resources { excludes += \"META-INF/*\" } }\n}\n\
+             dependencies {\n    implementation(\"com.google.code.gson:gson:2.11.0\")\n}\n\
+             /* implementation(\"com.example:legacy:1.0\") */\n",
+        )]);
+        let found: Vec<String> = declared(&dir, Lang::Kotlin).into_iter().collect();
+        assert_eq!(found, ["com.google.code.gson:gson"]);
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

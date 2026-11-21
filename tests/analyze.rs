@@ -554,6 +554,52 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
         .unwrap();
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
+    assert!(
+        w.dependencies
+            .iter()
+            .all(|d| d.name != "com.example:legacy"),
+        "a commented-out dependency is not declared: {:?}",
+        w.dependencies
+    );
+}
+
+#[test]
+fn a_comment_inside_a_require_block_is_not_a_module() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/go-reqs");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Go);
+    for name in [
+        "github.com/spf13/cobra",
+        "github.com/google/uuid",
+        "github.com/mattn/go-sqlite3",
+    ] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+    for bogus in ["//", "pinned", "until"] {
+        assert!(
+            !declared.contains(bogus),
+            "{bogus} is not a module: {declared:?}"
+        );
+    }
+}
+
+#[test]
+fn a_gem_group_ends_at_its_own_end() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ruby-gems");
+    let declared = rust_anything::whole_app::declared(&root, Lang::Ruby);
+    assert!(
+        declared.contains("rack"),
+        "a Gemfile gem is a runtime dependency: {declared:?}"
+    );
+    assert!(
+        !declared.contains("rspec"),
+        "a gem inside `group :test do` is not: {declared:?}"
+    );
+    assert!(
+        !declared.contains("debug"),
+        "a gem inside a nested block in a group is not: {declared:?}"
+    );
 }
 
 #[test]

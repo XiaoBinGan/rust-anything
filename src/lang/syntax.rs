@@ -38,3 +38,21 @@ pub fn named_children<'t>(node: Node<'t>) -> Vec<Node<'t>> {
 pub fn loc(text: &str) -> usize {
     text.lines().filter(|l| !l.trim().is_empty()).count()
 }
+
+/// `text` with its `<!-- -->` comments removed (a `pom.xml`, a project file).
+pub fn without_xml_comments(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(start) = rest.find("<!--") {
+        out.push_str(&rest[..start]);
+        match rest[start..].find("-->") {
+            Some(end) => rest = &rest[start + end + 3..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
