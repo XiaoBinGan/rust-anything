@@ -735,7 +735,24 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
         ));
     }
     if unit.deps.is_empty() && !keep {
-        notes.push("Leaf: imports no other unit.".into());
+        if unit.workspace_deps.is_empty() {
+            notes.push("Leaf: imports no other unit.".into());
+        } else {
+            let names: Vec<String> = unit
+                .workspace_deps
+                .iter()
+                .map(|d| format!("`{d}`"))
+                .collect();
+            notes.push(format!(
+                "Imports {} from another workspace package: port {} first.",
+                names.join(", "),
+                if names.len() == 1 {
+                    "that package"
+                } else {
+                    "those packages"
+                }
+            ));
+        }
     }
     if unit.direct_tests > 0 {
         notes.push(if unit.direct_tests == 1 {

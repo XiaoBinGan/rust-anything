@@ -1113,7 +1113,7 @@ fn ruby_modules_bridge_record_and_diff() {
         wrapper.contains("def rank(per_page = 10, min: 0)"),
         "{wrapper}"
     );
-    if !common::have("ruby") {
+    if !common::have_ruby_3() {
         return;
     }
     let recorded = harness::record(&RecordOptions {

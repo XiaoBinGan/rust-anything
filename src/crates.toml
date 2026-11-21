@@ -456,6 +456,105 @@ crates = "opus"
 fit = "good"
 note = "Binds libopus. For pure Rust, rusty-opus implements RFC 6716 (encoder and decoder)."
 
+[[python]]
+names = ["redis", "aioredis"]
+crates = "redis"
+fit = "good"
+
+[[python]]
+names = ["websockets", "websocket-client", "websocket"]
+crates = "tokio-tungstenite"
+fit = "good"
+
+[[python]]
+names = ["pyjwt", "jwt", "python-jose", "jose"]
+crates = "jsonwebtoken"
+fit = "good"
+
+[[python]]
+names = ["authlib"]
+crates = "-"
+fit = "none"
+note = "an OAuth/OIDC client: the flows are rewritten, not replaced by a JWT crate"
+
+[[python]]
+names = ["bcrypt", "passlib"]
+crates = "argon2, bcrypt"
+fit = "good"
+
+[[python]]
+names = ["grpcio", "grpc", "grpclib"]
+crates = "tonic"
+fit = "good"
+
+[[python]]
+names = ["protobuf", "google.protobuf"]
+crates = "prost"
+fit = "good"
+
+[[python]]
+names = ["tenacity", "backoff"]
+crates = "backon"
+fit = "good"
+
+[[python]]
+names = ["structlog", "loguru"]
+crates = "tracing"
+fit = "good"
+
+[[python]]
+names = ["aiofiles"]
+crates = "tokio::fs"
+fit = "good"
+
+[[python]]
+names = ["anyio", "trio", "gevent"]
+crates = "tokio"
+fit = "partial"
+
+[[python]]
+names = ["motor", "pymongo"]
+crates = "mongodb"
+fit = "good"
+
+[[python]]
+names = ["boto3", "botocore"]
+crates = "aws-sdk-* (per service)"
+fit = "partial"
+note = "one crate per AWS service"
+
+[[python]]
+names = ["celery", "rq", "dramatiq"]
+crates = "apalis"
+fit = "partial"
+
+[[python]]
+names = ["paramiko", "asyncssh"]
+crates = "russh"
+fit = "partial"
+
+[[python]]
+names = ["scipy"]
+crates = "ndarray, statrs"
+fit = "partial"
+
+[[python]]
+names = ["scikit-learn", "sklearn", "xgboost"]
+crates = "linfa"
+fit = "partial"
+note = "estimators have to be retrained or the model loaded"
+
+[[python]]
+names = ["matplotlib", "seaborn"]
+crates = "plotters"
+fit = "partial"
+
+[[python]]
+names = ["uvicorn", "gunicorn", "hypercorn"]
+crates = "axum"
+fit = "none"
+note = "a server is an application rewrite, not a port"
+
 [[c]]
 names = ["<zlib.h>"]
 crates = "flate2"

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Python: `__all__` was ignored when an earlier top-level statement held no assignment (a
+  docstring or an import, as in most modules), so `analyze`, `bridge`, library ports and
+  `profile` took every name without a leading underscore: names left out of `__all__` were
+  bridged and underscore names listed in it were dropped. `__all__` is now read after such
+  statements, with or without a type, follows `__all__ += [...]` and a later `__all__ = [...]`,
+  and reads prefixed strings (`r'name'`). An `__all__` built or changed any other way
+  (`+ other.__all__`, `sorted(...)`, `__all__.extend(...)`, inside an `if` or `try` block) falls
+  back to the names without a leading underscore rather than a partial list. Functions and
+  classes a module's `__all__` leaves out are no longer bridged.
+- When `build` of a Ruby bridge fails with rb-sys's `Stable API is needed but could not find a
+  candidate` and the Ruby rb-sys used (`RUBY`, else `ruby`) is older than `doctor`'s 3.0, the
+  error now ends with that Ruby's version and `doctor`'s install command (macOS's system Ruby is
+  2.6), instead of only rb-sys's hint to enable `stable-api-compiled-fallback`.
+
 ## 3.0.0 (2026-11-21)
 
 - `package` makes a whole Node CLI installable: pointed at a front door (`rust/app`), it lays out
