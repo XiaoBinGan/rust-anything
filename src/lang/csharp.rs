@@ -46,7 +46,28 @@ fn attribute(tag: &str, name: &str) -> Option<String> {
 }
 
 /// `Include` of each `<PackageReference>` in a project file.
+/// A project file with its `<!-- -->` comments removed. A commented-out `<PackageReference>` is
+/// not one the project references, and a commented-out test package would otherwise make a
+/// production project look like a test project.
+fn without_xml_comments(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(start) = rest.find("<!--") {
+        out.push_str(&rest[..start]);
+        match rest[start..].find("-->") {
+            Some(end) => rest = &rest[start + end + 3..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 pub fn package_references(text: &str) -> Vec<String> {
+    let text = without_xml_comments(text);
     text.split("<PackageReference")
         .skip(1)
         .filter_map(|tag| attribute(tag.split('>').next().unwrap_or(""), "Include"))
@@ -65,10 +86,11 @@ fn element(text: &str, tag: &str) -> Option<String> {
 
 /// A project of tests: it references a test framework or says `IsTestProject`.
 pub fn is_test_project(text: &str) -> bool {
-    package_references(text)
+    let text = without_xml_comments(text);
+    package_references(&text)
         .iter()
         .any(|d| TEST_PACKAGES.iter().any(|t| d.starts_with(t)))
-        || element(text, "IsTestProject").as_deref() == Some("true")
+        || element(&text, "IsTestProject").as_deref() == Some("true")
 }
 
 pub fn discover(root: &Path) -> Result<Workspace> {

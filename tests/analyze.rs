@@ -555,3 +555,22 @@ fn kotlin_units_export_jvm_statics_and_map_gradle_packages() {
     assert!(gson.declared);
     assert_eq!(gson.fit, "good");
 }
+
+#[test]
+fn a_commented_out_test_package_does_not_hide_a_csharp_project() {
+    use rust_anything::lang::Lang;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/csharp-comments");
+    let text = std::fs::read_to_string(root.join("App.csproj")).unwrap();
+    assert!(
+        !rust_anything::lang::csharp::is_test_project(&text),
+        "a project whose test package is commented out is not a test project"
+    );
+    let declared = rust_anything::whole_app::declared(&root, Lang::Csharp);
+    for name in ["Newtonsoft.Json", "Serilog"] {
+        assert!(declared.contains(name), "{name}: {declared:?}");
+    }
+    assert!(
+        !declared.iter().any(|d| d.to_lowercase().contains("xunit")),
+        "a commented-out package is not declared: {declared:?}"
+    );
+}
