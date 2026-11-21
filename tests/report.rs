@@ -24,3 +24,27 @@ fn a_parse_error_names_a_status_that_exists_and_an_empty_start_here_explains_its
     );
     assert!(!md.contains("See the blocked units"), "{md}");
 }
+
+#[test]
+fn an_empty_start_here_with_only_kept_units_says_so() {
+    let root = std::env::temp_dir().join(format!("ra-report-keep-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("src")).unwrap();
+    std::fs::write(
+        root.join("package.json"),
+        r#"{"name":"ui","dependencies":{"react":"18.0.0"}}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("src/Button.tsx"),
+        "export function Button() { return <button>hi</button>; }\n",
+    )
+    .unwrap();
+    let md = report::markdown(&analyze(&root).unwrap(), "ui");
+    assert!(
+        md.contains("every unit stays in the source language"),
+        "{md}"
+    );
+    assert!(!md.contains("No unit exports anything"), "{md}");
+    let _ = std::fs::remove_dir_all(&root);
+}

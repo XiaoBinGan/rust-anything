@@ -128,12 +128,17 @@ fn render(out: &mut String, r: &Report, title: &str) -> std::fmt::Result {
 
     writeln!(out, "## Start here\n")?;
     if r.start_here.is_empty() {
-        // Two different reasons, and the reader needs the one that is true: blocked units, or no
-        // unit that exports something a bridge can carry.
         if s.blocked > 0 {
             writeln!(
                 out,
                 "No unit is a safe first port yet. See the blocked units and dependencies below.\n"
+            )?;
+        } else if s.units == 0 {
+            writeln!(out, "No unit to port was found.\n")?;
+        } else if s.ready + s.caution == 0 {
+            writeln!(
+                out,
+                "No unit to port first: every unit stays in the source language.\n"
             )?;
         } else {
             writeln!(
