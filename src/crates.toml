@@ -924,6 +924,43 @@ prefixes = ["Microsoft.Extensions.Configuration"]
 crates = "config, figment"
 fit = "good"
 
+[[csharp]]
+prefixes = ["StackExchange.Redis"]
+crates = "redis"
+fit = "good"
+
+[[csharp]]
+prefixes = ["MongoDB.Driver"]
+crates = "mongodb"
+fit = "good"
+
+[[csharp]]
+prefixes = ["RabbitMQ.Client"]
+crates = "lapin"
+fit = "good"
+
+[[csharp]]
+prefixes = ["Grpc.Net.Client", "Grpc.AspNetCore", "Grpc.Core"]
+crates = "tonic"
+fit = "partial"
+note = "the gRPC surface carries; ASP.NET hosting does not"
+
+[[csharp]]
+prefixes = ["Google.Protobuf"]
+crates = "prost"
+fit = "good"
+
+[[csharp]]
+prefixes = ["Microsoft.Data.SqlClient"]
+crates = "tiberius"
+fit = "partial"
+note = "TDS from scratch; connection pooling differs"
+
+[[csharp]]
+prefixes = ["FluentValidation"]
+crates = "validator"
+fit = "good"
+
 [[kotlin]]
 prefixes = ["kotlinx.serialization"]
 crates = "serde, serde_json"

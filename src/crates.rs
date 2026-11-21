@@ -139,4 +139,36 @@ mod tests {
         }
         assert!(find("c", "<libavcodecx.h>").is_none());
     }
+
+    #[test]
+    fn csharp_libraries_a_project_references_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("StackExchange.Redis", "redis", Fit::Good),
+            ("MongoDB.Driver", "mongodb", Fit::Good),
+            ("RabbitMQ.Client", "lapin", Fit::Good),
+            ("Grpc.Net.Client", "tonic", Fit::Partial),
+            ("Google.Protobuf", "prost", Fit::Good),
+            ("Microsoft.Data.SqlClient", "tiberius", Fit::Partial),
+            ("FluentValidation", "validator", Fit::Good),
+        ] {
+            let m = find("csharp", name).unwrap_or_else(|| panic!("csharp: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "csharp: {name}");
+        }
+        // Neighbours that were already mapped keep answering the same way.
+        assert_eq!(
+            find("csharp", "Newtonsoft.Json").map(|m| m.crates),
+            Some("serde_json")
+        );
+        assert_eq!(
+            find("csharp", "Microsoft.Extensions.Logging").map(|m| m.crates),
+            Some("tracing")
+        );
+        // `AutoMapper` and the DI container were already answered; a second row for either would
+        // never be reached, since `find` takes the first match.
+        assert!(find("csharp", "AutoMapper").is_some_and(|m| m.fit == Fit::Good));
+        assert!(
+            find("csharp", "Microsoft.Extensions.DependencyInjection")
+                .is_some_and(|m| m.fit == Fit::None)
+        );
+    }
 }
