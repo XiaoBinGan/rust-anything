@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::bridge::{MANIFEST, Manifest};
+use crate::bridge::{MANIFEST, Manifest, SCHEMA};
 use crate::front_door::APP_DIR;
 use crate::harness::CASES;
 use crate::recording;
@@ -101,7 +101,11 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                     .and_then(|v| v["root"].as_str())
                     .and_then(|r| std::fs::canonicalize(dir.join(r)).ok())
                     .is_some_and(|resolved| resolved != root);
-                if foreign {
+                let other_schema = raw
+                    .as_ref()
+                    .and_then(|v| v["schema"].as_str())
+                    .is_some_and(|s| s != SCHEMA);
+                if foreign || other_schema {
                     continue;
                 }
                 if let Some(unit) = raw.as_ref().and_then(|v| v["unit"].as_str()) {

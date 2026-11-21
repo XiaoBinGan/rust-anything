@@ -117,7 +117,7 @@ fn map_names_a_crate_folder_whose_manifest_does_not_parse() {
     .unwrap();
 
     // A manifest that does not parse used to be skipped in silence: the map then said the unit had
-    // no port, which is wrong — the crate folder is right there. Break it the way a hand edit does:
+    // no port, which is wrong: the crate folder is right there. Break it the way a hand edit does:
     // valid JSON, one required field missing.
     let path = crate_dir.join("rust-anything.json");
     let mut manifest: serde_json::Value =
@@ -127,9 +127,16 @@ fn map_names_a_crate_folder_whose_manifest_does_not_parse() {
         .unwrap()
         .remove("optional");
     std::fs::write(&path, manifest.to_string()).unwrap();
+    std::fs::create_dir_all(repo.join("rust/app")).unwrap();
+    std::fs::write(
+        repo.join("rust/app/rust-anything.json"),
+        r#"{"schema": "rust-anything/front-door@1", "name": "mini"}"#,
+    )
+    .unwrap();
     let map = port_map::map(&repo, &[]).unwrap();
     let md = port_map::markdown(&map);
     assert!(md.contains("could not be read"), "{md}");
+    assert!(!md.contains("rust/app"), "{md}");
     // The unit is still counted, so the summary does not claim the repository has none.
     assert!(md.contains("0 of 6 units"), "{md}");
     assert!(md.contains("rust/util-rs"), "{md}");
