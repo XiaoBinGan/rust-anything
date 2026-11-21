@@ -264,13 +264,14 @@ existing Rust formatter, byte-identical output as the bar).
 | `doc-printer-rs` | `printDocToString` and `getStringWidth` (`src/document/`), recorded on 2,848 docs (2,570 harvested from the fixtures, 180 written to reach the rest); `gate` passes, 608 of the printer's 613 lines reached |
 | `prettier-js-rs` | the JavaScript and TypeScript printer, 12,000 lines of Rust: statements, expressions, member chains, call arguments, assignments, binary operators, arrays, objects, functions and arrows, modules, template literals, ternaries (both styles), classes and decorators, JSX, every TypeScript node, `needs-parens`, comments (attachment with the JavaScript and TypeScript handlers, printing, every comment branch in those printers) and `prettier-ignore` |
 | `js-format-rs` | Prettier's `format()` bridged and backed by `prettier-js-rs`; recorded on the 15,753 `format()` calls the CLI cases make for files the port covers; `gate` passes 15,753/15,753 |
-| `wire` | milestone 1: 3,143/3,143 at 51.9% fallback (1,513 in Rust); milestone 2, TypeScript: 3,143/3,143 at 22.5% (2,436 in Rust); with JSON: 4,621/4,621 at 25.8% (3,431 in Rust); with GraphQL: 5,468/5,468 at 22.9% (4,218 in Rust); with YAML: 8,812/8,812 at 14.6% (7,527 in Rust); with Markdown: 15,162/15,162 at 9.8% (13,676 in Rust); with CSS, SCSS and Less: **17,224/17,224 at 8.1% fallback, 15,837 cases formatted fully in Rust**, byte-identical |
+| `wire` | milestone 1: 3,143/3,143 at 51.9% fallback (1,513 in Rust); milestone 2, TypeScript: 3,143/3,143 at 22.5% (2,436 in Rust); with JSON: 4,621/4,621 at 25.8% (3,431 in Rust); with GraphQL: 5,468/5,468 at 22.9% (4,218 in Rust); with YAML: 8,812/8,812 at 14.6% (7,527 in Rust); with Markdown: 15,162/15,162 at 9.8% (13,676 in Rust); with CSS, SCSS and Less: 17,224/17,224 at 8.1% (15,837 in Rust); after the equivalence checks' fixes: **17,224/17,224 at 7.9% fallback, 15,861 cases formatted fully in Rust**, byte-identical |
 | config | the glue resolves Prettier's config as its CLI does (closest `.prettierrc`/`.prettierrc.json`/`package.json` `"prettier"` key with `overrides`, `.editorconfig` up to the project root, `.gitignore`/`.prettierignore` and `node_modules`), and hands YAML, TOML, JSON5 and JavaScript configs, unknown options and ignored files to Prettier; 44 of the 63 config cases run in Rust |
 | JSON | 1,478 more cases (`gen-json-inputs.mjs`): Prettier's 55 JSON fixtures as `.json`, `.jsonc`, `.json5` and `package.json`, ten option variants, 26 real JSON files (`package.json`, `tsconfig.json`, lock files...) and edge snippets; the port picks `json`, `jsonc`, `json5` or `json-stringify` from the file name as Prettier's language list does, parses the value with oxc, checks it with Prettier's `assertJsonNode`, and prints it with the same printer (keys quoted, double quotes, no trailing commas for `json`) or, for `json-stringify`, with a port of `printer-estree-json.js`; 995 of the 1,019 JSON cases Prettier formats run in Rust |
 | GraphQL | 847 more cases (`gen-graphql-inputs.mjs`): Prettier's 58 GraphQL fixtures (49 in `tests/format/graphql`, 9 pragma and error fixtures) as `.graphql`, `.gql` and `.graphqls`, eight option variants, `--parser graphql` on a `.txt` path, and edge snippets (block strings, escapes, legacy fragment variables, comments in every position, `prettier-ignore`, CRLF, BOM, 13 invalid inputs); the port is `graphql.rs`: graphql-js 16.11's lexer and parser (with `allowLegacyFragmentVariables`, block string dedent, every syntax error kept as an error), Prettier's generic comment attachment and printing (GraphQL has no comment handlers), and `printer-graphql.js`; **all 787 GraphQL cases Prettier formats run in Rust**, the other 60 are Prettier's own syntax errors and stay on Prettier |
 | YAML | 3,344 more cases (`gen-yaml-inputs.mjs`): Prettier's 355 YAML fixtures (348 in `tests/format/yaml`, the rest pragma, parser-inference and error fixtures) as `.yml` and `.yaml`, six option variants (`--prose-wrap always` and `never`, `--tab-width 4`, `--no-bracket-spacing`, `--single-quote`, `--print-width 40`), every fixture with CRLF line ends, 35 real files (Prettier's and the three repositories' GitHub workflows, issue templates, `.codecov.yml`...), YAML file names (`CITATION.cff`, `.clang-format`, `.prettierrc`, `yarn.lock`) and edge snippets (anchors, tags, `%TAG` directives, documents, block scalars, duplicate keys, bad indentation); the port is `src/yaml/`: yaml 1.10.2's CST parser and the checks its `Document#parse` makes (anchors, tags, pairs, duplicate keys, every error it reports), yaml-unist-parser 2.0.5's transform, comment attachment and position updates, and `printer-yaml.js`; **3,309 of the 3,310 YAML cases Prettier formats run in Rust** (the one left is `.prettierrc`, which Prettier prints as JSON), the other 34 are Prettier's own errors |
 | Markdown | 6,350 more cases (`gen-markdown-inputs.mjs`): Prettier's 852 Markdown fixtures (821 in `tests/format/markdown`, the rest pragma and front matter fixtures), five option variants (`--prose-wrap always` and `never`, `--tab-width 4`, `--print-width 40`, `--single-quote`), every fixture with CRLF, a quarter of them as `.markdown`, 54 real files (Prettier's docs and READMEs, the three repositories' Markdown) twice, and edge snippets (lists, tasks, tables, links, footnotes, math, liquid, wiki links, entities, `prettier-ignore` ranges, CJK text); the port is `src/markdown/`: remark-parse 8.0.3 with remark-footnotes, remark-math and Prettier's front matter, liquid and wiki link tokenizers, parse-entities, Prettier's preprocess and `printer-markdown.js`; code blocks in JavaScript, TypeScript, JSON, GraphQL, YAML, Markdown, CSS, SCSS and Less, and YAML front matter, are formatted by the other ports as Prettier does; **6,305 of the 6,350 Markdown cases run in Rust**, the rest hold HTML code blocks (not ported) or code oxc does not parse |
 | CSS, SCSS, Less | 2,062 more cases (`gen-css-inputs.mjs`): Prettier's 248 style fixtures (109 CSS, 80 SCSS, 36 Less, 23 in `tests/format/misc`), the CSS fixtures again as `.scss` and `.less`, five option variants (`--single-quote`, `--tab-width 4`, `--print-width 40`, `--trailing-comma none`, `--use-tabs`), every fixture with CRLF, 6 real files (Prettier's website styles, Fuse.js's docs styles) and 22 edge snippets in all three languages; the port is `src/css/`: postcss 8.5.6's tokenizer and parser with postcss-scss 4.0.9's changes (`//` comments, `#{}` interpolation, nested properties) and postcss-less 6.0.0's (inline comments, mixin calls, `each`, variables, `@{}` interpolation, `extend`), Prettier's `parseNestedCSS` and its quote masking for Less comments, postcss-values-parser 2.0.1 in loose mode, postcss-selector-parser 2.2.3, postcss-media-query-parser 0.2.3, and `printer-postcss.js` with its value group printers; **all 2,004 CSS, SCSS and Less cases Prettier formats run in Rust** (890 CSS, 711 SCSS, 403 Less), the other 58 are Prettier's own errors |
+| equivalence checks | differential fuzzing against Prettier in process (about 6M runs, random options, Prettier's output fed back, libFuzzer), mutation testing with the replay as the test, a comparison of the Rust `Doc` with Prettier's doc, and every doc up to size 5 through both doc printers; they found about 75 differences outside the corpus, now fixed or handed to Prettier, and 355 new cases (`equiv/cases.jsonl`). After the fixes: 17,224/17,224 at 7.9% fallback (15,861 in Rust), 355/355 new cases, and no difference in the last fuzzing runs. Details and bounds in [`equiv/README.md`](../demo/real-world/prettier-rs/equiv/README.md) |
 
 Formatted fully in Rust, by group: 1,295 of the 1,525 fixtures, 1,016 of the 1,196 option
 variants, all 59 real files, 20 of the 300 traps, and 46 of the 63 config cases. Of the 929
@@ -473,7 +474,8 @@ the utility library under every codec, and ported its pure C units one at a time
 against recordings of the real ffmpeg functions. Everything is in
 [`demo/real-world/ffmpeg-rs`](../demo/real-world/ffmpeg-rs): the crates (LGPL, like the code
 they port; `adler32-rs` keeps zlib's license), and the scripts that clone ffmpeg, assemble the
-tree, record, verify and bench. No ffmpeg source or recorded case is copied.
+tree, record, verify and bench. No ffmpeg source or recorded case is copied. The port is also
+published on its own as [erkamyaman/ffmpeg-rs-anything](https://github.com/erkamyaman/ffmpeg-rs-anything).
 
 | Step | Result |
 | --- | --- |
@@ -632,6 +634,89 @@ eight are faster, and the other 16 are slower by 3 to 40%, the slowest the 1 ns 
   now passes it.
 - The bridge reads `av_escape`'s `char **dst` (memory it allocates) as a position in `src`; it
   was kept in C by hand (`--keep`).
+
+## ESLint
+
+A Reddit comment asked for ESLint next: Oxlint is fast but differs from ESLint, so an
+exact-behavior Rust ESLint would be something else. This run took
+[ESLint](https://github.com/eslint/eslint) (MIT, tag `v10.15.0`, commit `a2101d9`) and put a Rust
+front door in front of its CLI: the front door lints a run in Rust when its
+whole config comes from flags (`--no-config-lookup --rule ... --stdin`) and every rule it enables
+is one of the 90 ported (`eslint:recommended` and 26 widely used rules), and hands every other run
+to ESLint. Everything is in [`demo/real-world/eslint-rs`](../demo/real-world/eslint-rs); its
+`DECISIONS.md` records the choices. No ESLint source, test or recorded case is copied there.
+
+| Step | Result |
+| --- | --- |
+| inputs | ESLint's own RuleTester cases for the 90 rules, turned into CLI runs by `scripts/harvest-rule-tests.cjs` (options as `--rule`, globals as `--global`, `commonjs`/`script` as `.cjs`, every fifth through `stylish`, invalid cases with an `output` through `--fix-dry-run`); 902 real-file runs (ESLint's own `lib/` and `bin/`, ms, Fuse.js, json-server, all 90 rules on, `json --fix-dry-run` and `stylish`); 555 linter-core runs (directives, inline config, unused directives, fixes, severities, CLI flags, parse errors) |
+| `app record` | 10,585 cases (8,856 rule, 902 real, 555 core, 272 traps), two runs each; the only noise was the HTML formatter's time stamp |
+| parser | oxc 0.158, with its token list mapped to espree's token types and its ranges to UTF-16: tree, tokens and comments equal espree's on 30,082 of 30,099 inputs taken from all of ESLint's rule tests (not only the 90); the other 17 are refused and go to ESLint, none differ |
+| port | about 33,700 lines of Rust: the linter core (`SourceCode`, the token store, selector ordering, directives, inline config, the report translator, the fix loop, the `json` and `stylish` formatters), eslint-scope 9.1.2, ESLint's code path analysis, eslint-utils' `getStaticValue` and `ReferenceTracker`, regexpp's parser and validator, and the 90 rules |
+| code paths | the enter, leave and code path event sequence and every segment graph, compared with ESLint's own `CodePathAnalyzer` on 9,706 inputs: all identical |
+| regexpp | `validatePattern` (message for message) and the parse tree, compared on 31,232 pattern and flag-mode pairs: all identical |
+| `gate eslint-stdin-rs` | passes: `lintStdin(args, text)`, a wrapper that runs ESLint's own `cli.execute` in process, bridged and backed by the port; 10,192/10,192 recorded calls |
+| `app replay --build` | **10,585/10,585 at 3.6% fallback; 10,204 runs answered fully in Rust**, byte-identical stdout, stderr and exit code |
+
+In Rust, by group: 8,848 of the 8,856 rule cases, 886 of the 902 real-file runs, 458 of the 555
+core cases, 12 of the 272 traps. What goes to ESLint, by the first thing the port does not take:
+file names other than `.js`, `.mjs` and `.cjs` 91, `--rule` values ESLint itself rejects (the
+tool's traps) 84, formats other than `json` and `stylish` 82, parse errors 65 (they keep espree's
+messages), `impliedStrict` and other parser options 15, inline config enabling a rule not ported
+13, import assertions (oxc accepts them, acorn does not) 6, and 25 others: inline configs whose
+options the port does not read or whose error message comes from ajv 12, invalid `--rule` options,
+severities and rule names 6, JSX text with HTML entities 2, two literals beyond `1e308` that
+no-loss-of-precision declines, `--help`, `--version`, and one run with config lookup on.
+
+How the port was checked as it grew: `linter-rs/examples/check.rs` runs every recorded case in
+process in about 3 seconds and counts cases claimed and identical, mismatches (always 0) and
+declines with their reasons. A rule that meets something it does not port (a regex option outside
+a small matcher, a value `getStaticValue` cannot reproduce exactly) declines the whole run rather
+than guess.
+
+What the port had to get right, all caught by recorded cases:
+
+- espree types a keyword used as a property name (`a.if`, `{ debugger: 1 }`) as `Identifier`
+  (acorn re-reads it as a name), except `let`, `static` and `yield`, which stay `Keyword`;
+  `new.target`'s `new` stays `Keyword`; template element ranges include the backtick and `${`.
+- oxc's parser leaves early errors to semantic analysis that acorn reports while parsing (`"use
+  strict"` in a function with default parameters); running oxc's syntax checks sends those
+  files to ESLint instead of linting them.
+- Listeners run in esquery's order: by attribute count, identifier count, then the selector
+  text, across rules; selectors with the same text in rule order. Messages at the same line and
+  column keep that order.
+- A suggestion's keys keep the order the rule wrote them, with `desc` appended; a problem from
+  `context.report` and one from the linter (`Definition for rule ... was not found`) put
+  `severity` in different places.
+- `eslint-disable-next-line` takes the comment's end line, unused directives are reported at the
+  comment's start, and removing one rule from a list keeps the commas right.
+- `String(number)`, `toPrecision` and radix conversion as V8 writes them (no-loss-of-precision),
+  UTF-16 lengths in the `stylish` table, JavaScript's `\s` set (which has U+FEFF and not U+0085).
+- `1e400` comes out of oxc's ESTree JSON as `1e+400`, which serde_json refuses; it is read as
+  infinity.
+
+Found in rust-anything, and fixed (all in the [changelog](../CHANGELOG.md)):
+
+- `bridge` and `analyze` found no functions in a CommonJS module (`module.exports = { a, b }`),
+  so no ESLint unit could be bridged; they now read `module.exports = { ... }`,
+  `module.exports.a = a` and `exports.a = a`.
+- The `timestamps` normalizer missed JavaScript's `Date#toString()`, so ESLint's HTML report
+  kept the minutes of its recording run and failed a replay ten minutes later.
+
+Benchmark: Apple M4 (10 cores), Node 24.15.0, two runs at load
+average 3.0 to 3.9, on the 443 real files the port answers with all 90 rules on
+([`bench/`](../demo/real-world/eslint-rs/bench)): one process per file, ESLint's CLI took
+53.5 s and 56.4 s and the front door 2.07 s and 2.15 s (25.9x, 26.3x; per file median 34.5x, the
+slowest file 6.3x, none slower, the same bytes from both). In process, ESLint's `Linter` warm in
+V8 took 2,368 ms and 2,553 ms and the port 754 ms and 759 ms (3.1x, 3.4x; per file median 2.9x
+and 3.0x, lowest 1.2x, none slower). A run that falls back costs about 2.5 ms more than ESLint
+alone. The CLI gap is mostly Node starting and loading ESLint; in process a first build measured
+2.1x to 2.3x (at load 19 to 22) and reached 3x after reading oxc's ESTree JSON straight into the arena instead of through
+`serde_json::Value`, and computing the listener order once per node type.
+
+What it does not cover: config files, plugins and custom parsers (TypeScript, Babel), the other
+202 core rules, formatters other than `json` and `stylish`, linting files named on the command
+line (ignore files, caching, suppressions, `--fix` writing files), and parse error messages. The
+front door is not lifted: ESLint stays installed and answers those runs.
 
 ## Fixtures written to stress the tool
 
