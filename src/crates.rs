@@ -141,6 +141,189 @@ mod tests {
     }
 
     #[test]
+    fn ruby_require_names_map_to_the_gem_that_serves_them() {
+        // `require "active_support/core_ext/..."` names `active_support`; the gem is
+        // `activesupport`, and the Rails components are separate gems again.
+        for (required, crates, fit) in [
+            ("active_support", "chrono, heck, inflector", Fit::Partial),
+            ("active_record", "sqlx, diesel", Fit::Partial),
+            ("action_controller", "axum", Fit::None),
+            ("action_view", "axum", Fit::None),
+            ("action_mailer", "axum", Fit::None),
+            ("active_job", "axum", Fit::None),
+            ("active_storage", "axum", Fit::None),
+            ("railties", "axum", Fit::None),
+        ] {
+            let m = find("ruby", required).unwrap_or_else(|| panic!("ruby: {required}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "ruby: {required}");
+        }
+        // The gem names themselves keep answering the same way.
+        assert_eq!(
+            find("ruby", "activesupport").map(|m| m.crates),
+            Some("chrono, heck, inflector")
+        );
+        assert_eq!(
+            find("ruby", "sequel").map(|m| m.crates),
+            Some("sqlx, diesel")
+        );
+        assert!(find("ruby", "railsx").is_none());
+    }
+
+    #[test]
+    fn csharp_libraries_a_project_references_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("StackExchange.Redis", "redis", Fit::Good),
+            ("MongoDB.Driver", "mongodb", Fit::Good),
+            ("RabbitMQ.Client", "lapin", Fit::Good),
+            ("Grpc.Net.Client", "tonic", Fit::Partial),
+            ("Google.Protobuf", "prost", Fit::Good),
+            ("Microsoft.Data.SqlClient", "tiberius", Fit::Partial),
+            ("FluentValidation", "validator", Fit::Good),
+        ] {
+            let m = find("csharp", name).unwrap_or_else(|| panic!("csharp: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "csharp: {name}");
+        }
+        // Neighbours that were already mapped keep answering the same way.
+        assert_eq!(
+            find("csharp", "Newtonsoft.Json").map(|m| m.crates),
+            Some("serde_json")
+        );
+        assert_eq!(
+            find("csharp", "Microsoft.Extensions.Logging").map(|m| m.crates),
+            Some("tracing")
+        );
+        // `AutoMapper` and the DI container were already answered; a second row for either would
+        // never be reached, since `find` takes the first match.
+        assert!(find("csharp", "AutoMapper").is_some_and(|m| m.fit == Fit::Good));
+        assert!(
+            find("csharp", "Microsoft.Extensions.DependencyInjection")
+                .is_some_and(|m| m.fit == Fit::None)
+        );
+    }
+
+    #[test]
+    fn a_go_subpackage_import_maps_to_the_module_row() {
+        // A Go import names a package, and one module holds many: the module path is a prefix.
+        for (name, crates, fit) in [
+            (
+                "golang.org/x/text/cases",
+                "unicode-normalization, icu",
+                Fit::Partial,
+            ),
+            (
+                "golang.org/x/text/language",
+                "unicode-normalization, icu",
+                Fit::Partial,
+            ),
+            ("github.com/spf13/cobra/doc", "clap", Fit::Good),
+            (
+                "github.com/jackc/pgx/v5/pgxpool",
+                "sqlx, tokio-postgres",
+                Fit::Good,
+            ),
+            ("github.com/pkg/errors", "anyhow, thiserror", Fit::Good),
+        ] {
+            let m = find("go", name).unwrap_or_else(|| panic!("go: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "go: {name}");
+        }
+        // The module roots keep answering the same way.
+        assert_eq!(
+            find("go", "golang.org/x/text").map(|m| m.crates),
+            Some("unicode-normalization, icu")
+        );
+        assert_eq!(
+            find("go", "github.com/google/uuid").map(|m| m.crates),
+            Some("uuid")
+        );
+        assert!(find("go", "github.com/not-a-module/x").is_none());
+    }
+
+    #[test]
+    fn go_and_java_libraries_a_module_imports_map_or_are_kept() {
+        for (lang, name, crates, fit) in [
+            (
+                "go",
+                "gorm.io/gorm/clause",
+                "sqlx, diesel, sea-orm",
+                Fit::Partial,
+            ),
+            ("go", "github.com/redis/go-redis/v9", "redis", Fit::Good),
+            (
+                "go",
+                "github.com/golang-jwt/jwt/v5",
+                "jsonwebtoken",
+                Fit::Good,
+            ),
+            (
+                "go",
+                "github.com/go-playground/validator/v10",
+                "validator",
+                Fit::Good,
+            ),
+            ("go", "github.com/go-chi/chi/v5", "axum", Fit::Partial),
+            ("java", "io.grpc.ManagedChannel", "tonic", Fit::Good),
+            ("java", "com.google.protobuf.Message", "prost", Fit::Good),
+            (
+                "java",
+                "org.apache.kafka.clients.producer.KafkaProducer",
+                "rdkafka",
+                Fit::Partial,
+            ),
+            ("java", "redis.clients.jedis.Jedis", "redis", Fit::Good),
+        ] {
+            let m = find(lang, name).unwrap_or_else(|| panic!("{lang}: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "{lang}: {name}");
+        }
+        // The tables that were already right keep answering the same way.
+        assert_eq!(
+            find("go", "github.com/spf13/cobra").map(|m| m.crates),
+            Some("clap")
+        );
+        assert_eq!(
+            find("java", "com.squareup.okhttp3:okhttp").map(|m| m.crates),
+            Some("reqwest")
+        );
+    }
+
+    #[test]
+    fn ts_libraries_a_node_service_imports_map_or_are_kept() {
+        for (name, crates, fit) in [
+            ("joi", "garde, validator", Fit::Partial),
+            ("graphql", "async-graphql", Fit::Partial),
+            ("mongoose", "mongodb", Fit::Partial),
+            ("ioredis", "redis", Fit::Good),
+            ("rxjs", "futures, tokio-stream", Fit::Partial),
+            ("socket.io", "socketioxide", Fit::Partial),
+            ("playwright", "chromiumoxide", Fit::Partial),
+            ("sharp", "image", Fit::Good),
+            ("bcrypt", "argon2, bcrypt", Fit::Good),
+            ("jsonwebtoken", "jsonwebtoken", Fit::Good),
+            ("execa", "std::process, tokio::process", Fit::Good),
+            ("pg", "tokio-postgres, sqlx", Fit::Good),
+            ("mysql2", "mysql_async, sqlx", Fit::Partial),
+            ("better-sqlite3", "rusqlite", Fit::Good),
+            ("papaparse", "csv", Fit::Good),
+            ("cheerio", "scraper", Fit::Partial),
+            ("marked", "pulldown-cmark, comrak", Fit::Good),
+            ("helmet", "tower-http", Fit::Good),
+            ("multer", "multer", Fit::Partial),
+            ("inquirer", "dialoguer", Fit::Good),
+            ("@prisma/client", "sqlx, diesel, sea-orm", Fit::Partial),
+        ] {
+            let m = find("ts", name).unwrap_or_else(|| panic!("ts: {name}"));
+            assert_eq!((m.crates, m.fit), (crates, fit), "ts: {name}");
+        }
+        // Neighbours that already answered keep answering.
+        assert_eq!(find("ts", "zod").map(|m| m.crates), Some("serde, garde"));
+        assert_eq!(find("ts", "express").map(|m| m.crates), Some("axum"));
+        assert_eq!(
+            find("ts", "ws").map(|m| m.crates),
+            Some("tokio-tungstenite")
+        );
+        assert!(find("ts", "left-pad-but-new").is_none());
+    }
+
+    #[test]
     fn c_headers_map_by_library_not_by_the_one_header_a_file_includes() {
         for (header, crates, fit) in [
             ("<openssl/sha.h>", "rustls, ring", Fit::Partial),
@@ -148,7 +331,7 @@ mod tests {
             ("<json-c/json.h>", "serde_json", Fit::Good),
             ("<libxml/parser.h>", "quick-xml", Fit::Partial),
             ("<png.h>", "png, jpeg-decoder", Fit::Good),
-            ("<pq-fe.h>", "tokio-postgres, sqlx", Fit::Good),
+            ("<libpq-fe.h>", "tokio-postgres, sqlx", Fit::Good),
             ("<hiredis/hiredis.h>", "redis", Fit::Good),
             ("<uuid/uuid.h>", "uuid", Fit::Good),
         ] {
