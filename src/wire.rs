@@ -228,7 +228,9 @@ pub fn rust_write(t: &Ty, rust: &str, expr: &str, schema: &str, depth: usize) ->
         // `serde_json::to_value` turns NaN and the infinities into `Value::Null`, so a scalar
         // float whose declaration is only `unknown` goes over the wire as a number: JS then sees
         // NaN and ±Infinity, instead of `null` that `diff` blames on the port.
-        if matches!(rust.trim(), "f64" | "f32") {
+        let spelled = rust.trim();
+        let scalar = spelled.rsplit("::").next().unwrap_or(spelled);
+        if matches!(scalar, "f64" | "f32") {
             return Some(format!("w.tag(4); w.f64(f64::from(*{expr}));"));
         }
         return Some(format!(
@@ -988,6 +990,12 @@ mod tests {
         assert!(!code.contains("to_value"), "{code}");
         let single = rust_write(&Ty::Dyn, "f32", "out", "S", 0).unwrap();
         assert!(single.contains("w.f64("), "{single}");
+        // A qualified spelling is the same type.
+        for spelled in ["std::primitive::f64", "core::primitive::f32"] {
+            let qualified = rust_write(&Ty::Dyn, spelled, "out", "S", 0).unwrap();
+            assert!(qualified.contains("w.f64("), "{spelled}: {qualified}");
+            assert!(!qualified.contains("to_value"), "{spelled}: {qualified}");
+        }
     }
 
     #[test]
