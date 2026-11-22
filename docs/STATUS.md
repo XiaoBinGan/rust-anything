@@ -56,6 +56,34 @@ Details of every run: [real-world.md](real-world.md) (TS/JS) and
 | MCP server (`mcp`) | Tested | protocol test in `src/mcp.rs` |
 | `setup` | Tested | registers the MCP server (and the skill, where the agent reads skills) with Claude Code, Codex, Cursor, Gemini CLI and OpenCode; per-agent tests in `src/setup.rs`, read back in `src/doctor.rs` and `tests/doctor.rs`. The OpenCode entry was also confirmed by OpenCode 2.3.2 itself (`mcp.servers`, `command` as an array) |
 
+## Which command covers which language
+
+The tables above say how far each part has been proven. This one says what each language can be
+asked for today, so a reader does not have to open the code to find out that `enable` is TS/JS and
+Python only, or that `profile` has no C entry point. `yes` means the command does its job for that
+language; `part` means it works with a restriction named in the row; `no` means it refuses and
+prints what to use instead.
+
+| Language | `analyze` | whole app | unit bridge | `record`/`diff` | `shadow` | `enable` | `profile` | `package` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| TypeScript/JavaScript | yes | yes | napi-rs, wasm-bindgen | yes | yes | yes (napi, wasm) | yes (Node 24) | napi, wasm, CLI front door |
+| Python | yes | yes | PyO3 | yes | yes (module) | yes (PyO3) | yes | PyO3, CLI front door |
+| C | yes | yes | `extern "C"` drop-in | yes | yes (`CAbi` file) | no | no (`perf record -g`) | no |
+| Go | yes | yes | dispatcher + generated driver | yes | yes | no | yes | no |
+| Ruby | yes | yes | magnus, FFI | yes | yes | no | yes | no |
+| Java | yes | yes | JNI + binary wire | yes | yes | no | yes | no |
+| Kotlin | yes | yes | JNI through the Java bridge | yes (`kotlinc` on PATH) | yes | no | no (JFR) | no |
+| PHP | yes | yes (`php -S` front door) | no | no | no | no | no (SPX or Xdebug) | no |
+| C# | yes | yes (ASP.NET) | no | no | no | no | no (`dotnet-trace`) | no |
+
+A `no` in one column is a scope decision, not a gap in the row: `package` covers napi-rs,
+wasm-bindgen and PyO3 crates plus CLI front doors, and says so when handed a `c-abi` crate; `enable`
+switches TS/JS and Python ports in place and points everything else at `shadow`.
+
+Where the cells come from: entry points in `whole_app.rs`, the unit-bridge guard in `lang/mod.rs`,
+the per-shape branches in `shadow.rs`, `enable.rs`'s `is_supported`, `profile.rs`'s alternatives for
+C, Kotlin, PHP and C#, and `package.rs`'s layout match.
+
 ## Where the tests run
 
 CI installs Node, Python, Go, Ruby and Java on macOS and Windows. It does not install PHP, .NET,
