@@ -223,12 +223,10 @@ fn js_block(
     esm: bool,
 ) -> String {
     let (start, end) = marker("//", &manifest.crate_name, crate_dir, dir);
-    let module = if manifest.kind == Kind::Wasm {
-        let lib = manifest.lib_name();
-        crate_dir.join("pkg").join(format!("{lib}.js"))
-    } else {
-        crate_dir.join("index.cjs")
-    };
+    // `index.cjs` for every kind, including wasm: the raw `pkg/<crate>.js` wasm-bindgen module
+    // takes pre-serialized JSON strings, while the wrapper accepts the JS values a caller passes
+    // and maps the `$num`/`$undefined` markers.
+    let module = crate_dir.join("index.cjs");
     let rel = crate::shadow::relative(dir, &module);
     let here = if esm {
         "import.meta.dirname"

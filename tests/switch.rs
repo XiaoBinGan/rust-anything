@@ -58,6 +58,25 @@ fn bridged(root: &Path, unit: &str, name: &str, keep: &[&str]) -> PathBuf {
     out
 }
 
+fn bridged_as(root: &Path, unit: &str, name: &str, kind: bridge::Kind) -> PathBuf {
+    let out = root.join("rust").join(name);
+    bridge::bridge(&bridge::Options {
+        root,
+        unit,
+        kind: Some(kind),
+        out: Some(out.clone()),
+        name: Some(name.into()),
+        force: false,
+        keep: Vec::new(),
+        lang: None,
+        batch: Vec::new(),
+        as_json: Vec::new(),
+        allocator: Default::default(),
+    })
+    .unwrap();
+    out
+}
+
 fn run(cmd: &mut Command) -> String {
     let out = cmd.output().unwrap();
     assert!(
@@ -161,6 +180,59 @@ fn typescript_callers_get_rust_until_disabled() {
     enable::disable(&crate_dir).unwrap();
     assert_eq!(std::fs::read(&file).unwrap(), before);
     assert_eq!(call(None), "2 [ 'x' ]");
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+/// A wasm crate's raw wasm-bindgen module takes pre-serialized JSON strings; its `index.cjs` is
+/// the wrapper that accepts ordinary JS values. `enable` must bind the wrapper, or every call with
+/// an object corrupts wasm memory.
+#[test]
+fn a_wasm_crate_is_switched_on_through_its_wrapper() {
+    if !common::have("node") {
+        return;
+    }
+    let root = scratch("wasm", "mini");
+    let crate_dir = bridged_as(
+        &root,
+        "packages/a/src/util.ts",
+        "util-rs",
+        bridge::Kind::Wasm,
+    );
+    assert!(
+        crate_dir.join("index.cjs").is_file(),
+        "a wasm bridge writes the wrapper next to the crate"
+    );
+    // The wrapper answers calls the way the real one does; the raw `pkg/` module does not exist
+    // here, so binding it leaves the callers on the original.
+    std::fs::write(
+        crate_dir.join("index.cjs"),
+        "exports.count = () => 42\nexports.words = () => ['rust']\nexports.rangeOf = () => null\n",
+    )
+    .unwrap();
+    let file = root.join("packages/a/src/util.ts");
+    let before = std::fs::read(&file).unwrap();
+    enable::enable(&crate_dir).unwrap();
+    let marked = std::fs::read_to_string(&file).unwrap();
+    assert!(
+        marked.contains("index.cjs"),
+        "the block binds the crate's wrapper:\n{marked}"
+    );
+    assert!(
+        !marked.contains("pkg/"),
+        "the raw wasm-bindgen module takes JSON strings, not JS values:\n{marked}"
+    );
+    let mut cmd = Command::new("node");
+    cmd.args([
+        "--no-warnings",
+        "--input-type=module",
+        "-e",
+        "const u = await import('./packages/a/src/util.ts'); console.log(u.count('a b c'), u.words('$x'))",
+    ])
+    .current_dir(&root)
+    .env_remove("RUST_ANYTHING_MODE");
+    assert_eq!(run(&mut cmd), "42 [ 'rust' ]");
+    enable::disable(&crate_dir).unwrap();
+    assert_eq!(std::fs::read(&file).unwrap(), before);
     std::fs::remove_dir_all(root).unwrap();
 }
 
