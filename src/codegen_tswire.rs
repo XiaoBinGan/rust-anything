@@ -217,7 +217,9 @@ const WIRE_NAPI_CJS: &str = r#"
 // The binary wire (see rust-anything's `wire.rs`): arguments are written into `wIn`, results read
 // from `wOut`; both are registered with the native module once.
 let wIn = new Uint8Array(1 << 16), wOut = new Uint8Array(1 << 16)
-const wLen = new Uint32Array(1)
+// Its own ArrayBuffer: Bun (JavaScriptCore) may relocate a small typed array whose `.buffer`
+// nobody read, and Rust then reads a length of 0 and reports `wire data ended early`.
+const wLen = new Uint32Array(new ArrayBuffer(4))
 let iv = new DataView(wIn.buffer), ov = new DataView(wOut.buffer), at = 0, p = 0
 native.rustAnythingWireInit(wIn, wOut, wLen)
 const regrow = () => native.rustAnythingWireInit(wIn, wOut, wLen)
@@ -717,6 +719,21 @@ pub fn index_cjs(m: &Manifest, api: &PortApi) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_argument_length_has_an_array_buffer_of_its_own() {
+        // `wIn` and `wOut` are registered after their `.buffer` is read for the DataViews above;
+        // `wLen` never was, and Bun (JavaScriptCore) may then move the small typed array, so Rust
+        // read a length of 0 and every call failed with `wire data ended early`.
+        assert!(
+            WIRE_NAPI_CJS.contains("const wLen = new Uint32Array(new ArrayBuffer(4))"),
+            "the loader must give `wLen` its own ArrayBuffer"
+        );
+        assert!(
+            !WIRE_NAPI_CJS.contains("new Uint32Array(1)"),
+            "a bare `new Uint32Array(1)` is the shape Bun relocates"
+        );
+    }
 
     #[test]
     fn wide_objects_use_dynamic_keys_instead_of_truncating_field_indexes() {
