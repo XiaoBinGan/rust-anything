@@ -1025,7 +1025,8 @@ fn powershell_modules_get_their_bridge_notes_and_import_order() {
 
 #[test]
 fn a_missing_folder_fails_with_one_message_instead_of_an_empty_plan() {
-    let missing = std::env::temp_dir().join("ra-analyze-missing-folder");
+    // A path of its own, so a parallel run or a leftover does not decide the result.
+    let missing = std::env::temp_dir().join(format!("ra-analyze-missing-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&missing);
     let err = analyze(&missing).unwrap_err().to_string();
     assert_eq!(err, format!("no folder {}", missing.display()));
