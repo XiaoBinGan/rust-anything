@@ -39,7 +39,7 @@
   <sub>在取自 ms、Fuse.js 與 json-server 的 59 個真實檔案上，Prettier 對上它的 Rust 移植版（Apple M4）。輸出逐位元組相同。<a href="real-world.md#prettier">測量方式</a>。</sub>
 </p>
 
-<p align="center"><sub>PHP 與 C#：目前支援錄製、重播和 front door；單元移植即將推出。</sub></p>
+<p align="center"><sub>PHP 與 C#：支援錄製、重播與前門代理，單元移植也可透過 FFI 與 P/Invoke 進行。</sub></p>
 
 <table>
   <tr>
@@ -217,10 +217,10 @@ rust-anything 並不直接翻譯程式碼：Rust 程式碼是由你的程式開�
 | Go | 套件（package） | 型別化 cgo 呼叫與自動產生的二進位傳輸協定，封裝於維持原 API 的套件內 | 自動產生的 Go 驅動程式，作為獨立模組建置執行 |
 | Ruby | 包含模組函式的檔案或資料夾 | 掛載於原模組名稱下的 magnus 擴充套件 | 自動產生的 Ruby 驅動程式 |
 | Java | 包含 `public static` 方法的套件 | 型別化 JNI 與自動產生的二進位傳輸協定，置於維持原方法的包裝類別中 | 自動產生的反射（reflection）驅動程式 |
-| PHP | 包含函式與 `public static` 方法的資料夾 | 下一步推出：透過 C ABI 運作的 PHP FFI | 目前支援整套應用程式：`app record`、`app replay` 與前門代理，適用於 CLI 與伺服器（`php -S`） |
-| C# | 包含 `public static` 方法的資料夾 | 下一步推出：透過 C ABI 運作的 P/Invoke | 目前支援整套應用程式：`app record`、`app replay` 與前門代理，適用於 CLI 與 ASP.NET 伺服器（`dotnet <app>.dll`） |
+| PHP | 頂層函式的檔案或資料夾（`public static` 方法留在 PHP） | 透過 `ext-ffi` 的 JSON 分派層，產生一個以原始參數重新宣告這些函式的檔案 | 產生 PHP 驅動程式；整套應用程式可用 `app record`、`app replay` 與前門代理，適用於 CLI 與伺服器（`php -S`） |
+| C# | 包含 `public static` 方法的檔案或資料夾 | 透過 P/Invoke 的 JSON 分派層，產生 `<namespace>.Rust` 類別並保留原始方法 | 產生反射驅動程式，與專案原始碼一起以 `dotnet build` 編譯；整套應用程式可用 `app record`、`app replay` 與前門代理，適用於 CLI 與 ASP.NET 伺服器（`dotnet <app>.dll`） |
 
-除了 C 語言外，每種語言皆可產生批次處理類別（`--batch`）：所有資料只需跨邊界傳入一次並留在
+除了 C、PHP 與 C# 之外，每種語言皆可產生批次處理類別（`--batch`）：所有資料只需跨邊界傳入一次並留在
 Rust 中，每次呼叫便會在所有 CPU 核心上平行運算全部項目。
 
 系統會根據儲存庫內容自動偵測語言（依序檢查 `go.mod`、`pom.xml`、`.csproj` 或 `.sln`、
@@ -231,13 +231,20 @@ Rust 中，每次呼叫便會在所有 CPU 核心上平行運算全部項目。
 
 對於 PHP，`analyze` 可為 PHP 應用程式規劃遷移（支援 Composer 套件與 PSR-4 自動載入，偵測
 寬鬆比較與整數溢位轉浮點數等風險，並將 Composer 套件對應至 crate），
-且支援對 PHP CLI 或伺服器進行錄製、重播與套用 Rust 前門代理。透過 PHP FFI 將各個
-單元移植到 Rust 是下一步規劃（[issue #2](https://github.com/erkamyaman/rust-anything/issues/2)）。
+且支援對 PHP CLI 或伺服器進行錄製、重播與套用 Rust 前門代理。單元的頂層函式（參數可為純量、
+字串、清單與關聯陣列）會透過 PHP 的 FFI 擴充功能橋接（需要啟用 `ext-ffi` 的 `php`，CLI 預設
+開啟）：`diff` 通過後，以產生的 `php/<crate>.php` 取代原始檔案。每次呼叫以 JSON 跨越邊界，
+約 1 µs，因此 `bench` 會顯示小型函式比 PHP 慢；PHP 目前還沒有 `shadow`
+（[issue #200](https://github.com/erkamyaman/rust-anything/issues/200)）。
 
 C# 的運作方式相同：`analyze` 會讀取 `.csproj` 專案與其 NuGet 套件
 （對應至 crate）、將 `using` 指示詞解析至對應資料夾，並標記 C# 的特殊差異
 （`decimal`、`dynamic`、LINQ 的延遲查詢、`Task`、`lock`、反射）。目前可對 C# CLI 或 ASP.NET
-伺服器進行錄製、重播與套用 Rust 前門代理；透過 P/Invoke 移植個別單元則為下一步支援項目。
+伺服器進行錄製、重播與套用 Rust 前門代理。單元的公開靜態方法（參數可為純量、字串、陣列、
+清單、字典，以及 record 或一般類別）會透過 P/Invoke 橋接（錄製與比對需要 `PATH` 中的
+`dotnet`）：`diff` 通過後，呼叫產生的 `<namespace>.Rust` 類別，或以 `using` 加上別名。每次
+呼叫以 JSON 跨越邊界，約 1-3 µs，因此 `bench` 會顯示小型方法比 .NET 慢；C# 目前還沒有
+`shadow`（[issue #200](https://github.com/erkamyaman/rust-anything/issues/200)）。
 
 ## 深入了解
 
