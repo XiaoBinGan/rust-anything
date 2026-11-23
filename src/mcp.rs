@@ -422,7 +422,7 @@ fn tool_schemas() -> Value {
             "name": "bridge",
             "description": "Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.rs, stubs to port in src/port.rs, UTF-16 helpers when the unit uses string offsets. Never overwrites an existing folder.",
             "inputSchema": { "type": "object", "properties": {
-                "root": { "type": "string" },
+                "root": { "type": "string", "description": "Repository root." },
                 "unit": { "type": "string", "description": "Unit id from analyze." },
                 "kind": { "type": "string", "enum": ["napi", "wasm"], "description": "Defaults to the plan's bridge." },
                 "out": { "type": "string", "description": "Crate folder; defaults to <root>/rust/<name>." },
@@ -479,7 +479,7 @@ fn tool_schemas() -> Value {
                 "profile": { "type": "string", "enum": ["host", "android"], "description": "Diff on this machine (default) or on a connected Android device (JVM crates)." },
                 "device": { "type": "string", "description": "Android device serial; picked automatically when only one is connected." },
                 "jni_libs": { "type": "string", "description": "Android libraries folder to diff; defaults to <crate>/jniLibs." },
-                "ignore_key_order": { "type": "boolean" },
+                "ignore_key_order": { "type": "boolean", "description": "Compare objects regardless of key order." },
                 "module": { "type": "string", "description": "Test this JS module instead of the crate's `index.cjs`." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
                 "float_tolerance": { "type": "number", "description": "Floats match within this tolerance for this run (the one saved by record otherwise)." },
@@ -489,7 +489,7 @@ fn tool_schemas() -> Value {
             "name": "profile",
             "description": "Run a real workload (a command: node or python3 script, `go test -bench`, java, ruby) under the language's profiler and rank the repository's hot functions by inclusive time, with their callers, call counts and advice: what to port together, and which loops to batch (`bridge` with `batch`). Profile before porting: leaf functions called one at a time are slower in Rust.",
             "inputSchema": { "type": "object", "properties": {
-                "root": { "type": "string" },
+                "root": { "type": "string", "description": "Repository root." },
                 "command": { "type": "array", "items": { "type": "string" }, "description": "The workload, run in root: [\"node\", \"bench.mjs\"]." },
                 "lang": { "type": "string", "enum": ["ts", "python", "go", "java", "ruby"], "description": "Detected from the repository when omitted." },
             }, "required": ["root", "command"] },
@@ -510,7 +510,7 @@ fn tool_schemas() -> Value {
         {
             "name": "enable",
             "description": "Switch a ported TS/JS or Python unit on: one marked block in each original source file rebinds the unit's functions to the built Rust module, for every caller, with no import changed. RUST_ANYTHING_MODE=old or RUST_ANYTHING_UNIT_<NAME>=original runs the original for one run. Refuses while recorded cases differ unless `force`.",
-            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "force": { "type": "boolean" } }, "required": ["crate"] },
+            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "force": { "type": "boolean", "description": "Switch it on even when recorded cases differ." } }, "required": ["crate"] },
         },
         {
             "name": "disable",
@@ -532,7 +532,7 @@ fn tool_schemas() -> Value {
             "description": "Time the recorded cases on the original and on the built Rust module, bridge included; speedup below 1 means the port is slower as its callers call it. Returns the rows and a verdict with advice: ship, keep the slower functions, or port a bigger unit.",
             "inputSchema": { "type": "object", "properties": {
                 "crate": crate_dir,
-                "resolve_from": { "type": "string" },
+                "resolve_from": { "type": "string", "description": "Resolve npm packages the original imports from this folder's node_modules." },
                 "min_ms": { "type": "integer", "description": "Minimum measured time per function and side, in milliseconds (default 200)." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
             }, "required": ["crate"] },
@@ -553,7 +553,7 @@ fn tool_schemas() -> Value {
         {
             "name": "shadow",
             "description": "Generate a drop-in shadow (a TS or Python module, Go package, Ruby file, Java classes or C file) that runs the original and the Rust port side by side and reports mismatches; RUST_ANYTHING_MODE=old|shadow|new switches at runtime.",
-            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string" } }, "required": ["crate"] },
+            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string", "description": "Shadow file or folder; defaults beside the crate." } }, "required": ["crate"] },
         },
         {
             "name": "map",

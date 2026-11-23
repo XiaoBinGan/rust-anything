@@ -24,7 +24,7 @@ Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `root` | string | yes |  |
+| `root` | string | yes | Repository root. |
 | `unit` | string | yes | Unit id from analyze. |
 | `kind` | string |  | Defaults to the plan's bridge. |
 | `out` | string |  | Crate folder; defaults to <root>/rust/<name>. |
@@ -99,7 +99,7 @@ Runs the original's code or commands.
 | `profile` | string |  | Diff on this machine (default) or on a connected Android device (JVM crates). |
 | `device` | string |  | Android device serial; picked automatically when only one is connected. |
 | `jni_libs` | string |  | Android libraries folder to diff; defaults to <crate>/jniLibs. |
-| `ignore_key_order` | boolean |  |  |
+| `ignore_key_order` | boolean |  | Compare objects regardless of key order. |
 | `module` | string |  | Test this JS module instead of the crate's `index.cjs`. |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
 | `float_tolerance` | number |  | Floats match within this tolerance for this run (the one saved by record otherwise). |
@@ -114,7 +114,7 @@ Runs the original's code or commands.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `root` | string | yes |  |
+| `root` | string | yes | Repository root. |
 | `command` | string[] | yes | The workload, run in root: ["node", "bench.mjs"]. |
 | `lang` | string |  | Detected from the repository when omitted. |
 
@@ -145,7 +145,7 @@ Switch a ported TS/JS or Python unit on: one marked block in each original sourc
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `force` | boolean |  |  |
+| `force` | boolean |  | Switch it on even when recorded cases differ. |
 
 ## Switch a unit off
 
@@ -183,7 +183,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `resolve_from` | string |  |  |
+| `resolve_from` | string |  | Resolve npm packages the original imports from this folder's node_modules. |
 | `min_ms` | integer |  | Minimum measured time per function and side, in milliseconds (default 200). |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
 
@@ -216,7 +216,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `out` | string |  |  |
+| `out` | string |  | Shadow file or folder; defaults beside the crate. |
 
 ## Map the port
 
