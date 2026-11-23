@@ -40,7 +40,7 @@ Hecho en Türkiye 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yam
   <sub>Prettier frente a su porte en Rust sobre 59 archivos reales de ms, Fuse.js y json-server (Apple M4). La misma salida, byte a byte. <a href="real-world.md#prettier">Cómo se midió</a>.</sub>
 </p>
 
-<p align="center"><sub>PHP y C#: hoy registro, repetición y puerta delantera; los portes de unidad vienen después.</sub></p>
+<p align="center"><sub>PHP y C#: registro, repetición y puerta delantera, más portes de unidad por FFI y P/Invoke.</sub></p>
 
 <table>
   <tr>
@@ -266,10 +266,10 @@ el correo dos veces falla:
 | Ruby | archivo o carpeta de funciones de módulo | una extensión magnus bajo los módulos originales | un driver de Ruby generado |
 | Java | paquete de métodos `public static` | JNI tipado y un cable binario generado, en clases envoltorio con los métodos originales | un driver de reflexión generado |
 | Kotlin | módulo Gradle de funciones de nivel superior y métodos `@JvmStatic` | el puente de Java: JNI tipado en clases envoltorio de Java que llaman a los estáticos de Kotlin compilados | un driver de reflexión generado, con los fuentes Kotlin compilados por `kotlinc` |
-| PHP | carpeta de funciones y métodos `public static` | lo siguiente: FFI de PHP sobre una ABI de C | hoy aplicaciones completas: `app record`, `app replay` y la puerta delantera, para CLIs y servidores (`php -S`) |
-| C# | carpeta de métodos `public static` | lo siguiente: P/Invoke sobre una ABI de C | hoy aplicaciones completas: `app record`, `app replay` y la puerta delantera, para CLIs y servidores ASP.NET (`dotnet <app>.dll`) |
+| PHP | carpeta de funciones de nivel superior y métodos `public static` | un despachador JSON sobre `ext-ffi`, en un archivo que redeclara las funciones con los parámetros originales | un driver PHP generado; aplicaciones completas con `app record`, `app replay` y la puerta delantera, para CLIs y servidores (`php -S`) |
+| C# | carpeta de métodos `public static` | un despachador JSON sobre P/Invoke, en clases `<namespace>.Rust` con los métodos originales | un driver de reflexión generado, compilado con las fuentes del proyecto por `dotnet build`; aplicaciones completas con `app record`, `app replay` y la puerta delantera, para CLIs y servidores ASP.NET (`dotnet <app>.dll`) |
 
-Todos los lenguajes salvo C reciben además clases por lotes (`--batch`): los elementos cruzan una
+Todos los lenguajes salvo C, PHP y C# reciben además clases por lotes (`--batch`): los elementos cruzan una
 vez y se quedan en Rust, y cada llamada se ejecuta sobre todos ellos en todos los núcleos.
 
 El lenguaje se detecta en el repositorio (`go.mod`, `pom.xml`, `build.gradle`/`build.gradle.kts`, un
@@ -300,14 +300,23 @@ generados. En un host, `record` y `diff` siguen usando la JVM de escritorio.
 Para PHP, `analyze` planifica una aplicación PHP (paquetes de Composer y autoload PSR-4, riesgos
 como la comparación laxa y el desbordamiento de enteros a coma flotante, paquetes de Composer
 mapeados a crates), y una CLI o un servidor PHP se puede registrar, repetir y poner detrás de una
-puerta delantera en Rust. Portar sus unidades a Rust mediante la FFI de PHP es el paso siguiente
-([issue #2](https://github.com/erkamyaman/rust-anything/issues/2)).
+puerta delantera en Rust. Las funciones de nivel superior de una unidad, con parámetros escalares,
+de cadena, de lista y de array asociativo, se conectan mediante la extensión FFI de PHP (`php` con
+`ext-ffi`, activa por defecto en la CLI): incluye el `php/<crate>.php` generado en lugar del archivo
+original cuando `diff` pase. Cada llamada cruza como JSON, alrededor de 1 µs, así que `bench` muestra
+las funciones pequeñas más lentas que PHP; todavía no hay `shadow` para PHP
+([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 C# funciona igual: `analyze` lee proyectos `.csproj` y sus paquetes NuGet (mapeados a crates),
 resuelve las directivas `using` a carpetas y señala lo que C# hace distinto (`decimal`, `dynamic`,
 las consultas diferidas de LINQ, `Task`, `lock`, reflexión). Una CLI de C# o un servidor ASP.NET se
-puede registrar, repetir y poner detrás de una puerta delantera en Rust; portar unidades mediante
-P/Invoke viene después.
+puede registrar, repetir y poner detrás de una puerta delantera en Rust. Los métodos estáticos
+públicos de una unidad, con parámetros escalares, de cadena, de array, de lista, de diccionario y de
+record o clase simple, se conectan mediante P/Invoke (`dotnet` en el `PATH` para registrar y
+comparar): llama a las clases `<namespace>.Rust` generadas, o aliasalas con `using`, cuando `diff`
+pase. Cada llamada cruza como JSON, alrededor de 1-3 µs, así que `bench` muestra los métodos pequeños
+más lentos que .NET; todavía no hay `shadow` para C#
+([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 ## Saber más
 
