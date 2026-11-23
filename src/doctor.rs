@@ -471,6 +471,14 @@ fn which(program: &str) -> Option<PathBuf> {
         .find(|p| p.is_file())
 }
 
+/// Whether `php -m`'s output lacks the FFI extension: a PHP unit is bridged through `ext-ffi`, so a
+/// build without it passes `php --version` and then fails on the first call.
+fn php_has_no_ffi(modules: &str) -> bool {
+    !modules
+        .lines()
+        .any(|line| line.trim().eq_ignore_ascii_case("FFI"))
+}
+
 fn runtime(r: &Runtime) -> Check {
     let banner = probe(r.program, r.args);
     let version = banner.as_deref().and_then(if r.java {
@@ -486,6 +494,15 @@ fn runtime(r: &Runtime) -> Check {
         }
         (Some(b), _) => b.clone(),
     };
+    if r.name == "php"
+        && status == Status::Ok
+        && probe("php", &["-m"]).is_some_and(|modules| php_has_no_ffi(&modules))
+    {
+        detail.push_str(
+            "; the FFI extension is not loaded, and `record` and `diff` cross PHP's boundary \
+             through it",
+        );
+    }
     if r.name == "node" && status == Status::Ok && version.is_some_and(|v| v.0 < 24) {
         detail.push_str("; works, but `profile` needs Node 24");
     }
@@ -974,6 +991,17 @@ mod tests {
             parse_java_version("openjdk version \"17.0.2\""),
             Some(Version(17, 0, 2))
         );
+    }
+
+    #[test]
+    fn a_php_without_ffi_is_told_apart_from_one_with_it() {
+        let with = "[PHP Modules]\nCore\nFFI\njson\n";
+        let without = "[PHP Modules]\nCore\njson\n";
+        assert!(!php_has_no_ffi(with));
+        assert!(php_has_no_ffi(without));
+        // Case and padding do not matter, and a module merely starting with FFI is not FFI.
+        assert!(!php_has_no_ffi("[PHP Modules]\n  ffi  \n"));
+        assert!(php_has_no_ffi("[PHP Modules]\nFFI2\n"));
     }
 
     #[test]
