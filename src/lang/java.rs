@@ -345,6 +345,18 @@ pub fn lookup(name: &str) -> Option<CrateMatch> {
 /// A Java type in the TS-like dialect, or why the bridge cannot carry it.
 pub fn java_to_ts(t: &str) -> Result<String, String> {
     let t = t.trim();
+    // A wildcard is a type argument, not a class name: a `List<? extends CharSequence>` parameter
+    // only reads its elements, so it takes what `List<CharSequence>` takes.
+    if let Some(rest) = t.strip_prefix('?') {
+        let rest = rest.trim();
+        if let Some(bound) = rest.strip_prefix("extends") {
+            return java_to_ts(bound.trim());
+        }
+        if rest.starts_with("super") {
+            return Err(format!("uses a wildcard `{t}`"));
+        }
+        return Err("takes or returns `Object`: values of any type".into());
+    }
     if let Some(inner) = t.strip_suffix("[]") {
         return java_to_ts(inner).map(|i| format!("{i}[]"));
     }
@@ -581,6 +593,32 @@ pub fn receiver(f: &ExportedFn) -> (String, String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_bounded_wildcard_reads_as_its_bound() {
+        // `List<? extends T>` only reads `T`, so it is the same parameter as `List<T>`.
+        assert_eq!(
+            java_to_ts("List<? extends CharSequence>").unwrap(),
+            "string[]"
+        );
+        assert_eq!(java_to_ts("List<? extends String>").unwrap(), "string[]");
+        assert_eq!(java_to_ts("List<String>").unwrap(), "string[]");
+        // A bound the bridge has no counterpart for keeps its own reason, not a "class ? extends …".
+        let object_bound = java_to_ts("List<? extends Number>").unwrap_err();
+        assert!(object_bound.contains("Number"), "{object_bound}");
+        assert!(!object_bound.contains("? extends"), "{object_bound}");
+        // `? super` writes, and an unbounded `?` is `Object`: both stay refusals that name why.
+        assert!(
+            java_to_ts("List<? super String>")
+                .unwrap_err()
+                .contains("? super String")
+        );
+        assert!(
+            java_to_ts("List<?>")
+                .unwrap_err()
+                .contains("values of any type")
+        );
+    }
 
     #[test]
     fn maps_types() {
