@@ -266,7 +266,7 @@ el correo dos veces falla:
 | Ruby | archivo o carpeta de funciones de módulo | una extensión magnus bajo los módulos originales | un driver de Ruby generado |
 | Java | paquete de métodos `public static` | JNI tipado y un cable binario generado, en clases envoltorio con los métodos originales | un driver de reflexión generado |
 | Kotlin | módulo Gradle de funciones de nivel superior y métodos `@JvmStatic` | el puente de Java: JNI tipado en clases envoltorio de Java que llaman a los estáticos de Kotlin compilados | un driver de reflexión generado, con los fuentes Kotlin compilados por `kotlinc` |
-| PHP | carpeta de funciones de nivel superior (los métodos `public static` se quedan en PHP) | un despachador JSON sobre `ext-ffi`, en un archivo que redeclara las funciones con los parámetros originales | un driver PHP generado; aplicaciones completas con `app record`, `app replay` y la puerta delantera, para CLIs y servidores (`php -S`) |
+| PHP | archivo o carpeta de funciones de nivel superior (los métodos `public static` se quedan en PHP) | un despachador JSON sobre `ext-ffi`, en un archivo que redeclara las funciones con los parámetros originales | un driver PHP generado; aplicaciones completas con `app record`, `app replay` y la puerta delantera, para CLIs y servidores (`php -S`) |
 | C# | carpeta de métodos `public static` | un despachador JSON sobre P/Invoke, en clases `<namespace>.Rust` con los métodos originales | un driver de reflexión generado, compilado con las fuentes del proyecto por `dotnet build`; aplicaciones completas con `app record`, `app replay` y la puerta delantera, para CLIs y servidores ASP.NET (`dotnet <app>.dll`) |
 
 Todos los lenguajes salvo C, PHP y C# reciben además clases por lotes (`--batch`): los elementos cruzan una
