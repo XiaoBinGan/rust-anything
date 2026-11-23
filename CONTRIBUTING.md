@@ -28,6 +28,7 @@ skip a part whose runtime is missing, so install the ones you touch:
 | Java | a JDK (17+) |
 | PHP | PHP 8 |
 | C# | the .NET SDK |
+| PowerShell | PowerShell 7.4+ (`pwsh`) |
 | wasm bridges | `rustup target add wasm32-unknown-unknown` and the matching `wasm-bindgen-cli` |
 
 ```sh
@@ -87,6 +88,8 @@ paths in what you commit. CI runs it on every file.
   - `tests/java_package_declaration.rs` and `tests/java_replay.rs`: Java recording with comments in
     the package declaration, and replay that tells `null` from a rejected argument.
   - `tests/ruby_recording.rs`: Ruby results that cannot be encoded.
+  - `tests/powershell.rs`: a PowerShell module bridged, recorded, diffed, gated and enabled;
+    skipped without `pwsh` 7.4+.
   - `tests/untyped_js_types.rs`: types for untyped JavaScript from JSDoc or a sibling declaration
     file.
   - `tests/android_device.rs`: on-device recording over adb; skipped without a device.
@@ -153,7 +156,8 @@ cargo test
 
 CI runs on Ubuntu, macOS and Windows. The Ubuntu `check` job has Node and cargo
 (`RUST_ANYTHING_REQUIRE=node,cargo`); macOS adds Python, Go, Ruby, Java and the wasm-bindgen CLI, and
-Windows runs the native bridge integration tests. PHP, .NET and Kotlin are installed nowhere, so their
+Windows runs the native bridge integration tests. The `powershell` job runs the PowerShell tests on
+Ubuntu and Windows, and the Ubuntu and macOS images have `pwsh` too. PHP, .NET and Kotlin are installed nowhere, so their
 tests skip there: run `cargo test` locally with those on `PATH` before a change that touches them
 (`docs/STATUS.md`, "Where the tests run", has the same split). For a first-time contributor, GitHub
 waits for a maintainer to approve the CI run, so expect a short delay before the checks start.

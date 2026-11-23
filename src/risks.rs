@@ -43,6 +43,13 @@ pub enum Risk {
     PlatformSpecific,
     /// Reads of the clock or random numbers, which change between runs.
     ClockAndRandom,
+    /// PowerShell sends every uncaptured value to the pipeline and unrolls arrays on the way out.
+    PipelineOutput,
+    /// PowerShell's `-eq`, `-like`, `-match`, `-contains`, `switch` and hashtable keys ignore case.
+    CaseInsensitive,
+    /// PowerShell converts between types on its own: the left operand decides, `/` on integers
+    /// gives a double, an integer that overflows becomes a double, `[int]` rounds to even.
+    LooseConversion,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -89,6 +96,9 @@ impl Risk {
             | Self::NullReferences
             | Self::AlreadyCompiled => Severity::Medium,
             Self::ArrayParameters => Severity::High,
+            Self::PipelineOutput | Self::CaseInsensitive | Self::LooseConversion => {
+                Severity::Medium
+            }
         }
     }
 
@@ -119,6 +129,9 @@ impl Risk {
             Self::ArrayParameters => "numpy array parameters",
             Self::PlatformSpecific => "Platform-specific C (asm, volatile, bitfields, packing)",
             Self::ClockAndRandom => "Clock and random numbers",
+            Self::PipelineOutput => "Implicit output and the pipeline",
+            Self::CaseInsensitive => "Case-insensitive comparison",
+            Self::LooseConversion => "Implicit type conversion",
         }
     }
 
@@ -243,6 +256,30 @@ impl Risk {
                  `random()`, a documented mulberry32). Or pass the time and the seed in as \
                  parameters."
             }
+            Self::PipelineOutput => {
+                "Every value a PowerShell function does not assign or discard is output, not only \
+                 what `return` names, and arrays unroll on the way out: no output reads as `$null`, \
+                 one item as that item, `,@(x)` keeps the array. `$r = f ...` is what callers see, \
+                 so the bridge records and compares that value; the port returns it whole (a `Vec` \
+                 for several items). `Write-Host` text and non-terminating `Write-Error` records go \
+                 to other streams: recorded as `output`, which a port cannot produce, so such cases \
+                 fail until the function stops writing them."
+            }
+            Self::CaseInsensitive => {
+                "`-eq`, `-ne`, `-like`, `-match`, `-replace`, `-split`, `-contains`, `-in`, `switch` \
+                 and `@{}` keys ignore case unless written `-ceq`, `-cmatch`, `switch -CaseSensitive`. \
+                 Rust's `==`, `contains` and `HashMap` do not: compare with `eq_ignore_ascii_case` or \
+                 `to_lowercase()` on both sides, write regexes with `(?i)`, and key maps by a folded \
+                 string. Test with non-ASCII letters: .NET folds with invariant culture rules."
+            }
+            Self::LooseConversion => {
+                "PowerShell converts the right operand to the left one's type (`'10' -eq 10` is \
+                 true, `10 -eq '10.0'` is true, `'a' + 1` is `a1`), `/` on two integers gives a \
+                 double (`5 / 2` is 2.5), an `[int]` that overflows becomes a `[double]`, and `[int]` \
+                 casts round halves to even (`[int]2.5` is 2). `$null -eq $x` and `$x -eq $null` \
+                 differ when `$x` is an array (the second filters it). Write each conversion out in \
+                 Rust and record cases at the edges."
+            }
         }
     }
 }
@@ -305,6 +342,12 @@ pub fn uses_regex(lang: crate::lang::Lang, source: &str) -> bool {
         Lang::C => has(&["<regex.h>", "pcre", "regcomp("]),
         Lang::Php => has(&["preg_", "mb_ereg"]),
         Lang::Csharp => has(&["Regex", "RegularExpressions"]),
+        Lang::Powershell => {
+            let lower = source.to_ascii_lowercase();
+            ["-match", "-replace", "-split", "[regex]", "select-string"]
+                .iter()
+                .any(|n| lower.contains(n))
+        }
     }
 }
 

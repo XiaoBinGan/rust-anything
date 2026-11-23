@@ -262,6 +262,31 @@ there while the plugins' `discover()` kept the bugs. Read a manifest in one plac
 declared ones (`PyYAML`) as strings, so most libraries showed up twice. Join spellings by the crate
 table row they resolve to (`CrateMatch::row`), not by the name or the `crates` text.
 
+**A PowerShell binding error depended on the process.** The driver splatted recorded arguments
+from a plain `@{}`, whose key order follows .NET's randomized string hashes, so a case with two bad
+arguments failed on one parameter while recording and on the other while diffing. Splat from
+`[ordered]@{}` in parameter order, and record twice to see the same `cases.jsonl`.
+
+**`$x = if (...) { $array }` unrolled the array.** An `if`, `foreach` or `switch` statement used
+as a value sends its output through the pipeline, so a one-item argument list became a scalar. In
+generated PowerShell, assign inside each branch, and return arrays with `, $value`.
+
+**`ConvertFrom-Json` turns strings into dates.** A string shaped like an ISO date comes back as
+`[datetime]`, and the switch that stops it (`-DateKind String`) needs PowerShell 7.5, while 7.4 is
+the current LTS. The first driver needed it; generated PowerShell now reads JSON with
+`System.Text.Json.JsonDocument`, and `doctor` asks for 7.4.
+
+**.NET casing is not Unicode casing.** `ToLowerInvariant` leaves `İ` alone, `OrdinalIgnoreCase`
+never folds `ı` or `ſ` to ASCII, and `-replace '[a-z]'` (case-insensitive) matches `İ` on
+macOS: a port that folded with Rust's `to_lowercase` failed every recorded case with `İ`, `ı` or `ſ`.
+Record `REGEX_TRAPS` for every PowerShell string function and fold per character as .NET does.
+
+**`-replace '[a-z]'` matching `İ` depended on the machine.** On macOS the
+case-insensitive class matches `İ`; on GitHub's Ubuntu 26.04 runner it does not, as under .NET's
+invariant globalization mode, so a port written against a macOS recording failed on Linux CI.
+The original itself differs, so record on the machine the code runs on, and reproduce with
+`DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1`.
+
 ## Repository
 
 **A local path reached a committed manifest.** Demo manifests keep a placeholder `root`; check

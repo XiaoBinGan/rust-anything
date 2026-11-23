@@ -1092,13 +1092,19 @@ pub fn bridge(opts: &Options) -> Result<Outcome> {
     if unit.bridge == Bridge::DotnetFfi && !opts.batch.is_empty() {
         bail!("`--batch` is not available for C# units yet");
     }
+    if unit.bridge == Bridge::PwshFfi && !opts.batch.is_empty() {
+        bail!("`--batch` is not available for PowerShell units yet");
+    }
     let kind = opts.kind.unwrap_or(match unit.bridge {
         Bridge::WasmBindgen => Kind::Wasm,
         Bridge::Pyo3 => Kind::Pyo3,
         Bridge::CAbi => Kind::CAbi,
-        Bridge::Cgo | Bridge::Fiddle | Bridge::Jni | Bridge::PhpFfi | Bridge::DotnetFfi => {
-            Kind::Ffi
-        }
+        Bridge::Cgo
+        | Bridge::Fiddle
+        | Bridge::Jni
+        | Bridge::PhpFfi
+        | Bridge::DotnetFfi
+        | Bridge::PwshFfi => Kind::Ffi,
         _ => Kind::Napi,
     });
 
@@ -1493,6 +1499,12 @@ fn ffi_bindings(m: &Manifest, api: &codegen::PortApi) -> Result<Vec<(String, Str
                 crate::codegen_csharp::wrapper(m),
             ));
         }
+        crate::lang::Lang::Powershell => {
+            files.push((
+                crate::codegen_powershell::wrapper_path(m),
+                crate::codegen_powershell::wrapper(m),
+            ));
+        }
         crate::lang::Lang::Java | crate::lang::Lang::Kotlin => {
             files.extend(crate::codegen_java::wrappers(m, api));
             files.extend(
@@ -1541,7 +1553,7 @@ fn bridge_ffi(manifest: &Manifest, crate_dir: &Path, kept: &[JsOnly]) -> Result<
         ("src/port.rs".into(), port),
         (
             ".gitignore".into(),
-            "target/\n.rust-anything/\nruby/*.so\nruby/*.bundle\nphp/*.so\nphp/*.dylib\nphp/*.dll\ncs/*.so\ncs/*.dylib\ncs/*.dll\n".into(),
+            "target/\n.rust-anything/\nruby/*.so\nruby/*.bundle\nphp/*.so\nphp/*.dylib\nphp/*.dll\ncs/*.so\ncs/*.dylib\ncs/*.dll\nps/*.so\nps/*.dylib\nps/*.dll\n".into(),
         ),
         ("README.md".into(), readme(manifest)),
         (
@@ -1637,13 +1649,20 @@ fn readme(m: &Manifest) -> String {
         Kind::Ffi => "shared library",
     };
     let shadow = match m.language {
-        Lang::Php | Lang::Csharp => String::new(),
+        Lang::Php | Lang::Csharp | Lang::Powershell => String::new(),
         _ => "rust-anything shadow .   # run both in the app, log mismatches\n".into(),
     };
     let switch = match m.language {
         Lang::Php => format!(
             "\nPHP has no shadow module: once `diff` passes, require `{}` in place of the original files.\n",
             crate::codegen_php::wrapper_path(m)
+        ),
+        Lang::Powershell => format!(
+            "\nPowerShell has no shadow module: once `diff` passes, `rust-anything enable .` \
+             dot-sources `{}` at the end of the original file, so every caller (the module's own \
+             functions too) gets Rust. Most slow PowerShell is the start-up of a new `pwsh` per \
+             command, which no port fixes: keep one shell open and call into it.\n",
+            crate::codegen_powershell::wrapper_path(m)
         ),
         Lang::Csharp => format!(
             "\nC# has no shadow module: once `diff` passes, compile `{}` into the project and call \

@@ -39,7 +39,7 @@ Fait en Turquie 🇹🇷 par <a href="https://github.com/erkamyaman">erKam Yaman
   <sub>Prettier face à son portage Rust sur 59 fichiers réels issus de ms, Fuse.js et json-server (Apple M4). Même sortie, octet par octet. <a href="real-world.md#prettier">Comment c'est mesuré</a>.</sub>
 </p>
 
-<p align="center"><sub>PHP et C# : enregistrement, rejeu et front door aujourd'hui ; les ports d'unités arrivent ensuite.</sub></p>
+<p align="center"><sub>PHP et C# : enregistrement, rejeu et porte d'entrée, plus les ports d'unités par FFI et P/Invoke.</sub></p>
 
 <table>
   <tr>
@@ -228,10 +228,10 @@ Une sortie identique ne suffit pas. Enregistrez aussi ce que l'application envoi
 | Go | paquet | appels cgo typés et protocole binaire généré, dans un paquet conservant l'API d'origine | un pilote Go généré, compilé comme son propre module |
 | Ruby | fichier ou dossier de fonctions de module | une extension magnus sous les modules d'origine | un pilote Ruby généré |
 | Java | paquet de méthodes `public static` | JNI typé et protocole binaire généré, dans des classes enveloppes conservant les méthodes d'origine | un pilote par réflexion généré |
-| PHP | dossier de fonctions et de méthodes `public static` | à venir : PHP FFI sur une ABI C | applications complètes dès aujourd'hui : `app record`, `app replay` et la porte d'entrée, pour les CLI et les serveurs (`php -S`) |
-| C# | dossier de méthodes `public static` | à venir : P/Invoke sur une ABI C | applications complètes dès aujourd'hui : `app record`, `app replay` et la porte d'entrée, pour les CLI et les serveurs ASP.NET (`dotnet <app>.dll`) |
+| PHP | fichier ou dossier de fonctions de premier niveau (les méthodes `public static` restent en PHP) | un répartiteur JSON sur `ext-ffi`, dans un fichier qui redéclare les fonctions avec les paramètres d'origine | applications complètes dès aujourd'hui : `app record`, `app replay` et la porte d'entrée, pour les CLI et les serveurs (`php -S`) |
+| C# | fichier ou dossier de méthodes `public static` | un répartiteur JSON sur P/Invoke, dans des classes `<namespace>.Rust` avec les méthodes d'origine | applications complètes dès aujourd'hui : `app record`, `app replay` et la porte d'entrée, pour les CLI et les serveurs ASP.NET (`dotnet <app>.dll`) |
 
-Chaque langage sauf C obtient également des classes de traitement par lots (`--batch`) : les éléments
+Chaque langage sauf C, PHP et C# obtient également des classes de traitement par lots (`--batch`) : les éléments
 traversent la frontière une seule fois et restent en Rust, et chaque appel s'exécute sur l'ensemble des
 éléments sur tous les cœurs.
 
@@ -244,14 +244,23 @@ sont inférés comme nombres.
 Pour PHP, `analyze` planifie une application PHP (paquets Composer et chargement automatique
 PSR-4, risques tels que la comparaison souple et le débordement d'entiers en flottants, paquets Composer
 mappés vers des crates), et un CLI ou serveur PHP peut être enregistré, rejoué et placé derrière une porte
-d'entrée Rust. Le portage de ses unités en Rust via la FFI de PHP est l'étape suivante
-([issue #2](https://github.com/erkamyaman/rust-anything/issues/2)).
+d'entrée Rust. Les fonctions de premier niveau d'une unité, avec des paramètres scalaires, chaîne, liste
+et tableau associatif, passent par l'extension FFI de PHP (`php` avec `ext-ffi`, active par défaut dans
+la CLI) : incluez le `php/<crate>.php` généré à la place du fichier d'origine une fois que `diff` passe.
+Chaque appel traverse la frontière en JSON, environ 1 µs, donc `bench` montre les petites fonctions plus
+lentes que PHP ; il n'y a pas encore de `shadow` pour PHP
+([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 C# fonctionne de la même manière : `analyze` lit les projets `.csproj` et leurs paquets NuGet (mappés
 vers des crates), résout les directives `using` vers les dossiers correspondants et signale ce que C# gère
 différemment (`decimal`, `dynamic`, requêtes différées LINQ, `Task`, `lock`, réflexion). Un CLI C# ou un
-serveur ASP.NET peut être enregistré, rejoué et placé derrière une porte d'entrée Rust ; le portage
-d'unités via P/Invoke viendra ensuite.
+serveur ASP.NET peut être enregistré, rejoué et placé derrière une porte d'entrée Rust. Les méthodes
+statiques publiques d'une unité, avec des paramètres scalaires, chaîne, tableau, liste, dictionnaire et
+record ou classe simple, passent par P/Invoke (`dotnet` dans le `PATH` pour enregistrer et comparer) :
+appelez les classes `<namespace>.Rust` générées, ou donnez-leur un alias avec `using`, une fois que
+`diff` passe. Chaque appel traverse la frontière en JSON, environ 1-3 µs, donc `bench` montre les
+petites méthodes plus lentes que .NET ; il n'y a pas encore de `shadow` pour C#
+([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 ## En savoir plus
 

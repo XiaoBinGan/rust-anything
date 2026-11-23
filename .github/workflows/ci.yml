@@ -46,7 +46,7 @@ jobs:
   macos:
     runs-on: macos-latest
     env:
-      RUST_ANYTHING_REQUIRE: node,python3,go,ruby,java,cc,cargo
+      RUST_ANYTHING_REQUIRE: node,python3,go,ruby,java,cc,cargo,pwsh
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
@@ -68,6 +68,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Install PowerShell 7 when the image lacks it
+        run: command -v pwsh || brew install powershell
       - uses: Swatinem/rust-cache@v2
       - run: cargo test
       - run: cargo install --path .
@@ -109,6 +111,29 @@ jobs:
         run: cargo test --locked --lib app::tests::shell_words
       - name: Run native bridge integration tests
         run: cargo test --locked --test native -- --nocapture
+
+  # PowerShell units end to end (bridge, record, diff, gate, enable) under pwsh 7.4+.
+  powershell:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      RUST_ANYTHING_REQUIRE: pwsh,cargo
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install PowerShell 7 when the image lacks it
+        if: runner.os == 'Linux'
+        run: command -v pwsh || sudo snap install powershell --classic
+      - name: PowerShell version
+        run: pwsh -NoProfile -NonInteractive -Version
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --locked --test powershell -- --nocapture
+      - run: cargo test --locked --lib lang::powershell
 
   # The whole loop on a real port: build both bridges and pass the gate.
   demo:

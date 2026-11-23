@@ -338,6 +338,13 @@ pub fn profile(root: &Path, command: &[String], lang: Option<Lang>) -> Result<Re
             "`profile` does not run C# workloads yet; use `dotnet-trace` or your IDE's profiler and \
              port the hot loops it shows"
         ),
+        Lang::Powershell => bail!(
+            "`profile` does not run PowerShell workloads yet. Time one `pwsh` start first \
+             (`Measure-Command {{ pwsh -NoProfile -c 1 }}`): when a tool starts a shell per \
+             command, start-up is the slow part and no port fixes it; keep one shell open. For a \
+             script whose own logic is slow, time its functions with `Measure-Command` and port \
+             those"
+        ),
     };
     let _ = std::fs::remove_dir_all(&work);
     Ok(report(

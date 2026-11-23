@@ -204,6 +204,7 @@ fn port_param_type(m: &Manifest, p: &crate::ts::exports::Param) -> RType {
             | crate::lang::Lang::Ruby
             | crate::lang::Lang::Php
             | crate::lang::Lang::Csharp
+            | crate::lang::Lang::Powershell
     ) && crate::codegen_py::has_literal_default(p)
     {
         RType::from_ts(&p.ts_type)

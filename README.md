@@ -269,9 +269,10 @@ Same output is not enough. Record what the app sends too, and a rewrite that mai
 | Java | package of `public static` methods | typed JNI and a generated binary wire, in wrapper classes with the original methods | a generated reflection driver |
 | Kotlin | Gradle module of top-level functions and `@JvmStatic` methods | the Java bridge: typed JNI in Java wrapper classes calling the compiled Kotlin statics | a generated reflection driver, with the Kotlin sources compiled by `kotlinc` |
 | PHP | file or folder of top-level functions (`public static` methods stay in PHP) | a JSON dispatcher over `ext-ffi`, in a file that redeclares the functions with the original parameters | a generated PHP driver; whole apps with `app record`, `app replay` and the front door, for CLIs and servers (`php -S`) |
+| PowerShell | `.psm1` module or `.ps1` script of functions with `param()` blocks (exported per `Export-ModuleMember`) | a JSON dispatcher over P/Invoke, declared at load time with Reflection.Emit, in a `.ps1` that redeclares each function with its original `param()` block | a generated `pwsh` driver (PowerShell 7.4+) |
 | C# | file or folder of `public static` methods | a JSON dispatcher over P/Invoke, in `<namespace>.Rust` classes with the original methods | a generated reflection driver, compiled with the project's sources by `dotnet build`; whole apps with `app record`, `app replay` and the front door, for CLIs and ASP.NET servers (`dotnet <app>.dll`) |
 
-Every language except C, PHP and C# also gets batch classes (`--batch`): the items cross once and stay in
+Every language except C, PHP, C# and PowerShell also gets batch classes (`--batch`): the items cross once and stay in
 Rust, and each call runs over all of them on all cores.
 
 The language is detected from the repository (`go.mod`, `pom.xml`, `build.gradle`/`build.gradle.kts`,
@@ -316,6 +317,21 @@ through P/Invoke (`dotnet` on PATH to record and diff): call the generated `<nam
 classes, or alias them with `using`, once `diff` passes. Each call crosses as JSON, about 1-3 µs,
 so `bench` shows small methods slower than .NET; there is no `shadow` for C# yet
 ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
+
+For PowerShell, `analyze` reads `.psm1` modules, `.ps1` scripts and `.psd1` manifests
+(`RequiredModules`), follows `Import-Module`, `using module` and dot-sourced files, and flags what
+PowerShell does differently: implicit output and array unrolling, case-insensitive `-eq`, `-match`
+and hashtable keys, `$null`, and implicit conversions (`5 / 2` is 2.5, `[int]2.5` is 2). A unit's
+functions with `[string]`, integer, `[double]`, `[bool]`/`[switch]`, array, `[hashtable]` or untyped
+parameters are bridged through P/Invoke from a generated `ps/<crate>.ps1`; filters, `begin`/`process`
+blocks, pipeline input, `[scriptblock]`, `[ref]` and other .NET types stay in PowerShell with the
+reason. Once `diff` passes, `rust-anything enable <crate>` dot-sources the wrapper at the end of the
+original file. Each call crosses as JSON encoded by PowerShell code: about 0.1 ms for a few
+scalars on an Apple M4, more for arrays and hashtables, so only functions that do more work than
+that per call get faster (`bench` measures it for yours). Most slow PowerShell in tools is the
+start-up of a new `pwsh` or `powershell.exe` per command (0.24 to 0.45 s for
+`pwsh -NoProfile -c 1` on the same M4), which no port fixes: keep one shell open and send it the
+commands (see the [FAQ](docs/faq.md)).
 
 ## Learn more
 

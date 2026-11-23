@@ -12,6 +12,7 @@ pub mod go;
 pub mod java;
 pub mod kotlin;
 pub mod php;
+pub mod powershell;
 pub mod python;
 pub mod ruby;
 pub mod syntax;
@@ -35,6 +36,7 @@ pub enum Lang {
     Kotlin,
     Php,
     Csharp,
+    Powershell,
 }
 
 impl Lang {
@@ -49,6 +51,7 @@ impl Lang {
             Self::Kotlin => "Kotlin",
             Self::Php => "PHP",
             Self::Csharp => "C#",
+            Self::Powershell => "PowerShell",
         }
     }
 
@@ -65,6 +68,7 @@ impl Lang {
             Self::Kotlin => "Maven",
             Self::Php => "Composer",
             Self::Csharp => "NuGet",
+            Self::Powershell => "the PowerShell Gallery",
         }
     }
 
@@ -173,7 +177,7 @@ impl Lang {
         Self::ALL[best]
     }
 
-    const ALL: [Self; 9] = [
+    const ALL: [Self; 10] = [
         Self::Ts,
         Self::Python,
         Self::C,
@@ -183,6 +187,7 @@ impl Lang {
         Self::Kotlin,
         Self::Php,
         Self::Csharp,
+        Self::Powershell,
     ];
 
     /// File extensions of the language's source files.
@@ -199,6 +204,7 @@ impl Lang {
             Self::Kotlin => &["kt"],
             Self::Php => &["php"],
             Self::Csharp => &["cs"],
+            Self::Powershell => &["ps1", "psm1"],
         }
     }
 }
@@ -221,6 +227,7 @@ pub fn discover(lang: Lang, root: &Path) -> anyhow::Result<crate::ts::discover::
         Lang::Kotlin => kotlin::discover(root),
         Lang::Php => php::discover(root),
         Lang::Csharp => csharp::discover(root),
+        Lang::Powershell => powershell::discover(root),
         _ => anyhow::bail!("{} is not supported yet", lang.name()),
     }
 }
@@ -235,6 +242,7 @@ pub fn scan(lang: Lang, _path: &str, text: &str) -> crate::ts::scan::FileFacts {
         Lang::Kotlin => kotlin::scan(text),
         Lang::Php => php::scan(text),
         Lang::Csharp => csharp::scan(text),
+        Lang::Powershell => powershell::scan(text),
         _ => crate::ts::scan::FileFacts::default(),
     }
 }
@@ -260,6 +268,7 @@ pub fn resolve(
         Lang::Kotlin => kotlin::resolve(spec, index, ws),
         Lang::Php => php::resolve(from, spec, index, ws),
         Lang::Csharp => csharp::resolve(spec, index, ws),
+        Lang::Powershell => powershell::resolve(from, spec, index, ws),
         _ => Resolution::Unresolved,
     }
 }
@@ -281,6 +290,7 @@ pub fn exports(
         Lang::Kotlin => (kotlin::exports(path, text), Vec::new()),
         Lang::Php => (php::exports(path, text), Vec::new()),
         Lang::Csharp => (csharp::exports(path, text), Vec::new()),
+        Lang::Powershell => (powershell::exports(path, text), Vec::new()),
         _ => (Vec::new(), Vec::new()),
     }
 }
@@ -295,6 +305,7 @@ pub fn lookup(lang: Lang, name: &str) -> Option<crate::ts::deps::CrateMatch> {
         Lang::Kotlin => kotlin::lookup(name),
         Lang::Php => php::lookup(name),
         Lang::Csharp => csharp::lookup(name),
+        Lang::Powershell => powershell::lookup(name),
         _ => None,
     }
 }

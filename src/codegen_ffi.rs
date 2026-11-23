@@ -31,6 +31,7 @@ fn arg_expr(f: &PortFn, i: usize) -> String {
         "f64" => format!("num(args, {i})?"),
         "Option<f64>" => format!("opt_num(args, {i})?"),
         "Vec<f64>" => format!("num_vec(args, {i})?"),
+        "Option<Vec<f64>>" => format!("opt_num_vec(args, {i})?"),
         _ => format!("arg(args, {i})?"),
     }
 }
@@ -166,6 +167,14 @@ fn num_vec(args: &[Value], i: usize) -> Result<Vec<f64>, String> {{
     match args.get(i) {{
         Some(Value::Array(items)) => (0..items.len()).map(|j| num(items, j)).collect(),
         _ => arg(args, i),
+    }}
+}}
+
+#[allow(dead_code)]
+fn opt_num_vec(args: &[Value], i: usize) -> Result<Option<Vec<f64>>, String> {{
+    match args.get(i) {{
+        None | Some(Value::Null) => Ok(None),
+        Some(_) => num_vec(args, i).map(Some),
     }}
 }}
 

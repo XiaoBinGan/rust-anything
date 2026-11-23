@@ -36,8 +36,13 @@ reason is rarely the language. When a tool starts `powershell.exe` or `bash` for
 the time goes to starting the process, often more than the command itself, and the same command
 in Rust still waits for that start. Keep one shell open and send it the commands, batch them into
 one call, or call the API the command wraps (the file system, the registry, HTTP) from your code
-directly. Shell scripts themselves are not a supported language; PowerShell is on the list in
-[issue #200](https://github.com/erkamyaman/rust-anything/issues/200). The code around the calls
+directly. On an Apple M4, `pwsh -NoProfile -c 1` takes 0.24 to 0.45 s, longer than most commands
+it would run.
+Shell scripts (bash) are not a supported language. PowerShell modules and scripts are: their
+functions can be bridged, recorded and switched on like any other unit, but that pays off only for
+functions whose own logic is slow, since each call into Rust costs about 0.1 ms or more of
+PowerShell-side encoding. `profile` does not run PowerShell workloads yet ([issue #208](https://github.com/erkamyaman/rust-anything/issues/208)
+adds child-process detection, so it can say when start-up is the cost). The code around the calls
 (an Electron main process, a Node or Python tool runner) can be ported as usual.
 
 **My code is numeric; will the floats match exactly?** Often not: operation order, fused

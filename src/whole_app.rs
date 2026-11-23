@@ -87,6 +87,7 @@ fn main_pattern(lang: Lang) -> Option<&'static str> {
         Lang::Kotlin => r"\bfun\s+main\s*\(",
         Lang::Php => r#"^#!.*\bphp\b|\$argv\b|PHP_SAPI\s*===?\s*['"]cli['"]"#,
         Lang::Csharp => r"\bstatic\s+(?:async\s+)?(?:void|int|Task(?:<int>)?)\s+Main\s*\(",
+        Lang::Powershell => r"(?i)^#!.*\bpwsh\b|\$args\b|^\s*param\s*\(",
     })
 }
 

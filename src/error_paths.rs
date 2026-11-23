@@ -47,7 +47,10 @@ fn is_comment(lang: Lang, line: &str) -> bool {
     t.starts_with("//")
         || t.starts_with("/*")
         || t.starts_with('*')
-        || (matches!(lang, Lang::Python | Lang::Ruby | Lang::Php) && t.starts_with('#'))
+        || (matches!(
+            lang,
+            Lang::Python | Lang::Ruby | Lang::Php | Lang::Powershell
+        ) && t.starts_with('#'))
 }
 
 /// The lines of the definition that starts at `start`.
@@ -115,7 +118,9 @@ fn raise_line(lang: Lang, lines: &[&str], range: Range<usize>) -> Option<usize> 
             .find(|&i| !is_comment(lang, lines[i]) && re.is_match(lines[i]))
     };
     match lang {
-        Lang::Ts | Lang::Java | Lang::Kotlin | Lang::Php | Lang::Csharp => find(&word("throw")),
+        Lang::Ts | Lang::Java | Lang::Kotlin | Lang::Php | Lang::Csharp | Lang::Powershell => {
+            find(&word("throw"))
+        }
         Lang::Python | Lang::Ruby => find(&word("raise")),
         Lang::Go => {
             let open = range

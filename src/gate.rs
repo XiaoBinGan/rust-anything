@@ -158,6 +158,7 @@ fn size_check(crate_dir: &Path, manifest: &Manifest) -> Option<Check> {
     let source_comments: &[&str] = match manifest.language {
         crate::lang::Lang::Python | crate::lang::Lang::Ruby => &["#"],
         crate::lang::Lang::Php => &["//", "#", "/*", "*"],
+        crate::lang::Lang::Powershell => &["#", "<#"],
         _ => &["//", "/*", "*"],
     };
     let mut files = files_under(

@@ -52,6 +52,8 @@ pub enum Bridge {
     /// PHP through its FFI extension over a C ABI.
     PhpFfi,
     DotnetFfi,
+    /// PowerShell through P/Invoke over a C ABI, declared at run time with Reflection.Emit.
+    PwshFfi,
 }
 
 impl Bridge {
@@ -67,6 +69,7 @@ impl Bridge {
             Self::Jni => "JNI",
             Self::PhpFfi => "PHP FFI (C ABI)",
             Self::DotnetFfi => "P/Invoke (C ABI)",
+            Self::PwshFfi => "PowerShell P/Invoke (C ABI)",
         }
     }
 
@@ -81,6 +84,7 @@ impl Bridge {
             Lang::Java | Lang::Kotlin => Self::Jni,
             Lang::Php => Self::PhpFfi,
             Lang::Csharp => Self::DotnetFfi,
+            Lang::Powershell => Self::PwshFfi,
         }
     }
 }

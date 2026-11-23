@@ -960,3 +960,64 @@ fn bridgeable_exports_are_counted_as_bridge_judges_them() {
     let sum = unit(&report, "src/sum.js");
     assert_eq!((sum.exports, sum.bridgeable), (1, 1), "{sum:?}");
 }
+
+#[test]
+fn powershell_modules_get_their_bridge_notes_and_import_order() {
+    let root =
+        std::env::temp_dir().join(format!("rust-anything-ps-analyze-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("Private")).unwrap();
+    std::fs::create_dir_all(root.join("tests")).unwrap();
+    std::fs::write(
+        root.join("Tools.psd1"),
+        "@{\n    ModuleVersion = '1.0.0'\n    RootModule = 'Tools.psm1'\n    RequiredModules = @('PSReadLine')\n}\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("Tools.psm1"),
+        ". \"$PSScriptRoot/Private/Strings.ps1\"\nImport-Module Pester\n\nfunction Get-Key {\n    param([string]$Name)\n    if ($Name -eq 'id') { return $null }\n    Format-Key $Name\n}\n\nExport-ModuleMember -Function Get-Key\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("Private/Strings.ps1"),
+        "function Format-Key {\n    param([string]$Name)\n    $Name.ToLowerInvariant() -replace '\\s+', '-'\n}\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("tests/Tools.Tests.ps1"),
+        "Describe 'Get-Key' { It 'works' { Get-Key 'A' | Should -Be 'a' } }\n",
+    )
+    .unwrap();
+    let report = analyze(&root).unwrap();
+    assert_eq!(report.language, rust_anything::lang::Lang::Powershell);
+    assert_eq!(report.summary.test_files, 1);
+    let unit = |file: &str| -> &UnitReport {
+        report
+            .units
+            .iter()
+            .find(|u| u.files.iter().any(|f| f == file))
+            .unwrap_or_else(|| panic!("{file}: {:?}", report.units))
+    };
+    let tools = unit("Tools.psm1");
+    let strings = unit("Private/Strings.ps1");
+    assert_eq!(tools.bridge, Bridge::PwshFfi);
+    assert!(
+        tools.wave > strings.wave,
+        "Tools.psm1 dot-sources Strings.ps1"
+    );
+    let risks: Vec<Risk> = tools.risks.iter().map(|r| r.risk).collect();
+    for risk in [Risk::CaseInsensitive, Risk::NullReferences] {
+        assert!(risks.contains(&risk), "{risk:?} in {risks:?}");
+    }
+    assert!(
+        unit("Private/Strings.ps1")
+            .risks
+            .iter()
+            .any(|r| r.risk == Risk::PipelineOutput),
+        "implicit output"
+    );
+    let w = rust_anything::whole_app::whole_app(&root, &report);
+    let names: Vec<&str> = w.dependencies.iter().map(|d| d.name.as_str()).collect();
+    assert!(names.contains(&"Pester"), "{names:?}");
+    let _ = std::fs::remove_dir_all(&root);
+}

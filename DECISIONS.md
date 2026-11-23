@@ -71,6 +71,8 @@ Choices made so far, with reasons. Each one can be revisited.
 | M8 | Unannotated parameters used as numbers become `number` (Python, Ruby); Python recording passes integral numbers as ints in every fourth case. | `colorsys` got 1,709 garbage cases out of 1,800 without inference, and its int results were never recorded without ints. |
 | M9 | `serde_json` runs with `float_roundtrip` in rust-anything and in every generated crate. | The default parser can be one ULP off; Java's `Double.toString` exposed it in 43 cases. |
 | M10 | Shadow per language: a Go package, a Ruby file that `prepend`s, `<Class>Shadow` Java classes, a C file with `-D` renames and a `shadow` crate feature. | Each is the least invasive drop-in that language allows. |
+| M11 | PowerShell crosses through the JSON dispatcher: a generated `ps/<crate>.ps1` redeclares each exported function with the original `param()` block (attributes included) and calls `rust_anything_call` through P/Invoke methods that `System.Reflection.Emit` declares when the file loads. `enable` dot-sources that file after the module's last function. | Works the same on Windows, macOS and Linux with only `pwsh` installed: `Add-Type` would compile C# on every load (350 ms warm, about 4 s cold on an M4), and a binary module would need the .NET SDK to build. Reusing the `param()` block keeps parameter binding, coercion and validation errors in PowerShell, identical for both sides. Dot-sourcing redefines the functions in the module's own scope, so its internal callers get Rust too, without touching `Export-ModuleMember`. |
+| M12 | A PowerShell result is what `$r = f ...` holds: no output is `$null`, one object is that object, several are an array. The port returns that value; the wrapper writes it back so a caller sees the same (`, $v` for an array of fewer than two items). `Write-Host`, warnings and non-terminating errors are recorded as `output`. | PowerShell functions output a stream, not a return value, and unroll arrays on the way out; the assigned value is what callers use, and it is the only shape both sides can reproduce exactly. |
 
 ## Speed
 
@@ -119,5 +121,8 @@ Choices made so far, with reasons. Each one can be revisited.
   more than their work; `bench` recommends porting bigger units there. Interfaces, pointers,
   channels, Java objects other than strings, lists, arrays and maps, and Java primitive arrays
   other than `int[]`, `long[]`, `double[]` and `boolean[]` still cross as JSON.
+- PowerShell: each call costs about 0.1 ms or more in PowerShell itself (encoding the arguments, decoding
+  the answer), so functions that finish faster than that get slower; `bench` says so. Process
+  start-up, the usual cost of PowerShell in tools, is outside any port.
 - Ruby: aliases made with `alias` copy the original method, so shadow mode does not see calls
   through them.

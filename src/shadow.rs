@@ -66,6 +66,16 @@ pub fn shadow(crate_dir: &Path, out: Option<&Path>) -> Result<ShadowOutcome> {
                 .display()
         );
     }
+    if manifest.language == crate::lang::Lang::Powershell {
+        bail!(
+            "there is no shadow module for PowerShell yet; once `diff` passes, `rust-anything \
+             enable {}` dot-sources {} at the end of the original file",
+            crate_dir.display(),
+            crate_dir
+                .join(crate::codegen_powershell::wrapper_path(&manifest))
+                .display()
+        );
+    }
     if manifest.language == crate::lang::Lang::Csharp {
         bail!(
             "C# binds calls when it compiles, so there is no shadow module for C# yet; once `diff` \

@@ -315,6 +315,8 @@ pub(crate) fn record_with(
         crate::harness_php::record(opts.crate_dir, manifest, cases)?
     } else if manifest.language == crate::lang::Lang::Csharp {
         crate::harness_csharp::record(opts.crate_dir, manifest, cases)?
+    } else if manifest.language == crate::lang::Lang::Powershell {
+        crate::harness_powershell::record(opts.crate_dir, manifest, cases)?
     } else if manifest.language == crate::lang::Lang::Java {
         crate::harness_java::record(opts.crate_dir, manifest, cases)?
     } else if manifest.language == crate::lang::Lang::Kotlin {
@@ -470,6 +472,9 @@ fn stale_build(crate_dir: &Path, manifest: &Manifest) -> Option<PathBuf> {
         Kind::Ffi if manifest.language == crate::lang::Lang::Csharp => {
             crate::harness_csharp::built_file(crate_dir, manifest)?
         }
+        Kind::Ffi if manifest.language == crate::lang::Lang::Powershell => {
+            crate::harness_powershell::built_file(crate_dir, manifest)?
+        }
         _ => return None,
     };
     sources_newer_than(crate_dir, &built).then_some(built)
@@ -529,6 +534,9 @@ pub fn build(crate_dir: &Path) -> Result<PathBuf> {
         }
         Kind::Ffi if manifest.language == crate::lang::Lang::Csharp => {
             crate::harness_csharp::build(crate_dir, &manifest)
+        }
+        Kind::Ffi if manifest.language == crate::lang::Lang::Powershell => {
+            crate::harness_powershell::build(crate_dir, &manifest)
         }
         Kind::CAbi | Kind::Ffi => crate::harness_c::build(crate_dir, &manifest),
         Kind::Napi => {
@@ -739,6 +747,9 @@ pub fn bench(opts: &BenchOptions) -> Result<Vec<BenchRow>> {
     if manifest.language == crate::lang::Lang::Csharp {
         return crate::harness_csharp::bench(opts.crate_dir, &manifest, opts.min_ms);
     }
+    if manifest.language == crate::lang::Lang::Powershell {
+        return crate::harness_powershell::bench(opts.crate_dir, &manifest, opts.min_ms);
+    }
     if manifest.language == crate::lang::Lang::Java {
         return crate::harness_java::bench(opts.crate_dir, &manifest, opts.min_ms);
     }
@@ -939,6 +950,12 @@ pub(crate) fn diff_exact(opts: &DiffOptions) -> Result<DiffOutcome> {
         && opts.module.is_none()
     {
         return crate::harness_php::diff(opts.crate_dir, &manifest);
+    }
+    if let Ok(manifest) = Manifest::load(opts.crate_dir)
+        && manifest.language == crate::lang::Lang::Powershell
+        && opts.module.is_none()
+    {
+        return crate::harness_powershell::diff(opts.crate_dir, &manifest);
     }
     if let Ok(manifest) = Manifest::load(opts.crate_dir)
         && manifest.language == crate::lang::Lang::Java

@@ -389,6 +389,19 @@ const RUNTIMES: &[Runtime] = &[
         ],
     },
     Runtime {
+        name: "pwsh",
+        program: "pwsh",
+        args: &["-NoProfile", "-NonInteractive", "-Version"],
+        minimum: Some(Version(7, 4, 0)),
+        required: false,
+        java: false,
+        fix: [
+            "brew install powershell",
+            "winget install Microsoft.PowerShell",
+            "install PowerShell 7.4+ from https://aka.ms/install-powershell",
+        ],
+    },
+    Runtime {
         name: "wasm-bindgen",
         program: "wasm-bindgen",
         args: &["--version"],
@@ -1019,6 +1032,7 @@ mod tests {
             ("openjdk version \"21.0.8\" 2025-07-15", Version(21, 0, 8)),
             ("javac 17", Version(17, 0, 0)),
             ("PHP 8.3.4 (cli) (built: Mar 12 2024)", Version(8, 3, 4)),
+            ("PowerShell 7.7.0", Version(7, 7, 0)),
             ("cargo 1.97.0 (abcdef 2026-01-01)", Version(1, 97, 0)),
             ("8.0.100", Version(8, 0, 100)),
         ];

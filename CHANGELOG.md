@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- PowerShell units (#209). `analyze` reads `.psm1` modules, `.ps1` scripts and `.psd1` manifests,
+  follows `Import-Module`, `using module` and dot-sourced files, and adds notes on implicit output
+  and array unrolling, case-insensitive comparison and implicit conversions. `bridge` takes the
+  functions a module exports (`Export-ModuleMember`, wildcards included) with `[string]`, integer,
+  `[double]`, `[bool]`/`[switch]`, array, `[hashtable]` and untyped parameters, and writes
+  `ps/<crate>.ps1`: each function with its original `param()` block, calling the Rust library
+  through P/Invoke methods that Reflection.Emit declares at load time, so only `pwsh` 7.4+ is
+  needed on Windows, macOS and Linux. Filters, `begin`/`process` blocks, pipeline input,
+  `[scriptblock]`, `[ref]`, `$PSCmdlet` and other .NET types stay in PowerShell with the reason.
+  `record`, `diff`, `bench` and `gate` run a generated `pwsh` driver; a result is what
+  `$r = f ...` holds, and `Write-Host`, warnings and non-terminating errors are recorded as
+  `output`. `enable` dot-sources the wrapper after the module's last function, so its own callers
+  get Rust too; `disable` restores the file byte for byte. `doctor` checks `pwsh`, and `profile`
+  says to time one `pwsh` start first. Each call costs about 0.1 ms of PowerShell-side encoding on
+  an Apple M4, more with arrays and hashtables: a port pays off only for functions that do more
+  work than that, and never for the start-up of a shell per command.
+- Generated JSON dispatchers read `$num` markers (NaN, the infinities, -0) inside an optional list
+  of floats (`Option<Vec<f64>>`), which failed with "invalid type: map, expected f64".
 - `doctor` checks that PHP has the `FFI` extension loaded (`php -m`), not only PHP 8.0+
   (#240). When `FFI` is missing, the PHP line says so with how to enable or install it, and stays
   optional so the report does not fail.

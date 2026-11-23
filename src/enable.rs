@@ -101,6 +101,7 @@ pub fn enable(crate_dir: &Path) -> Result<Switched> {
             .canonical()?;
         let block = match manifest.language {
             Lang::Python => python_block(&manifest, &crate_dir, &dir, &swap, &switch),
+            Lang::Powershell => powershell_block(&manifest, &crate_dir, &dir, &switch),
             _ => js_block(
                 &manifest,
                 &crate_dir,
@@ -159,7 +160,9 @@ pub fn disable(crate_dir: &Path) -> Result<Switched> {
 pub fn is_supported(manifest: &Manifest) -> bool {
     matches!(
         (manifest.language, manifest.kind),
-        (Lang::Python, Kind::Pyo3) | (Lang::Ts, Kind::Napi | Kind::Wasm)
+        (Lang::Python, Kind::Pyo3)
+            | (Lang::Ts, Kind::Napi | Kind::Wasm)
+            | (Lang::Powershell, Kind::Ffi)
     )
 }
 
@@ -167,7 +170,7 @@ fn supported(manifest: &Manifest) -> Result<()> {
     match manifest.language {
         _ if is_supported(manifest) => Ok(()),
         lang => bail!(
-            "`enable` switches TS/JS and Python ports in place; for {} use the shadow module \
+            "`enable` switches TS/JS, Python and PowerShell ports in place; for {} use the shadow module \
              (`rust-anything shadow`), imported where the app imported the original, and \
              RUST_ANYTHING_MODE=old|shadow|new",
             lang.name()
@@ -187,6 +190,8 @@ fn declared(text: &str, name: &str, lang: Lang) -> bool {
     let name = regex::escape(name);
     let pattern = if lang == Lang::Python {
         format!(r"(?m)^(async\s+)?def\s+{name}\s*\(")
+    } else if lang == Lang::Powershell {
+        format!(r"(?mi)^\s*function\s+{name}\s*[{{(\s]")
     } else {
         format!(r"(?m)^\s*(export\s+)?(default\s+)?(async\s+)?function\s*\*?\s*{name}\s*[<(]")
     };
@@ -291,11 +296,30 @@ fn python_block(
     )
 }
 
+fn powershell_block(manifest: &Manifest, crate_dir: &Path, dir: &Path, switch: &str) -> String {
+    let (start, end) = marker("#", &manifest.crate_name, crate_dir, dir);
+    let wrapper = crate_dir.join(crate::codegen_powershell::wrapper_path(manifest));
+    let rel = crate::shadow::relative(dir, &wrapper).replace('\'', "''");
+    format!(
+        "{start}\n\
+         if ($env:RUST_ANYTHING_MODE -ne 'old' -and $env:{switch} -ne 'original') {{\n\
+         \x20   try {{\n\
+         \x20       . (Join-Path $PSScriptRoot '{rel}')\n\
+         \x20   }} catch {{\n\
+         \x20       if ($env:RUST_ANYTHING_MODE -eq 'new') {{ throw }}\n\
+         \x20   }}\n\
+         }}\n\
+         {end}\n"
+    )
+}
+
 /// Puts the block on its own lines: Python before a top-level `if __name__ == "__main__":`
 /// (else at the end, after every `def`), JS after a shebang and `"use strict"`, where hoisted
 /// function declarations can already be rebound.
 fn insert(text: &str, block: &str, lang: Lang) -> String {
-    let at = if lang == Lang::Python {
+    let at = if lang == Lang::Powershell {
+        crate::lang::powershell::after_functions(text).unwrap_or(text.len())
+    } else if lang == Lang::Python {
         line_starts(text)
             .find(|&i| {
                 let line = &text[i..];
