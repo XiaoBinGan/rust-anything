@@ -55,7 +55,6 @@ enum Cmd {
         #[arg(default_value = ".")]
         root: PathBuf,
         /// Print the machine-readable report (schema `rust-anything/analyze@1`) instead of Markdown.
-        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
         /// Write to this file instead of stdout.
@@ -116,7 +115,6 @@ enum Cmd {
     /// 3a. Record what the original's functions return on generated and given inputs.
     Record {
         /// Crate folder made by `bridge`.
-        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Generated cases per function.
@@ -132,7 +130,6 @@ enum Cmd {
         /// Resolve npm packages from this folder's `node_modules` (when the repo has none installed).
         #[arg(long)]
         resolve_from: Option<PathBuf>,
-        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
