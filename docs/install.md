@@ -8,11 +8,13 @@ Every way to install rust-anything, keep it up to date, remove it, and build it 
 cargo install --path .
 ```
 
-`record`, `diff` and `bench` run the original in its own runtime: Node 22.6+ for TS (it runs `.ts`
-sources directly), Python 3.9+ for Python and C (ctypes), Go 1.21+, Ruby 3+, JDK 17+
-(`javac` and `java`). `profile` on Node needs Node 24+, which allows `--cpu-prof` in `NODE_OPTIONS`. C also needs a C compiler. wasm bridges also need `rustup target add wasm32-unknown-unknown` and
-`cargo install wasm-bindgen-cli --version <the crate's wasm-bindgen version> --locked`; `build` names
-the exact version.
+`record`, `diff` and `bench` run the original in its own runtime, and `doctor` checks each version
+against the same minimums: Node 22.6+ for TS (it runs `.ts` sources directly), Python 3.9+ for Python
+and C (ctypes), Go 1.22+, Ruby 3.0+, JDK 17+ (`javac` and `java`), PHP 8.0+ with `ext-ffi` for PHP
+units, `kotlinc` for Kotlin units, the .NET SDK for C# and `pwsh` 7.4+ for PowerShell. `profile` on
+Node needs Node 24+, which allows `--cpu-prof` in `NODE_OPTIONS`. C also needs a C compiler. wasm
+bridges also need `rustup target add wasm32-unknown-unknown` and `cargo install wasm-bindgen-cli
+--version <the crate's wasm-bindgen version> --locked`; `build` names the exact version.
 
 ### Windows
 
