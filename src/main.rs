@@ -24,7 +24,7 @@ use rust_anything::{analyze, app, bridge, front_door, gate, harness, lift, mcp, 
 #[command(
     name = "rust-anything",
     version,
-    about = "Rewrite TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP or C# apps in Rust, one verified piece at a time",
+    about = "Rewrite TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP, C# or PowerShell apps in Rust, one verified piece at a time",
     after_help = "Loop per unit: analyze -> bridge -> record -> port src/port.rs -> build -> diff -> shadow -> gate\nOnly the slow part: go --agent claude -- <workload>, then enable/disable and report"
 )]
 struct Cli {
