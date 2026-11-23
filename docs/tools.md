@@ -168,7 +168,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `out` | string |  | Output folder; defaults to <crate>/report. |
+| `out` | string |  | Output folder; defaults to `<crate>/report`. |
 | `min_ms` | integer |  | Minimum measured time per function and side, in milliseconds (default 200). |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
 
@@ -216,7 +216,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `out` | string |  | Output folder; defaults to <crate>/report. |
+| `out` | string |  | Where to write the module; defaults to `<crate>/shadow/<name>.shadow.ts`. |
 
 ## Map the port
 

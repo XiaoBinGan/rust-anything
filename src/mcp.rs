@@ -522,7 +522,7 @@ fn tool_schemas() -> Value {
             "description": "Write <crate>/report/REPORT.md and card.svg for a pull request or README: the unit, recorded cases matched (diff), speedup call included (bench), fallback rate, on or off, and the machine with its core count. Builds first; every number comes from this run.",
             "inputSchema": { "type": "object", "properties": {
                 "crate": crate_dir,
-                "out": { "type": "string", "description": "Output folder; defaults to <crate>/report." },
+                "out": { "type": "string", "description": "Output folder; defaults to `<crate>/report`." },
                 "min_ms": { "type": "integer", "description": "Minimum measured time per function and side, in milliseconds (default 200)." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
             }, "required": ["crate"] },
@@ -553,7 +553,7 @@ fn tool_schemas() -> Value {
         {
             "name": "shadow",
             "description": "Generate a drop-in shadow (a TS or Python module, Go package, Ruby file, Java classes or C file) that runs the original and the Rust port side by side and reports mismatches; RUST_ANYTHING_MODE=old|shadow|new switches at runtime.",
-            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string", "description": "Output folder; defaults to <crate>/report." } }, "required": ["crate"] },
+            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string", "description": "Where to write the module; defaults to `<crate>/shadow/<name>.shadow.ts`." } }, "required": ["crate"] },
         },
         {
             "name": "map",
