@@ -361,12 +361,8 @@ pub fn lookup(header: &str) -> Option<CrateMatch> {
 
 /// A C scalar type: (dialect type, Rust type in the port, Rust type at the C ABI, ctypes name).
 pub fn scalar(c: &str) -> Option<(&'static str, &'static str, &'static str, &'static str)> {
-    let c = c
-        .split_whitespace()
-        .filter(|w| *w != "const")
-        .collect::<Vec<_>>()
-        .join(" ");
-    Some(match c.as_str() {
+    let spellings = spellings(c);
+    Some(match spellings.first()?.as_str() {
         "int" | "signed int" | "signed" => ("int", "i32", "std::ffi::c_int", "c_int"),
         "unsigned" | "unsigned int" => ("int", "u32", "std::ffi::c_uint", "c_uint"),
         "short" | "short int" | "signed short" => ("int", "i16", "std::ffi::c_short", "c_short"),
@@ -392,12 +388,36 @@ pub fn scalar(c: &str) -> Option<(&'static str, &'static str, &'static str, &'st
         "uint64_t" => ("int", "u64", "u64", "c_uint64"),
         "size_t" => ("int", "usize", "usize", "c_size_t"),
         "ssize_t" | "ptrdiff_t" | "intptr_t" => ("int", "isize", "isize", "c_ssize_t"),
+        "uintptr_t" => ("int", "usize", "usize", "c_size_t"),
         "float" => ("number", "f32", "f32", "c_float"),
         "double" => ("number", "f64", "f64", "c_double"),
         "bool" | "_Bool" => ("boolean", "bool", "bool", "c_bool"),
         "void" => ("void", "()", "()", "None"),
-        _ => return None,
+        _ => return spellings[1..].iter().find_map(|spelling| scalar(spelling)),
     })
+}
+
+/// The spellings of one C type worth trying, in order: C allows the integer specifiers in any
+/// order (`long unsigned int`), and `int` is implied (`signed long int` is `signed long`).
+fn spellings(c: &str) -> Vec<String> {
+    let mut words: Vec<&str> = c
+        .split_whitespace()
+        .filter(|w| !matches!(*w, "const" | "volatile" | "restrict"))
+        .collect();
+    // Sign, then size, then the base type: the order the table's own spellings use.
+    let rank = |w: &str| match w {
+        "signed" | "unsigned" => 0,
+        "short" | "long" => 1,
+        "int" | "char" | "double" | "float" | "void" | "_Bool" | "bool" => 2,
+        _ => 3,
+    };
+    words.sort_by_key(|w| rank(w));
+    let sorted = words.join(" ");
+    let mut out = vec![sorted.clone()];
+    if let Some(without_int) = sorted.strip_suffix(" int").filter(|rest| !rest.is_empty()) {
+        out.push(without_int.to_string());
+    }
+    out
 }
 
 /// The C type of a declarator: base type plus pointers (`const char *`), and the name.
@@ -1103,6 +1123,20 @@ pub fn defines_main(source: &str) -> bool {
 mod tests {
     use super::*;
 
+
+    #[test]
+    fn specifiers_may_come_in_any_order_and_int_is_implied() {
+        // C allows `long unsigned int`; the table keeps one spelling of each type.
+        assert_eq!(scalar("long unsigned int"), scalar("unsigned long"));
+        assert_eq!(scalar("unsigned long int"), scalar("unsigned long"));
+        assert_eq!(scalar("signed long int"), scalar("signed long"));
+        assert_eq!(scalar("int unsigned"), scalar("unsigned int"));
+        assert_eq!(scalar("short unsigned int"), scalar("unsigned short"));
+        assert_eq!(scalar("const unsigned long int"), scalar("unsigned long"));
+        // `uintptr_t` is a pointer-sized unsigned integer.
+        assert_eq!(scalar("uintptr_t").map(|t| t.1), Some("usize"));
+        assert_eq!(scalar("uintptr_t").map(|t| t.0), Some("int"));
+    }
     #[test]
     fn reads_drop_in_candidates() {
         let source = "#include \"text.h\"\n#include <string.h>\n\
