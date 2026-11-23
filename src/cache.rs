@@ -177,7 +177,12 @@ pub fn human(bytes: u64) -> String {
     const UNITS: [&str; 4] = ["B", "KB", "MB", "GB"];
     let mut value = bytes as f64;
     let mut unit = 0;
-    while value >= 1024.0 && unit < UNITS.len() - 1 {
+    // One decimal of the unit below reads `1024.0` from `1023.95` up, so a value that rounds to it
+    // belongs in the next unit: `human(1_048_575)` is `1.0 MB`, not `1024.0 KB`.
+    while (unit == 0 && value >= 1023.5) || (unit > 0 && value >= 1023.95) {
+        if unit == UNITS.len() - 1 {
+            break;
+        }
         value /= 1024.0;
         unit += 1;
     }
@@ -278,5 +283,11 @@ mod tests {
         assert_eq!(human(512), "512 B");
         assert_eq!(human(1536), "1.5 KB");
         assert_eq!(human(3 * 1024 * 1024 * 1024), "3.0 GB");
+        // A value whose one-decimal form would read `1024.0` belongs in the next unit.
+        assert_eq!(human(1_048_575), "1.0 MB");
+        assert_eq!(human(1_073_741_823), "1.0 GB");
+        assert_eq!(human(1_048_000), "1023.4 KB");
+        assert_eq!(human(1023), "1023 B");
+        assert_eq!(human(1024), "1.0 KB");
     }
 }
