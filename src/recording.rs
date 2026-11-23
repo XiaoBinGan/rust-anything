@@ -113,9 +113,11 @@ pub fn coverage_line(c: &Value) -> Option<String> {
             files.len() - 4
         ));
     }
+    // `{:.0}` rounds 99.9% up to `100%`, which reads as full coverage while a line never ran:
+    // below 100 the share is floored, and it only prints `100%` when every line ran.
     let mut line = format!(
-        "the recorded cases ran {reached} of the original's {lines} lines ({:.0}%)",
-        reached as f64 * 100.0 / lines as f64
+        "the recorded cases ran {reached} of the original's {lines} lines ({})",
+        percent(reached, lines)
     );
     if !missed.is_empty() {
         line.push_str(&format!(
@@ -124,6 +126,14 @@ pub fn coverage_line(c: &Value) -> Option<String> {
         ));
     }
     Some(line)
+}
+
+/// A whole-number share that never says `100%` unless the counts are equal.
+fn percent(reached: u64, lines: u64) -> String {
+    if reached >= lines {
+        return "100%".into();
+    }
+    format!("{}%", reached * 100 / lines.max(1))
 }
 
 /// Line coverage of the unit's files from the V8 coverage Node writes to `dir`
@@ -444,6 +454,26 @@ mod tests {
     }
 
     #[test]
+    fn a_share_just_under_full_never_reads_as_100_percent() {
+        assert_eq!(percent(1000, 1000), "100%");
+        assert_eq!(percent(999, 1000), "99%");
+        assert_eq!(percent(1999, 2000), "99%");
+        assert_eq!(percent(1, 3), "33%");
+        assert_eq!(percent(0, 10), "0%");
+        assert_eq!(percent(5, 0), "100%");
+    }
+
+    #[test]
+    fn covered_lines_run_together_and_gaps_keep_their_own_range() {
+        assert_eq!(spans(std::iter::empty()), "");
+        assert_eq!(spans([5].into_iter()), "5");
+        assert_eq!(spans([1, 2, 3].into_iter()), "1-3");
+        assert_eq!(spans([1, 2, 3, 5, 7, 8].into_iter()), "1-3, 5, 7-8");
+        // A gap of one line still splits the range.
+        assert_eq!(spans([1, 3].into_iter()), "1, 3");
+    }
+
+    #[test]
     fn known_diffs_pass_only_with_the_listed_result() {
         let entries = [
             json!({"fn": "f", "args": [1], "actual": {"ok": 2}, "reason": "fixed a bug"}),
@@ -493,15 +523,5 @@ mod tests {
         let err = known_diffs(&dir).unwrap_err();
         std::fs::remove_dir_all(&dir).unwrap();
         assert!(format!("{err:#}").contains("reason"), "{err:#}");
-    }
-
-    #[test]
-    fn spans_collapse_runs_and_keep_gaps_apart() {
-        assert_eq!(spans(std::iter::empty()), "");
-        assert_eq!(spans([4].into_iter()), "4");
-        assert_eq!(spans([4, 5].into_iter()), "4-5");
-        assert_eq!(spans([1, 2, 3, 4].into_iter()), "1-4");
-        assert_eq!(spans([1, 3, 5].into_iter()), "1, 3, 5");
-        assert_eq!(spans([1, 2, 3, 5, 7, 8].into_iter()), "1-3, 5, 7-8");
     }
 }
