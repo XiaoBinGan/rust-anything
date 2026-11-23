@@ -190,6 +190,7 @@ pub fn run() -> Report {
         let wasm = s.spawn(wasm_target);
         let ndk = s.spawn(android_ndk);
         let android_targets = s.spawn(android_targets);
+        let adb = s.spawn(android_adb);
         let mcp = s.spawn(|| mcp_self_test(&exe));
         let mut checks: Vec<Check> = probes
             .into_iter()
@@ -202,6 +203,7 @@ pub fn run() -> Report {
                 .join()
                 .expect("the Android targets probe panicked"),
         );
+        checks.push(adb.join().expect("the adb probe panicked"));
         checks.push(mcp.join().expect("the MCP self-test panicked"));
         checks
     });
@@ -615,6 +617,34 @@ fn android_ndk() -> Check {
         detail,
         fix: (status != Status::Ok).then(|| {
             "sdkmanager \"ndk;28.0.13004108\"  (or set ANDROID_NDK_HOME to an installed NDK)"
+                .to_string()
+        }),
+    }
+}
+
+/// `adb`, which `record`/`diff --profile android` use to reach a device.
+fn android_adb() -> Check {
+    let probe = probe("adb", &["version"]);
+    let (status, detail) = match probe.as_deref() {
+        Some(banner) => (
+            Status::Ok,
+            banner.lines().next().unwrap_or(banner).to_string(),
+        ),
+        None => (
+            Status::Missing,
+            "`adb` not found or did not run; recording and diffing on a device needs it".into(),
+        ),
+    };
+    Check {
+        name: "Android adb".into(),
+        status,
+        required: false,
+        detail,
+        fix: (status != Status::Ok).then(|| {
+            // The package alone is not enough: its folder has to be on PATH, or the next probe
+            // still cannot find `adb`.
+            "sdkmanager \"platform-tools\"  (or install Android Studio's SDK tools), then put its \
+             platform-tools folder on PATH"
                 .to_string()
         }),
     }
@@ -1279,6 +1309,25 @@ mod tests {
         let lines: Vec<_> = out.lines().collect();
         assert!(lines[1].trim_start().starts_with("fix: first"), "{out}");
         assert_eq!(lines[1].find("first"), lines[2].find("second"), "{out}");
+    }
+
+    #[test]
+    fn adb_is_a_row_of_its_own_and_never_required() {
+        // `record`/`diff --profile android` run `adb devices`, so a machine without it should hear
+        // about it — but a device is optional, like the NDK and the Rust targets next to it.
+        let check = android_adb();
+        assert_eq!(check.name, "Android adb");
+        assert!(!check.required);
+        if check.status != Status::Ok {
+            assert!(
+                check
+                    .fix
+                    .as_deref()
+                    .is_some_and(|f| f.contains("platform-tools")),
+                "a missing adb names the package that installs it: {:?}",
+                check.fix
+            );
+        }
     }
 
     #[test]

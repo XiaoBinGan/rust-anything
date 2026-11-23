@@ -688,6 +688,13 @@ fn run() -> Result<ExitCode> {
             lang,
             whole_app,
         } => {
+            // Said here, not under "analyzing X", so the path is named once (#267).
+            if !root
+                .try_exists()
+                .with_context(|| format!("reading {}", root.display()))?
+            {
+                anyhow::bail!("no folder {}", root.display());
+            }
             let lang = lang.unwrap_or_else(|| rust_anything::lang::Lang::detect(&root));
             let mut report = analyze::analyze_lang(&root, lang)
                 .with_context(|| format!("analyzing {}", root.display()))?;
@@ -927,6 +934,16 @@ fn run() -> Result<ExitCode> {
             json,
             node_args,
         } => {
+            // The same missing-folder hint the other commands give before they
+            // read the manifest. Otherwise a missing crate reaches the harness
+            // and reports "run record first", which cannot work yet.
+            let manifest_path = crate_dir.join(rust_anything::bridge::MANIFEST);
+            if !manifest_path.exists() {
+                anyhow::bail!(
+                    "reading {} (run `rust-anything bridge` first)",
+                    manifest_path.display()
+                );
+            }
             let opts = harness::DiffOptions {
                 crate_dir: &crate_dir,
                 module: module.as_deref(),
