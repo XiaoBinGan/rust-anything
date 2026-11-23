@@ -30,7 +30,12 @@ pub fn script_of(path: &str, text: &str) -> String {
         let body = &after_open[tag_end + 1..];
         let close = body.find("</script>").unwrap_or(body.len());
         out.push_str(&body[..close]);
-        out.push('\n');
+        // Two blocks on one line (`<script>a</script><script>b</script>`) must not glue their
+        // bodies together, and a newline here would push every later block down a line: a space
+        // keeps them apart on the line they are already on.
+        if !body[..close].ends_with('\n') {
+            out.push(' ');
+        }
         rest = &body[close..];
         rest = rest.strip_prefix("</script>").unwrap_or(rest);
     }
@@ -46,5 +51,20 @@ mod tests {
         let sfc = "<template>\n<div/>\n</template>\n<script setup lang=\"ts\">\nimport x from './x'\n</script>\n";
         let script = script_of("App.vue", sfc);
         assert_eq!(script.lines().nth(4), Some("import x from './x'"));
+    }
+
+    #[test]
+    fn a_second_block_stays_on_its_own_lines() {
+        let sfc = "<script context=\"module\">\nexport const a = 1\n</script>\n<script>\nlet b = 2\n</script>\n";
+        let script = script_of("App.svelte", sfc);
+        assert_eq!(script.lines().nth(1), Some("export const a = 1"));
+        assert_eq!(script.lines().nth(4), Some("let b = 2"), "{script:?}");
+    }
+
+    #[test]
+    fn two_blocks_on_one_line_do_not_glue_their_bodies() {
+        let script = script_of("App.svelte", "<script>a</script><script>b</script>");
+        assert!(!script.contains("ab"), "{script:?}");
+        assert_eq!(script.lines().count(), 1, "{script:?}");
     }
 }
