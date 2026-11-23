@@ -303,9 +303,10 @@ For PHP, `analyze` plans a PHP app (Composer packages and PSR-4 autoloading, ris
 such as loose comparison and integer overflow into floats, Composer packages mapped to crates),
 and a PHP CLI or server can be recorded, replayed and put behind a Rust front door. A unit's
 top-level functions with scalar, string, list and assoc-array parameters are bridged through PHP's
-FFI extension (`php` with `ext-ffi`, on by default for the CLI): require the generated
-`php/<crate>.php` in place of the original file once `diff` passes. Each call crosses as JSON, about
-1 µs, so `bench` shows small functions slower than PHP; there is no `shadow` for PHP yet
+FFI extension (`php` with `ext-ffi`, on by default for the CLI): once `diff` passes, require the
+generated `php/<crate>.php` where the app required the original, and leave both files where they are —
+the wrapper loads its native library relative to its own folder, so moving it breaks the load. Each
+call crosses as JSON, about 1 µs, so `bench` shows small functions slower than PHP; there is no `shadow` for PHP yet
 ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 C# works the same way: `analyze` reads `.csproj` projects and their NuGet packages
@@ -313,8 +314,9 @@ C# works the same way: `analyze` reads `.csproj` projects and their NuGet packag
 (`decimal`, `dynamic`, LINQ's deferred queries, `Task`, `lock`, reflection). A C# CLI or ASP.NET
 server can be recorded, replayed and put behind a Rust front door. A unit's public static methods
 with scalar, string, array, list, dictionary and record or plain-class parameters are bridged
-through P/Invoke (`dotnet` on PATH to record and diff): call the generated `<namespace>.Rust`
-classes, or alias them with `using`, once `diff` passes. Each call crosses as JSON, about 1-3 µs,
+through P/Invoke (`dotnet` on PATH to record and diff): once `diff` passes, call the generated classes
+in the `<namespace>.Rust` namespace (`Acme.Text.Slug.Slugify` becomes
+`Acme.Text.Rust.Slug.Slugify`), or alias them with `using`. Each call crosses as JSON, about 1-3 µs,
 so `bench` shows small methods slower than .NET; there is no `shadow` for C# yet
 ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
