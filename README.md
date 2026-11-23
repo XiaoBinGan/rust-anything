@@ -308,11 +308,11 @@ generated `php/<crate>.php` — the name is the crate with `-` written as `_`, s
 `php/foo_rs.php` — where the app required the original, and leave both files where they are: the
 wrapper loads its native library relative to its own folder, so moving it breaks the load. The wrapper
 declares each bridged function unconditionally, with no `function_exists` guard, so it replaces the
-original file rather than joining it. A file that also defines classes, `public static` methods, or
-functions the bridge keeps in PHP (a `callable` or `Closure` parameter, say) cannot simply be required
-alongside it — the second load redeclares the bridged functions — so keep those declarations in a file
-that stays required. A PHP server (anything but the CLI) needs
-`ffi.enable=1` for this: `ext-ffi` is limited to the CLI SAPI by default. Each
+original file rather than joining it. Whatever else that file holds cannot come along: classes,
+`public static` methods, functions the bridge keeps in PHP (a `callable` or `Closure` parameter, say),
+and top-level statements such as `define('FEATURE_ENABLED', true)` are not in the wrapper, and requiring
+both files redeclares the bridged functions. Keep those in a file that stays required.
+Each
 call crosses as JSON, about 1 µs, so `bench` shows small functions slower than PHP; there is no `shadow` for PHP yet
 ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
