@@ -1009,10 +1009,15 @@ fn run() -> Result<ExitCode> {
             json,
             node_args,
         } => {
+            // `--time 0` means "one round", so zero is a valid value here: the helper rejects it,
+            // and a value `Duration` cannot hold is an error rather than a panic.
             let time = time
                 .map(|t| {
                     anyhow::ensure!(t.is_finite() && t >= 0.0, "`--time` takes seconds");
-                    Ok(std::time::Duration::from_secs_f64(t))
+                    if t == 0.0 {
+                        return Ok(std::time::Duration::ZERO);
+                    }
+                    rust_anything::process::seconds(t).context("`--time` is too large")
                 })
                 .transpose()?;
             let f = rust_anything::fuzz::fuzz(&rust_anything::fuzz::FuzzOptions {

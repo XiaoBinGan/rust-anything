@@ -487,7 +487,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "profile",
-            "description": "Run a real workload (a command: node or python3 script, `go test -bench`, java, ruby) under the language's profiler and rank the repository's hot functions by inclusive time, with their callers, call counts and advice: what to port together, and which loops to batch (`bridge` with `batch`). Time spent waiting on child processes (`execSync`, `subprocess.run`, `os.system`) is listed apart, with the command and the call, and a function that mostly waits is not offered for porting. Profile before porting: leaf functions called one at a time are slower in Rust.",
+            "description": "Run a real workload (a command: node or python3 script, `go test -bench`, java, ruby) under the language's profiler and rank the repository's hot functions by inclusive time, with their callers, call counts and advice: what to port together, and which loops to batch (`bridge` with `batch`). Profile before porting: leaf functions called one at a time are slower in Rust.",
             "inputSchema": { "type": "object", "properties": {
                 "root": { "type": "string", "description": "Repository root." },
                 "command": { "type": "array", "items": { "type": "string" }, "description": "The workload, run in root: [\"node\", \"bench.mjs\"]." },
@@ -496,7 +496,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "go",
-            "description": "The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so; passing over one that mostly waits on child processes, and stopping when waiting is half the run or more; `function` still names one to port then, unless that function itself mostly waits), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.",
+            "description": "The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.",
             "inputSchema": { "type": "object", "properties": {
                 "root": { "type": "string", "description": "Repository root." },
                 "command": { "type": "array", "items": { "type": "string" }, "description": "The workload, run in root: [\"python3\", \"app.py\"]." },
@@ -881,7 +881,10 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 Some(other) => anyhow::bail!("unknown `keep` `{other}`: use mismatches or all"),
             };
             let time = match args["time"].as_f64() {
-                Some(t) if t.is_finite() && t >= 0.0 => Some(std::time::Duration::from_secs_f64(t)),
+                Some(0.0) => Some(std::time::Duration::ZERO),
+                Some(t) if t.is_finite() && t > 0.0 => {
+                    Some(crate::process::seconds(t).context("`time` is too large")?)
+                }
                 Some(_) => anyhow::bail!("`time` takes seconds"),
                 None => None,
             };
@@ -1053,6 +1056,15 @@ fn call(name: &str, args: &Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_fuzz_time_too_large_for_a_duration_is_an_error_not_a_panic() {
+        // The conversion used to be `Duration::from_secs_f64`, which panics above ~1.8e19 s.
+        let err = call("fuzz", &json!({ "crate": ".", "time": 1e30 }))
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("too large"), "{err}");
+    }
 
     #[test]
     fn allocator_defaults_only_when_omitted() {
