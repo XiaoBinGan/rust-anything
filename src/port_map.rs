@@ -1,7 +1,7 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::Serialize;
 
 use crate::bridge::{MANIFEST, Manifest, SCHEMA};
@@ -75,10 +75,21 @@ impl PortMap {
 pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
     let root =
         std::fs::canonicalize(root).with_context(|| format!("mapping {}", root.display()))?;
+    // A file is not a repository: `analyze` says so, and a map over a file used to come out empty
+    // and exit 0, or fail on the first directory read without naming what it read.
+    if !root.is_dir() {
+        bail!(
+            "{} is a file; `map` takes the folder of a project's source code",
+            root.display()
+        );
+    }
     let mut crate_dirs = manifests(&root);
     for dir in extra {
         let dir =
             std::fs::canonicalize(dir).with_context(|| format!("mapping {}", dir.display()))?;
+        if !dir.is_dir() {
+            bail!("{} is a file; `--crates` takes folders", dir.display());
+        }
         crate_dirs.extend(manifests(&dir));
     }
     crate_dirs.sort();
