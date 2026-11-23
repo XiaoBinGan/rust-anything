@@ -216,7 +216,7 @@ pub fn markdown(card: &Card) -> String {
         card.matched,
         card.cases,
         times(card.speedup),
-        100.0 * card.fallback_rate(),
+        share(card.fallback_rate()),
         card.fallback_cases,
         card.cases,
         state(card),
@@ -340,7 +340,7 @@ pub fn svg(card: &Card) -> String {
             format!("{} slower", times(1.0 / card.speedup.max(1e-9)))
         },
         crab = include_str!("card_crab.svg").trim(),
-        fallback = share(card.fallback_rate()),
+        fallback = esc(&share(card.fallback_rate())),
         machine = esc(&card.machine),
     )
 }
@@ -348,6 +348,43 @@ pub fn svg(card: &Card) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn both_rendered_pages_show_the_edge_rates() {
+        // The helper is not the whole story: the Markdown row and the SVG footer each format it,
+        // and the SVG has to escape `<` or the document stops being XML.
+        let with = |cases: usize, fallback: usize| {
+            let mut c = card();
+            c.cases = cases;
+            c.fallback_cases = fallback;
+            c
+        };
+        let few = with(2001, 1);
+        let few_md = markdown(&few);
+        assert!(
+            few_md.contains("| Fallback to the original | <0.1% (1 of 2001 cases) |"),
+            "{few_md}"
+        );
+        let few_svg = svg(&few);
+        assert!(
+            few_svg.contains("Fallback to the original: &lt;0.1% of cases"),
+            "{few_svg}"
+        );
+        assert!(
+            !few_svg.contains("<0.1%"),
+            "an unescaped `<` breaks the SVG: {few_svg}"
+        );
+        assert!(few_svg.contains("xmlns="), "{few_svg}");
+
+        let almost = with(2000, 1999);
+        let almost_md = markdown(&almost);
+        assert!(
+            almost_md.contains("| Fallback to the original | >99.9% (1999 of 2000 cases) |"),
+            "{almost_md}"
+        );
+        let almost_svg = svg(&almost);
+        assert!(almost_svg.contains("&gt;99.9% of cases"), "{almost_svg}");
+    }
 
     #[test]
     fn a_fallback_rate_never_reads_as_none_or_as_all() {
