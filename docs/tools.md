@@ -216,7 +216,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `out` | string |  | Shadow file or folder; defaults beside the crate. |
+| `out` | string |  | Output folder; defaults to <crate>/report. |
 
 ## Map the port
 

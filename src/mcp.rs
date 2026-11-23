@@ -553,7 +553,7 @@ fn tool_schemas() -> Value {
         {
             "name": "shadow",
             "description": "Generate a drop-in shadow (a TS or Python module, Go package, Ruby file, Java classes or C file) that runs the original and the Rust port side by side and reports mismatches; RUST_ANYTHING_MODE=old|shadow|new switches at runtime.",
-            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string", "description": "Shadow file or folder; defaults beside the crate." } }, "required": ["crate"] },
+            "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "out": { "type": "string", "description": "Output folder; defaults to <crate>/report." } }, "required": ["crate"] },
         },
         {
             "name": "map",
