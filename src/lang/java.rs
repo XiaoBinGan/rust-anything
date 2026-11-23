@@ -342,23 +342,44 @@ pub fn lookup(name: &str) -> Option<CrateMatch> {
 
 // ---- exports ---------------------------------------------------------------------------------
 
+/// A Java parameter type: a wildcard is a type argument there, not a class name. A
+/// `List<? extends CharSequence>` parameter only reads its elements, so it takes what
+/// `List<CharSequence>` takes.
+pub fn java_to_ts_param(t: &str) -> Result<String, String> {
+    java_to_ts_in(t, true)
+}
+
 /// A Java type in the TS-like dialect, or why the bridge cannot carry it.
 pub fn java_to_ts(t: &str) -> Result<String, String> {
+    java_to_ts_in(t, false)
+}
+
+fn java_to_ts_in(t: &str, wildcard: bool) -> Result<String, String> {
     let t = t.trim();
-    // A wildcard is a type argument, not a class name: a `List<? extends CharSequence>` parameter
-    // only reads its elements, so it takes what `List<CharSequence>` takes.
-    if let Some(rest) = t.strip_prefix('?') {
+    // A result cannot carry a wildcard: the caller would have to know what it got. A parameter can,
+    // which is what `java_to_ts_param` is for.
+    if wildcard && let Some(rest) = t.strip_prefix('?') {
         let rest = rest.trim();
         if let Some(bound) = rest.strip_prefix("extends") {
-            return java_to_ts(bound.trim());
+            return java_to_ts_in(bound.trim(), wildcard);
         }
         if rest.starts_with("super") {
             return Err(format!("uses a wildcard `{t}`"));
         }
         return Err("takes or returns `Object`: values of any type".into());
     }
+    if let Some(rest) = t.strip_prefix('?') {
+        let rest = rest.trim();
+        return Err(
+            if rest.starts_with("super") || rest.starts_with("extends") {
+                format!("uses a wildcard `{t}`")
+            } else {
+                "takes or returns `Object`: values of any type".into()
+            },
+        );
+    }
     if let Some(inner) = t.strip_suffix("[]") {
-        return java_to_ts(inner).map(|i| format!("{i}[]"));
+        return java_to_ts_in(inner, wildcard).map(|i| format!("{i}[]"));
     }
     let (head, args) = match t.find('<') {
         Some(i) if t.ends_with('>') => (&t[..i], split_top(&t[i + 1..t.len() - 1])),
@@ -366,8 +387,10 @@ pub fn java_to_ts(t: &str) -> Result<String, String> {
     };
     let head = head.trim().rsplit('.').next().unwrap_or(head);
     let arg = |i: usize| -> Result<String, String> {
-        args.get(i)
-            .map_or_else(|| Err(format!("raw `{head}`")), |a| java_to_ts(a))
+        args.get(i).map_or_else(
+            || Err(format!("raw `{head}`")),
+            |a| java_to_ts_in(a, wildcard),
+        )
     };
     Ok(match head {
         "String" | "CharSequence" => "string".into(),
@@ -525,7 +548,7 @@ pub fn exports(path: &str, source: &str) -> Vec<ExportedFn> {
                         }
                         _ => continue,
                     };
-                    let ts_type = java_to_ts(&ty).unwrap_or_else(|reason| {
+                    let ts_type = java_to_ts_param(&ty).unwrap_or_else(|reason| {
                         blocker.get_or_insert(reason);
                         "unknown".into()
                     });
@@ -595,29 +618,39 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_bounded_wildcard_reads_as_its_bound() {
+    fn a_bounded_wildcard_reads_as_its_bound_in_a_parameter_only() {
         // `List<? extends T>` only reads `T`, so it is the same parameter as `List<T>`.
         assert_eq!(
-            java_to_ts("List<? extends CharSequence>").unwrap(),
+            java_to_ts_param("List<? extends CharSequence>").unwrap(),
             "string[]"
         );
-        assert_eq!(java_to_ts("List<? extends String>").unwrap(), "string[]");
-        assert_eq!(java_to_ts("List<String>").unwrap(), "string[]");
+        assert_eq!(
+            java_to_ts_param("List<? extends String>").unwrap(),
+            "string[]"
+        );
+        assert_eq!(java_to_ts_param("List<String>").unwrap(), "string[]");
         // A bound the bridge has no counterpart for keeps its own reason, not a "class ? extends …".
-        let object_bound = java_to_ts("List<? extends Number>").unwrap_err();
+        let object_bound = java_to_ts_param("List<? extends Number>").unwrap_err();
         assert!(object_bound.contains("Number"), "{object_bound}");
         assert!(!object_bound.contains("? extends"), "{object_bound}");
         // `? super` writes, and an unbounded `?` is `Object`: both stay refusals that name why.
         assert!(
-            java_to_ts("List<? super String>")
+            java_to_ts_param("List<? super String>")
                 .unwrap_err()
                 .contains("? super String")
         );
         assert!(
-            java_to_ts("List<?>")
+            java_to_ts_param("List<?>")
                 .unwrap_err()
                 .contains("values of any type")
         );
+        // A result cannot carry one: the caller would have to know what it got.
+        assert!(
+            java_to_ts("List<? extends CharSequence>")
+                .unwrap_err()
+                .contains("? extends CharSequence")
+        );
+        assert_eq!(java_to_ts("List<String>").unwrap(), "string[]");
     }
 
     #[test]
