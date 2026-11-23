@@ -402,7 +402,7 @@ pub fn scalar(c: &str) -> Option<(&'static str, &'static str, &'static str, &'st
 fn spellings(c: &str) -> Vec<String> {
     let mut words: Vec<&str> = c
         .split_whitespace()
-        .filter(|w| !matches!(*w, "const" | "volatile" | "restrict"))
+        .filter(|w| !QUALIFIERS.contains(w))
         .collect();
     // Sign, then size, then the base type: the order the table's own spellings use.
     let rank = |w: &str| match w {
@@ -702,12 +702,21 @@ fn struct_type(c_type: &str) -> Option<String> {
 }
 
 /// A declared type with typedefs and enums replaced by their scalar, `const` kept.
+/// Type qualifiers that do not change the type: `volatile unsigned char *` is a `char *` buffer.
+const QUALIFIERS: [&str; 3] = ["const", "volatile", "restrict"];
+
+fn without_qualifiers(base: &str) -> String {
+    base.split_whitespace()
+        .filter(|w| !QUALIFIERS.contains(w))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn resolve_type(c_type: &str) -> String {
     let stars = c_type.matches('*').count();
     let base = c_type.trim_end_matches(['*', ' ']).trim();
     let is_const = base.split_whitespace().any(|w| w == "const");
-    let bare: Vec<&str> = base.split_whitespace().filter(|w| *w != "const").collect();
-    let bare = bare.join(" ");
+    let bare = without_qualifiers(base);
     let resolved = if bare.starts_with("enum ") {
         "int".to_string()
     } else {
@@ -739,12 +748,7 @@ fn pointee(c_type: &str) -> Option<(String, bool)> {
     }
     let base = normalized.trim_end_matches(['*', ' ']).trim();
     let is_const = base.split_whitespace().any(|w| w == "const");
-    let bare = base
-        .split_whitespace()
-        .filter(|w| *w != "const")
-        .collect::<Vec<_>>()
-        .join(" ");
-    Some((bare, is_const))
+    Some((without_qualifiers(base), is_const))
 }
 
 fn is_integer(c_type: &str) -> bool {
@@ -1123,6 +1127,20 @@ pub fn defines_main(source: &str) -> bool {
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_volatile_byte_buffer_is_still_a_buffer() {
+        // `volatile` does not change the type: the parameter is a `char *` buffer, not an out scalar.
+        assert_eq!(
+            pointee("volatile unsigned char *"),
+            Some(("unsigned char".to_string(), false))
+        );
+        assert_eq!(
+            pointee("const volatile char *"),
+            Some(("char".to_string(), true))
+        );
+        assert_eq!(resolve_type("volatile unsigned char *"), "unsigned char*");
+        assert_eq!(scalar("volatile unsigned long"), scalar("unsigned long"));
+    }
 
     #[test]
     fn specifiers_may_come_in_any_order_and_int_is_implied() {
