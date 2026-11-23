@@ -33,8 +33,17 @@ pub fn limit(default: Duration) -> Duration {
     std::env::var("RUST_ANYTHING_COMMAND_TIMEOUT")
         .ok()
         .and_then(|v| v.parse::<f64>().ok())
-        .filter(|s| s.is_finite() && *s > 0.0)
-        .map_or(default, Duration::from_secs_f64)
+        .and_then(seconds)
+        .unwrap_or(default)
+}
+
+/// A duration from a number of seconds; `None` when the value cannot be one (not positive, not
+/// finite, or too large for `Duration` — a plain conversion panics on `1e20`).
+pub fn seconds(v: f64) -> Option<Duration> {
+    if !v.is_finite() || v <= 0.0 {
+        return None;
+    }
+    Duration::try_from_secs_f64(v).ok()
 }
 
 pub const TESTS: Duration = Duration::from_secs(30 * 60);
@@ -159,6 +168,17 @@ fn shown(cmd: &Command) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_timeout_value_that_cannot_be_a_duration_falls_back_instead_of_panicking() {
+        // `Duration::from_secs_f64(1e20)` panics; an over-large value is ignored, as a bad one is.
+        assert_eq!(seconds(1e20), None);
+        assert_eq!(seconds(f64::INFINITY), None);
+        assert_eq!(seconds(f64::NAN), None);
+        assert_eq!(seconds(-1.0), None);
+        assert_eq!(seconds(0.0), None);
+        assert_eq!(seconds(2.5), Some(Duration::from_secs_f64(2.5)));
+    }
 
     #[cfg(unix)]
     #[test]

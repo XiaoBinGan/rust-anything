@@ -1581,12 +1581,11 @@ impl Rng {
 /// How long one recorded case may run before the original is stopped on it:
 /// `RUST_ANYTHING_CASE_TIMEOUT` seconds, 10 by default.
 fn case_timeout() -> std::time::Duration {
-    let secs = std::env::var("RUST_ANYTHING_CASE_TIMEOUT")
+    std::env::var("RUST_ANYTHING_CASE_TIMEOUT")
         .ok()
         .and_then(|v| v.parse::<f64>().ok())
-        .filter(|s| s.is_finite() && *s > 0.0)
-        .unwrap_or(10.0);
-    std::time::Duration::from_secs_f64(secs)
+        .and_then(crate::process::seconds)
+        .unwrap_or(std::time::Duration::from_secs(10))
 }
 
 /// Runs a record driver over `cases` with a watchdog. The driver appends the index of each case
