@@ -304,8 +304,8 @@ such as loose comparison and integer overflow into floats, Composer packages map
 and a PHP CLI or server can be recorded, replayed and put behind a Rust front door. A unit's
 top-level functions with scalar, string, list and assoc-array parameters are bridged through PHP's
 FFI extension (`php` with `ext-ffi`, on by default for the CLI): once `diff` passes, require the
-generated `php/<crate>.php` — the name is the crate with `-` written as `_`, so `foo-rs` is
-`php/foo_rs.php` — where the app required the original, and leave both files where they are: the
+generated `php/<crate>.php` (the name is the crate with `-` written as `_`, so `foo-rs` is
+`php/foo_rs.php`) where the app required the original, and leave both files where they are: the
 wrapper loads its native library relative to its own folder, so moving it breaks the load. The wrapper
 declares each bridged function unconditionally, with no `function_exists` guard, so it replaces the
 original file rather than joining it. Whatever else that file holds cannot come along: classes,
