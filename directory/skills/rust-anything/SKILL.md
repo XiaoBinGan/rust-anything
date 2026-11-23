@@ -22,7 +22,7 @@ For PHP, a unit's top-level functions are bridged through `ext-ffi` (PHP with FF
 stay in PHP), and a whole app goes through `app record`, `app replay` and `app front-door` (CLIs, and
 servers run with `php -S 127.0.0.1:{port} router.php`). C# and PowerShell units are bridged the same
 shape over P/Invoke: C# public static methods (`dotnet` on PATH), and PowerShell functions from a
-`.psm1` (`pwsh` 7.4+). `shadow` covers every language but PHP, C# and PowerShell, and PowerShell units
+`.psm1` module or a `.ps1` script (`pwsh` 7.4+). `shadow` covers every language but PHP, C# and PowerShell, and PowerShell units
 have no `profile` and no `--batch`; say so before planning one of those steps.
 
 Tools: the `rust-anything` CLI, or the same steps as MCP tools (`rust-anything mcp`): `go`,
