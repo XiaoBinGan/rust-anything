@@ -152,19 +152,23 @@ pub fn machine() -> String {
 }
 
 fn times(x: f64) -> String {
-    if x >= 10.0 {
+    // The boundary is where the one-decimal form would read `10.0x`: print the whole number it
+    // already shows instead of a decimal that adds nothing.
+    if x >= 9.95 {
         format!("{x:.0}x")
     } else {
         format!("{x:.1}x")
     }
 }
 
+/// Each threshold is the value at which the unit below it would print as `1000` of that unit,
+/// rounded: `999_999 ns` is `1000.0 µs`, so it belongs in `ms`.
 fn ns(v: f64) -> String {
-    if v >= 1e9 {
+    if v >= 999_950_000.0 {
         format!("{:.2} s", v / 1e9)
-    } else if v >= 1e6 {
+    } else if v >= 999_950.0 {
         format!("{:.1} ms", v / 1e6)
-    } else if v >= 1e3 {
+    } else if v >= 999.5 {
         format!("{:.1} µs", v / 1e3)
     } else {
         format!("{v:.0} ns")
@@ -327,6 +331,23 @@ pub fn svg(card: &Card) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_value_that_rounds_up_to_the_next_unit_prints_in_that_unit() {
+        assert_eq!(ns(999.6), "1.0 µs");
+        assert_eq!(ns(999_999.0), "1.0 ms");
+        assert_eq!(ns(999_999_999.0), "1.00 s");
+        assert_eq!(times(9.96), "10x");
+        // Just under each boundary stays where it is.
+        assert_eq!(ns(999.0), "999 ns");
+        assert_eq!(ns(999_000.0), "999.0 µs");
+        assert_eq!(ns(999_000_000.0), "999.0 ms");
+        assert_eq!(times(9.94), "9.9x");
+        // The ordinary cases are unchanged.
+        assert_eq!(ns(500.0), "500 ns");
+        assert_eq!(ns(1_500_000.0), "1.5 ms");
+        assert_eq!(times(31.4), "31x");
+    }
 
     fn card() -> Card {
         Card {
