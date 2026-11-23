@@ -39,7 +39,7 @@ Feito na Turquia 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yama
   <sub>O Prettier contra a sua migração para Rust em 59 ficheiros reais do ms, Fuse.js e json-server (Apple M4). A mesma saída, byte a byte. <a href="real-world.md#prettier">Como foi medido</a>.</sub>
 </p>
 
-<p align="center"><sub>PHP e C#: gravação, repetição e front door hoje; a migração de unidades vem a seguir.</sub></p>
+<p align="center"><sub>PHP e C#: gravação, repetição e front door, mais a migração de unidades por FFI e P/Invoke.</sub></p>
 
 <table>
   <tr>
@@ -194,16 +194,16 @@ A mesma saída não basta. Registe também o que a aplicação envia, e uma rees
 | Go | Pacote | Chamadas cgo tipadas e um protocolo binário gerado, num pacote com a API original | Um driver Go gerado, compilado como módulo independente |
 | Ruby | Ficheiro ou pasta de funções de módulo | Uma extensão magnus nos módulos originais | Um driver Ruby gerado |
 | Java | Pacote de métodos `public static` | JNI tipado e um protocolo binário gerado, em classes wrapper com os métodos originais | Um driver de reflexão gerado |
-| PHP | Pasta de funções e métodos `public static` | Próximo passo: PHP FFI através de uma ABI C | Aplicações completas atualmente: `app record`, `app replay` e a front door, para CLIs e servidores (`php -S`) |
-| C# | Pasta de métodos `public static` | Próximo passo: P/Invoke através de uma ABI C | Aplicações completas atualmente: `app record`, `app replay` e a front door, para CLIs e servidores ASP.NET (`dotnet <app>.dll`) |
+| PHP | Ficheiro ou pasta de funções de topo (os métodos `public static` ficam em PHP) | Um despachante JSON sobre `ext-ffi`, num ficheiro que redeclara as funções com os parâmetros originais | Um condutor PHP gerado; aplicações completas com `app record`, `app replay` e a front door, para CLIs e servidores (`php -S`) |
+| C# | Ficheiro ou pasta de métodos `public static` | Um despachante JSON sobre P/Invoke, em classes `<namespace>.Rust` com os métodos originais | Um condutor de reflexão gerado, compilado com o código do projeto por `dotnet build`; aplicações completas com `app record`, `app replay` e a front door, para CLIs e servidores ASP.NET (`dotnet <app>.dll`) |
 
-Todas as linguagens, exceto C, também recebem classes de processamento em lote (`--batch`): os elementos atravessam a ponte uma única vez e permanecem em Rust, e cada chamada processa todos eles em todos os núcleos.
+Todas as linguagens, exceto C, PHP e C#, também recebem classes de processamento em lote (`--batch`): os elementos atravessam a ponte uma única vez e permanecem em Rust, e cada chamada processa todos eles em todos os núcleos.
 
 A linguagem é detetada a partir do repositório (`go.mod`, `pom.xml`, um `.csproj` ou `.sln`, `pyproject.toml`, `Gemfile`, `composer.json`, `package.json` ou, caso contrário, os ficheiros de código-fonte mais comuns). A opção `--lang` permite substituir essa deteção. Os tipos são obtidos a partir do código-fonte: tipos de TS, anotações de Python, assinaturas de C, Go, Java e C#, tags YARD de Ruby, tipos PHP e phpdoc. Parâmetros sem tipo que são utilizados como números são inferidos como números.
 
-Para PHP, `analyze` planeia uma aplicação PHP (pacotes Composer e carregamento automático PSR-4, riscos como comparações flexíveis e overflow de inteiros para floats, pacotes Composer associados a crates), e uma CLI ou servidor PHP pode ser registado, reproduzido e colocado atrás de uma front door em Rust. A migração das suas unidades para Rust através do FFI do PHP é o próximo passo ([issue #2](https://github.com/erkamyaman/rust-anything/issues/2)).
+Para PHP, `analyze` planeia uma aplicação PHP (pacotes Composer e carregamento automático PSR-4, riscos como comparações flexíveis e overflow de inteiros para floats, pacotes Composer associados a crates), e uma CLI ou servidor PHP pode ser registado, reproduzido e colocado atrás de uma front door em Rust. As funções de topo de uma unidade, com parâmetros escalares, de texto, de lista e de array associativo, passam pela extensão FFI do PHP (`php` com `ext-ffi`, ativa por omissão na CLI): quando `diff` passar, carregue o `php/<crate>.php` gerado onde a aplicação carregava o original, e deixe os dois ficheiros no sítio — o invólucro carrega a biblioteca nativa relativamente à sua própria pasta. Cada chamada atravessa a fronteira como JSON, cerca de 1 µs, por isso `bench` mostra funções pequenas mais lentas do que em PHP; ainda não há `shadow` para PHP ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
-O C# funciona da mesma forma: `analyze` lê projetos `.csproj` e os respetivos pacotes NuGet (associados a crates), resolve diretivas `using` para pastas e identifica diferenças do C# (`decimal`, `dynamic`, consultas adiadas do LINQ, `Task`, `lock` e reflexão). Uma CLI C# ou um servidor ASP.NET pode ser registado, reproduzido e colocado atrás de uma front door em Rust; a migração de unidades através de P/Invoke vem a seguir.
+O C# funciona da mesma forma: `analyze` lê projetos `.csproj` e os respetivos pacotes NuGet (associados a crates), resolve diretivas `using` para pastas e identifica diferenças do C# (`decimal`, `dynamic`, consultas adiadas do LINQ, `Task`, `lock` e reflexão). Uma CLI C# ou um servidor ASP.NET pode ser registado, reproduzido e colocado atrás de uma front door em Rust. Os métodos estáticos públicos de uma unidade, com parâmetros escalares, de texto, de array, de lista, de dicionário e de record ou classe simples, passam por P/Invoke (`dotnet` no `PATH` para gravar e comparar): quando `diff` passar, chame as classes geradas no espaço de nomes `<namespace>.Rust` (`Acme.Text.Slug.Slugify` passa a `Acme.Text.Rust.Slug.Slugify`), ou dê-lhes um alias com `using`. Cada chamada atravessa a fronteira como JSON, cerca de 1-3 µs, por isso `bench` mostra métodos pequenos mais lentos do que em .NET; ainda não há `shadow` para C# ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 ## Saber mais
 
