@@ -62,7 +62,7 @@ fn whole_app(out: &mut String, w: &crate::whole_app::WholeApp) -> std::fmt::Resu
     for p in &w.pieces {
         writeln!(
             out,
-            "- wave {}: {}{} ({} lines)",
+            "- wave {}: {}{} ({})",
             p.wave,
             p.units
                 .iter()
@@ -74,7 +74,7 @@ fn whole_app(out: &mut String, w: &crate::whole_app::WholeApp) -> std::fmt::Resu
             } else {
                 ""
             },
-            p.loc
+            count(p.loc, "line")
         )?;
     }
     writeln!(out, "\n### Decisions for the user\n")?;
@@ -97,10 +97,10 @@ fn render(out: &mut String, r: &Report, title: &str) -> std::fmt::Result {
     )?;
     writeln!(
         out,
-        "{}, {} ({} lines), {}, {}, grouped into {}.\n",
+        "{}, {} ({}), {}, {}, grouped into {}.\n",
         count(s.packages, "package"),
         count(s.source_files, "source file"),
-        s.loc,
+        count(s.loc, "line"),
         count(s.test_files, "test file"),
         count(s.ui_files, "UI file"),
         count(s.units, "unit")
@@ -290,8 +290,8 @@ fn unit_detail(out: &mut String, u: &UnitReport) -> std::fmt::Result {
     writeln!(out, "### `{}`\n", u.id)?;
     writeln!(
         out,
-        "{} lines in {}, wave {}, priority {}, readiness {}, bridge **{}**.\n",
-        u.loc,
+        "{} in {}, wave {}, priority {}, readiness {}, bridge **{}**.\n",
+        count(u.loc, "line"),
         count(u.files.len(), "file"),
         u.wave,
         u.priority,

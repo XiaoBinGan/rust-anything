@@ -48,3 +48,27 @@ fn an_empty_start_here_with_only_kept_units_says_so() {
     assert!(!md.contains("No unit exports anything"), "{md}");
     let _ = std::fs::remove_dir_all(&root);
 }
+
+#[test]
+fn a_one_line_unit_prints_one_line_not_one_lines() {
+    // A package with a single one-line unit, as the issue describes.
+    let root = std::env::temp_dir().join(format!("ra-report-oneline-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("src")).unwrap();
+    std::fs::write(
+        root.join("package.json"),
+        "{\"name\":\"one\",\"version\":\"1.0.0\"}\n",
+    )
+    .unwrap();
+    std::fs::write(
+        root.join("src/math.ts"),
+        "export function add(a, b) { return a + b }\n",
+    )
+    .unwrap();
+    let report = analyze(&root).unwrap();
+    let md = report::markdown(&report, "oneline");
+    assert!(md.contains("1 source file (1 line)"), "{md}");
+    assert!(md.contains("1 line in 1 file"), "{md}");
+    assert!(!md.contains("1 lines"), "{md}");
+    let _ = std::fs::remove_dir_all(&root);
+}

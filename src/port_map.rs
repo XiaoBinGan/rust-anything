@@ -261,12 +261,18 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
     let total = map.ports.len() + map.not_ported.len() + map.covered_by_broken;
     write!(
         out,
-        "{} of {} units have a Rust port",
+        "{} of {} {} a Rust port",
         map.ports.len(),
         if map.analyze_error.is_some() {
             "the".to_string()
         } else {
             total.to_string()
+        },
+        // One unit reads "1 of 1 unit has", not "units have".
+        if total == 1 && map.analyze_error.is_none() {
+            "unit has"
+        } else {
+            "units have"
         }
     )?;
     match map.changed() {
