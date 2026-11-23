@@ -101,4 +101,21 @@ installs each one:
 A missing optional runtime skips its tests instead of failing them; `RUST_ANYTHING_REQUIRE` makes
 them fail. See [Install](install.md#install).
 
+**What stops a command, or one case, that hangs?** Two limits, both in seconds and both set through
+an environment variable. `RUST_ANYTHING_COMMAND_TIMEOUT` bounds every child process rust-anything
+runs — 60 s for a quick probe, 30 min for a build or a full test run — and the message a stopped
+command prints names it, so a suite that legitimately takes longer can say so:
+
+```sh
+RUST_ANYTHING_COMMAND_TIMEOUT=3600 rust-anything record rust/fuzzy-rs --from-tests
+```
+
+`RUST_ANYTHING_CASE_TIMEOUT` bounds one case while it replays the original, 10 s by default. A case
+over it is left out of the recording and reported as such, rather than failing the run, because the
+port does not have to match an input the original itself cannot finish:
+
+```sh
+RUST_ANYTHING_CASE_TIMEOUT=60 rust-anything record rust/fuzzy-rs
+```
+
 **Something broke.** Open an issue with the command, its output and your platform.
