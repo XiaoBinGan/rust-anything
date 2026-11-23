@@ -641,7 +641,11 @@ fn android_adb() -> Check {
         required: false,
         detail,
         fix: (status != Status::Ok).then(|| {
-            "sdkmanager \"platform-tools\"  (or install Android Studio's SDK tools)".to_string()
+            // The package alone is not enough: its folder has to be on PATH, or the next probe
+            // still cannot find `adb`.
+            "sdkmanager \"platform-tools\"  (or install Android Studio's SDK tools), then put its \
+             platform-tools folder on PATH"
+                .to_string()
         }),
     }
 }
