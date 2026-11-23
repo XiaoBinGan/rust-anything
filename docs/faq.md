@@ -102,15 +102,19 @@ A missing optional runtime skips its tests instead of failing them; `RUST_ANYTHI
 them fail. See [Install](install.md#install).
 
 **What stops a command, or one case, that hangs?** Two limits, both in seconds and both set through
-an environment variable. `RUST_ANYTHING_COMMAND_TIMEOUT` bounds every child process rust-anything
-runs — 60 s for a quick probe, 30 min for a build or a full test run — and the message a stopped
-command prints names it, so a suite that legitimately takes longer can say so:
+an environment variable. `RUST_ANYTHING_COMMAND_TIMEOUT` bounds the child processes rust-anything
+runs through its timed helper — the workload you name under `record`, `profile` and `app record`,
+`cargo build`, `gate`'s checks and the version probes — 60 s for a quick probe, 30 min for a build or
+a full test run. The message a stopped command prints names it, so a suite that legitimately takes
+longer can say so:
 
 ```sh
 RUST_ANYTHING_COMMAND_TIMEOUT=3600 rust-anything record rust/fuzzy-rs --from-tests
 ```
 
-`RUST_ANYTHING_CASE_TIMEOUT` bounds one case while it replays the original, 10 s by default. A case
+The language drivers are not covered: `harness_c`, `harness_go`, `harness_php`, `harness_java` and
+`harness`'s own runner start their processes directly, so a driver that hangs has to be killed by
+hand. `RUST_ANYTHING_CASE_TIMEOUT` bounds one case while it replays the original, 10 s by default. A case
 over it is left out of the recording and reported as such, rather than failing the run, because the
 port does not have to match an input the original itself cannot finish:
 
