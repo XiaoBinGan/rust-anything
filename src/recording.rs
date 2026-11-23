@@ -444,6 +444,16 @@ mod tests {
     }
 
     #[test]
+    fn covered_lines_run_together_and_gaps_keep_their_own_range() {
+        assert_eq!(spans(std::iter::empty()), "");
+        assert_eq!(spans([5].into_iter()), "5");
+        assert_eq!(spans([1, 2, 3].into_iter()), "1-3");
+        assert_eq!(spans([1, 2, 3, 5, 7, 8].into_iter()), "1-3, 5, 7-8");
+        // A gap of one line still splits the range.
+        assert_eq!(spans([1, 3].into_iter()), "1, 3");
+    }
+
+    #[test]
     fn known_diffs_pass_only_with_the_listed_result() {
         let entries = [
             json!({"fn": "f", "args": [1], "actual": {"ok": 2}, "reason": "fixed a bug"}),
