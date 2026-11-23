@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use rust_anything::analyze::{Bridge, Report, Status, UnitReport, analyze};
+use rust_anything::analyze::{Bridge, Report, Status, UnitReport, analyze, analyze_lang};
+use rust_anything::lang::Lang;
 use rust_anything::risks::Risk;
 
 fn mini() -> Report {
@@ -1020,4 +1021,17 @@ fn powershell_modules_get_their_bridge_notes_and_import_order() {
     let names: Vec<&str> = w.dependencies.iter().map(|d| d.name.as_str()).collect();
     assert!(names.contains(&"Pester"), "{names:?}");
     let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn a_missing_folder_fails_with_one_message_instead_of_an_empty_plan() {
+    let missing = std::env::temp_dir().join("ra-analyze-missing-folder");
+    let _ = std::fs::remove_dir_all(&missing);
+    let err = analyze(&missing).unwrap_err().to_string();
+    assert_eq!(err, format!("no folder {}", missing.display()));
+    // The same check backs `--lang`, which used to print a plan titled after the missing path.
+    let err = analyze_lang(&missing, Lang::Python)
+        .unwrap_err()
+        .to_string();
+    assert_eq!(err, format!("no folder {}", missing.display()));
 }

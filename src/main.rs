@@ -660,15 +660,6 @@ fn say_replay(replay: &app::ReplayOutcome) {
     say!("Report: {}", replay.report.display());
 }
 
-/// `n` and `word`, with an `s` unless `n` is one.
-fn counted(n: usize, word: &str) -> String {
-    if n == 1 {
-        format!("1 {word}")
-    } else {
-        format!("{n} {word}s")
-    }
-}
-
 fn main() -> ExitCode {
     match run() {
         Ok(code) => code,
@@ -689,8 +680,17 @@ fn run() -> Result<ExitCode> {
             whole_app,
         } => {
             let lang = lang.unwrap_or_else(|| rust_anything::lang::Lang::detect(&root));
-            let mut report = analyze::analyze_lang(&root, lang)
-                .with_context(|| format!("analyzing {}", root.display()))?;
+            // Name the folder for an error that does not, and leave one that already does alone:
+            // a missing folder says "no folder /x" and must not read "analyzing /x: no folder /x".
+            let name_the_folder = |e: anyhow::Error| {
+                let shown = root.display().to_string();
+                if format!("{e:#}").contains(&shown) {
+                    e
+                } else {
+                    e.context(format!("analyzing {shown}"))
+                }
+            };
+            let mut report = analyze::analyze_lang(&root, lang).map_err(name_the_folder)?;
             if whole_app {
                 report.whole_app = Some(rust_anything::whole_app::whole_app(&root, &report));
             }
@@ -827,8 +827,8 @@ fn run() -> Result<ExitCode> {
                 Profile::Android => harness::record_android(&opts, device.as_deref())?,
             };
             say!(
-                "Recorded {} ({} threw) in {}",
-                counted(outcome.cases, "case"),
+                "Recorded {} cases ({} threw) in {}",
+                outcome.cases,
                 outcome.errors,
                 outcome.path.display()
             );
@@ -1018,15 +1018,10 @@ fn run() -> Result<ExitCode> {
             json,
             node_args,
         } => {
-            // `--time 0` means "one round", so zero is a valid value here: the helper rejects it,
-            // and a value `Duration` cannot hold is an error rather than a panic.
             let time = time
                 .map(|t| {
                     anyhow::ensure!(t.is_finite() && t >= 0.0, "`--time` takes seconds");
-                    if t == 0.0 {
-                        return Ok(std::time::Duration::ZERO);
-                    }
-                    rust_anything::process::seconds(t).context("`--time` is too large")
+                    Ok(std::time::Duration::from_secs_f64(t))
                 })
                 .transpose()?;
             let f = rust_anything::fuzz::fuzz(&rust_anything::fuzz::FuzzOptions {
@@ -1521,8 +1516,8 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
                 return Ok(ExitCode::SUCCESS);
             }
             say!(
-                "Recorded {} in {} ({} from examples, {} from inputs, {} traps)",
-                counted(outcome.cases, "case"),
+                "Recorded {} cases in {} ({} from examples, {} from inputs, {} traps)",
+                outcome.cases,
                 outcome.dir.display(),
                 outcome.examples,
                 outcome.inputs,
@@ -1615,11 +1610,7 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
                             outcome
                                 .api
                                 .iter()
-                                .map(|a| format!(
-                                    "{} ({})",
-                                    a.unit,
-                                    counted(a.exports.len(), "export")
-                                ))
+                                .map(|a| format!("{} ({} exports)", a.unit, a.exports.len()))
                                 .collect::<Vec<_>>()
                                 .join(", ")
                         )

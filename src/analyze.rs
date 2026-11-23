@@ -242,6 +242,11 @@ fn compiled_hint() -> &'static str {
 }
 
 pub fn analyze_lang(root: &Path, lang: Lang) -> Result<Report> {
+    // A folder that is not there is not an empty repository: say so once, like `app record` does,
+    // instead of walking it and reporting a plan with nothing in it.
+    if !root.exists() {
+        bail!("no folder {}", root.display());
+    }
     if root.is_file() {
         let ext = root
             .extension()
