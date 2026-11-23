@@ -264,8 +264,8 @@ l'email due volte fallisce:
 | Ruby | file o cartella di funzioni di modulo | un'estensione magnus sotto i moduli originali | un driver Ruby generato |
 | Java | pacchetto di metodi `public static` | JNI tipizzato e un wire binario generato, in classi wrapper con i metodi originali | un driver di reflection generato |
 | Kotlin | modulo Gradle di funzioni di primo livello e metodi `@JvmStatic` | il ponte Java: JNI tipizzato in classi wrapper Java che chiamano gli static Kotlin compilati | un driver di reflection generato, con i sorgenti Kotlin compilati da `kotlinc` |
-| PHP | cartella di funzioni di primo livello e metodi `public static` | un dispatcher JSON su `ext-ffi`, in un file che ridichiara le funzioni con i parametri originali | un driver PHP generato; applicazioni intere con `app record`, `app replay` e la front door, per CLI e server (`php -S`) |
-| C# | cartella di metodi `public static` | un dispatcher JSON su P/Invoke, in classi `<namespace>.Rust` con i metodi originali | un driver a reflection generato, compilato con le sorgenti del progetto da `dotnet build`; applicazioni intere con `app record`, `app replay` e la front door, per CLI e server ASP.NET (`dotnet <app>.dll`) |
+| PHP | cartella di funzioni di primo livello (i metodi `public static` restano in PHP) | un dispatcher JSON su `ext-ffi`, in un file che ridichiara le funzioni con i parametri originali | un driver PHP generato; applicazioni intere con `app record`, `app replay` e la front door, per CLI e server (`php -S`) |
+| C# | file o cartella di metodi `public static` | un dispatcher JSON su P/Invoke, in classi `<namespace>.Rust` con i metodi originali | un driver a reflection generato, compilato con le sorgenti del progetto da `dotnet build`; applicazioni intere con `app record`, `app replay` e la front door, per CLI e server ASP.NET (`dotnet <app>.dll`) |
 
 Ogni linguaggio tranne C, PHP e C# riceve anche classi batch (`--batch`): gli elementi attraversano una
 volta sola e restano in Rust, e ogni chiamata li esegue tutti su tutti i core.
