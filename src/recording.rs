@@ -133,7 +133,8 @@ fn percent(reached: u64, lines: u64) -> String {
     if reached >= lines {
         return "100%".into();
     }
-    format!("{}%", reached * 100 / lines.max(1))
+    // u128: `reached * 100` in u64 would overflow on a hand-edited record near the top of the range.
+    format!("{}%", u128::from(reached) * 100 / u128::from(lines.max(1)))
 }
 
 /// Line coverage of the unit's files from the V8 coverage Node writes to `dir`
