@@ -122,7 +122,11 @@ cargo test
 - Note anything you couldn't test (another OS, a runtime you don't have).
 - Keep it to one change: two fixes are easier to review as two pull requests.
 
-CI runs on Ubuntu and macOS with every runtime installed. For a first-time contributor, GitHub
+CI runs on Ubuntu, macOS and Windows. The Ubuntu `check` job has Node and cargo
+(`RUST_ANYTHING_REQUIRE=node,cargo`); macOS adds Python, Go, Ruby, Java and the wasm-bindgen CLI, and
+Windows runs the native bridge integration tests. PHP, .NET and Kotlin are installed nowhere, so their
+tests skip there: run `cargo test` locally with those on `PATH` before a change that touches them
+(`docs/STATUS.md`, "Where the tests run", has the same split). For a first-time contributor, GitHub
 waits for a maintainer to approve the CI run, so expect a short delay before the checks start.
 
 Pull requests are merged with their commits kept, so your history stays yours. If a change needs
