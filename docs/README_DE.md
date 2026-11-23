@@ -39,7 +39,7 @@ Gemacht in der Türkei 🇹🇷 von <a href="https://github.com/erkamyaman">erKa
   <sub>Prettier gegen seine Rust-Portierung an 59 echten Dateien aus ms, Fuse.js und json-server (Apple M4). Dieselbe Ausgabe, Byte für Byte. <a href="real-world.md#prettier">So wurde gemessen</a>.</sub>
 </p>
 
-<p align="center"><sub>PHP und C#: heute Aufzeichnen, Abspielen und die Front Door; Unit-Ports folgen.</sub></p>
+<p align="center"><sub>PHP und C#: Aufzeichnen, Abspielen und die Front Door, dazu Unit-Ports über FFI und P/Invoke.</sub></p>
 
 <table>
   <tr>
@@ -229,10 +229,10 @@ Dieselbe Ausgabe reicht nicht. Zeichne auch auf, was die App nach außen sendet,
 | Go | Paket | typisierte cgo-Aufrufe und ein generiertes binäres Wire-Format in einem Paket mit der Original-API | einen generierten Go-Treiber, gebaut als eigenes Modul |
 | Ruby | Datei oder Ordner mit Modulfunktionen | eine magnus-Erweiterung unter den ursprünglichen Modulen | einen generierten Ruby-Treiber |
 | Java | Paket mit `public static`-Methoden | typisiertes JNI und ein generiertes binäres Wire-Format in Wrapper-Klassen mit den Originalmethoden | einen generierten Reflection-Treiber |
-| PHP | Ordner mit Funktionen und `public static`-Methoden | als Nächstes geplant: PHP FFI über ein C-ABI | heute schon ganze Apps: `app record`, `app replay` und die Front Door, für CLIs und Server (`php -S`) |
-| C# | Ordner mit `public static`-Methoden | als Nächstes geplant: P/Invoke über ein C-ABI | heute schon ganze Apps: `app record`, `app replay` und die Front Door, für CLIs und ASP.NET-Server (`dotnet <app>.dll`) |
+| PHP | Datei oder Ordner mit Top-Level-Funktionen (`public static`-Methoden bleiben in PHP) | ein JSON-Dispatcher über `ext-ffi`, in einer Datei, die die Funktionen mit den ursprünglichen Parametern neu deklariert | ein generierter PHP-Treiber; ganze Apps mit `app record`, `app replay` und der Front Door, für CLIs und Server (`php -S`) |
+| C# | Datei oder Ordner mit `public static`-Methoden | ein JSON-Dispatcher über P/Invoke, in `<namespace>.Rust`-Klassen mit den ursprünglichen Methoden | ein generierter Reflection-Treiber, mit den Quellen des Projekts über `dotnet build` kompiliert; ganze Apps mit `app record`, `app replay` und der Front Door, für CLIs und ASP.NET-Server (`dotnet <app>.dll`) |
 
-Jede Sprache außer C erhält außerdem Batch-Klassen (`--batch`): Die Elemente überqueren die Grenze
+Jede Sprache außer C, PHP und C# erhält außerdem Batch-Klassen (`--batch`): Die Elemente überqueren die Grenze
 einmalig und bleiben in Rust, und jeder Aufruf verarbeitet sie alle auf allen Kernen.
 
 Die Sprache wird anhand des Repositorys erkannt (`go.mod`, `pom.xml`, eine `.csproj` oder `.sln`,
@@ -243,15 +243,24 @@ verwendet werden, werden als Zahlen abgeleitet.
 
 Für PHP plant `analyze` eine PHP-App (Composer-Pakete und PSR-4-Autoloading, Risiken
 wie lose Vergleiche und Integer-Überläufe in Floats, Zuordnung von Composer-Paketen zu Crates), und ein
-PHP-CLI oder -Server lässt sich aufzeichnen, wiedergeben und hinter eine Rust-Front-Door stellen. Das
-Portieren einzelner Einheiten nach Rust über das PHP-FFI ist der nächste Schritt
-([Issue #2](https://github.com/erkamyaman/rust-anything/issues/2)).
+PHP-CLI oder -Server lässt sich aufzeichnen, wiedergeben und hinter eine Rust-Front-Door stellen. Die
+Top-Level-Funktionen einer Einheit, mit skalaren, String-, Listen- und assoziativen Array-Parametern,
+laufen über die FFI-Erweiterung von PHP (`php` mit `ext-ffi`, in der CLI standardmäßig aktiv): binde
+die generierte `php/<crate>.php` anstelle der ursprünglichen Datei ein, sobald `diff` durchläuft. Jeder
+Aufruf überquert die Grenze als JSON, etwa 1 µs, deshalb zeigt `bench` kleine Funktionen langsamer als
+PHP; für PHP gibt es noch kein `shadow`
+([Issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 C# funktioniert auf dieselbe Weise: `analyze` liest `.csproj`-Projekte und ihre NuGet-Pakete
 (auf Crates abgebildet), löst `using`-Direktiven zu Ordnern auf und markiert C#-Eigenheiten
 (`decimal`, `dynamic`, verzögerte LINQ-Abfragen, `Task`, `lock`, Reflection). Ein C#-CLI oder
-ASP.NET-Server lässt sich aufzeichnen, wiedergeben und hinter eine Rust-Front-Door stellen; das
-Portieren einzelner Einheiten über P/Invoke folgt als Nächstes.
+ASP.NET-Server lässt sich aufzeichnen, wiedergeben und hinter eine Rust-Front-Door stellen. Die
+öffentlichen statischen Methoden einer Einheit, mit skalaren, String-, Array-, Listen-, Dictionary-
+sowie Record- oder einfachen Klassen-Parametern, laufen über P/Invoke (`dotnet` im `PATH` zum
+Aufzeichnen und Vergleichen): rufe die generierten `<namespace>.Rust`-Klassen auf oder gib ihnen mit
+`using` einen Alias, sobald `diff` durchläuft. Jeder Aufruf überquert die Grenze als JSON, etwa
+1-3 µs, deshalb zeigt `bench` kleine Methoden langsamer als .NET; für C# gibt es noch kein `shadow`
+([Issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
 
 ## Mehr erfahren
 
