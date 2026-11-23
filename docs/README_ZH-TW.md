@@ -233,8 +233,8 @@ Rust 中，每次呼叫便會在所有 CPU 核心上平行運算全部項目。
 寬鬆比較與整數溢位轉浮點數等風險，並將 Composer 套件對應至 crate），
 且支援對 PHP CLI 或伺服器進行錄製、重播與套用 Rust 前門代理。單元的頂層函式（參數可為純量、
 字串、清單與關聯陣列）會透過 PHP 的 FFI 擴充功能橋接（需要啟用 `ext-ffi` 的 `php`，CLI 預設
-開啟）：`diff` 通過後，以產生的 `php/<crate>.php` 取代原始檔案。每次呼叫以 JSON 跨越邊界，
-約 1 µs，因此 `bench` 會顯示小型函式比 PHP 慢；PHP 目前還沒有 `shadow`
+開啟）：`diff` 通過後，改為載入產生的 `php/<crate>.php`（不要移動它，包裝檔案會以 `__DIR__`
+相對路徑載入原生程式庫）。每次呼叫以 JSON 跨越邊界，約 1 µs，因此 `bench` 會顯示小型函式比 PHP 慢；PHP 目前還沒有 `shadow`
 （[issue #200](https://github.com/erkamyaman/rust-anything/issues/200)）。
 
 C# 的運作方式相同：`analyze` 會讀取 `.csproj` 專案與其 NuGet 套件
@@ -242,7 +242,8 @@ C# 的運作方式相同：`analyze` 會讀取 `.csproj` 專案與其 NuGet 套�
 （`decimal`、`dynamic`、LINQ 的延遲查詢、`Task`、`lock`、反射）。目前可對 C# CLI 或 ASP.NET
 伺服器進行錄製、重播與套用 Rust 前門代理。單元的公開靜態方法（參數可為純量、字串、陣列、
 清單、字典，以及 record 或一般類別）會透過 P/Invoke 橋接（錄製與比對需要 `PATH` 中的
-`dotnet`）：`diff` 通過後，呼叫產生的 `<namespace>.Rust` 類別，或以 `using` 加上別名。每次
+`dotnet`）：`diff` 通過後，呼叫 `<namespace>.Rust` **命名空間**中產生的類別（例如
+`Acme.Text.Slug.Slugify` 會變成 `Acme.Text.Rust.Slug.Slugify`），或以 `using` 加上別名。每次
 呼叫以 JSON 跨越邊界，約 1-3 µs，因此 `bench` 會顯示小型方法比 .NET 慢；C# 目前還沒有
 `shadow`（[issue #200](https://github.com/erkamyaman/rust-anything/issues/200)）。
 
