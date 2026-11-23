@@ -342,9 +342,9 @@ pub fn lookup(name: &str) -> Option<CrateMatch> {
 
 // ---- exports ---------------------------------------------------------------------------------
 
-/// A Java parameter type: a wildcard is a type argument there, not a class name. A
-/// `List<? extends CharSequence>` parameter only reads its elements, so it takes what
-/// `List<CharSequence>` takes.
+/// A Java parameter type. A wildcard is refused here as well, but with a reason that names it: the
+/// recorder's converter casts a type argument to `Class`, so a `WildcardType` would throw at record
+/// time. Accepting `? extends T` has to wait for that converter.
 pub fn java_to_ts_param(t: &str) -> Result<String, String> {
     java_to_ts_in(t, true)
 }
@@ -360,13 +360,15 @@ fn java_to_ts_in(t: &str, wildcard: bool) -> Result<String, String> {
     // which is what `java_to_ts_param` is for.
     if wildcard && let Some(rest) = t.strip_prefix('?') {
         let rest = rest.trim();
-        if let Some(bound) = rest.strip_prefix("extends") {
-            return java_to_ts_in(bound.trim(), wildcard);
-        }
-        if rest.starts_with("super") {
-            return Err(format!("uses a wildcard `{t}`"));
-        }
-        return Err("takes or returns `Object`: values of any type".into());
+        // A wildcard cannot cross the recorder's converter yet: it casts each type argument to
+        // `Class`, so a `WildcardType` throws there. Say which wildcard, instead of calling it a class.
+        return Err(
+            if rest.starts_with("extends") || rest.starts_with("super") {
+                format!("uses a wildcard `{t}`")
+            } else {
+                "takes or returns `Object`: values of any type".into()
+            },
+        );
     }
     if let Some(rest) = t.strip_prefix('?') {
         let rest = rest.trim();
@@ -534,14 +536,24 @@ pub fn exports(path: &str, source: &str) -> Vec<ExportedFn> {
             if let Some(list) = method.child_by_field_name("parameters") {
                 for p in named_children(list) {
                     let (ty, pname) = match p.kind() {
-                        "formal_parameter" => (
-                            p.child_by_field_name("type")
+                        "formal_parameter" => {
+                            let base = p
+                                .child_by_field_name("type")
                                 .map_or("", |t| text(t, source))
-                                .to_string(),
-                            p.child_by_field_name("name")
-                                .map_or("", |n| text(n, source))
-                                .to_string(),
-                        ),
+                                .to_string();
+                            // `int values[]` is the same type as `int[] values`: tree-sitter keeps
+                            // the brackets in a separate `dimensions` child of the parameter.
+                            let dims = named_children(p)
+                                .iter()
+                                .find(|c| c.kind() == "dimensions")
+                                .map_or(String::new(), |d| text(*d, source).replace(' ', ""));
+                            (
+                                format!("{base}{dims}"),
+                                p.child_by_field_name("name")
+                                    .map_or("", |n| text(n, source))
+                                    .to_string(),
+                            )
+                        }
                         "spread_parameter" => {
                             blocker.get_or_insert_with(|| "is variadic".into());
                             continue;
@@ -618,21 +630,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_bounded_wildcard_reads_as_its_bound_in_a_parameter_only() {
-        // `List<? extends T>` only reads `T`, so it is the same parameter as `List<T>`.
+    fn a_c_style_array_parameter_keeps_its_dimensions() {
+        // `int values[]` is `int[] values`: tree-sitter keeps the brackets in a `dimensions` child,
+        // which used to be dropped, so the parameter came out as a plain `int`.
+        let src = "package acme;\npublic class Stats {\n    public static int sum(int values[]) { return 0; }\n    public static int plain(int[] values) { return 0; }\n    public static int grid(int rows[][]) { return 0; }\n}\n";
+        let fns = exports("acme/Stats.java", src);
+        let types: Vec<(&str, &str)> = fns
+            .iter()
+            .map(|f| (f.name.as_str(), f.params[0].ts_type.as_str()))
+            .collect();
         assert_eq!(
-            java_to_ts_param("List<? extends CharSequence>").unwrap(),
-            "string[]"
+            types,
+            [("sum", "int[]"), ("plain", "int[]"), ("grid", "int[][]"),]
         );
-        assert_eq!(
-            java_to_ts_param("List<? extends String>").unwrap(),
-            "string[]"
-        );
+    }
+
+    #[test]
+    fn a_wildcard_is_named_as_one_and_stays_refused() {
+        // A wildcard is a wildcard, not a class name: the refusal says which one. It stays a refusal
+        // because the recorder's converter casts each type argument to `Class`.
+        for t in ["List<? extends CharSequence>", "List<? extends Number>"] {
+            let reason = java_to_ts_param(t).unwrap_err();
+            assert!(reason.contains("wildcard"), "{t}: {reason}");
+            assert!(!reason.contains("uses the class"), "{t}: {reason}");
+        }
         assert_eq!(java_to_ts_param("List<String>").unwrap(), "string[]");
-        // A bound the bridge has no counterpart for keeps its own reason, not a "class ? extends …".
-        let object_bound = java_to_ts_param("List<? extends Number>").unwrap_err();
-        assert!(object_bound.contains("Number"), "{object_bound}");
-        assert!(!object_bound.contains("? extends"), "{object_bound}");
         // `? super` writes, and an unbounded `?` is `Object`: both stay refusals that name why.
         assert!(
             java_to_ts_param("List<? super String>")
@@ -644,7 +666,7 @@ mod tests {
                 .unwrap_err()
                 .contains("values of any type")
         );
-        // A result cannot carry one: the caller would have to know what it got.
+        // The result side refuses it too, with the same wording.
         assert!(
             java_to_ts("List<? extends CharSequence>")
                 .unwrap_err()
