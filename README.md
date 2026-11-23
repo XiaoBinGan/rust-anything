@@ -307,8 +307,10 @@ FFI extension (`php` with `ext-ffi`, on by default for the CLI): once `diff` pas
 generated `php/<crate>.php` — the name is the crate with `-` written as `_`, so `foo-rs` is
 `php/foo_rs.php` — where the app required the original, and leave both files where they are: the
 wrapper loads its native library relative to its own folder, so moving it breaks the load. The wrapper
-declares the bridged top-level functions only, so a file that also defines classes or `public static`
-methods keeps its `require` as well, or those disappear. A PHP server (anything but the CLI) needs
+declares each bridged function unconditionally, with no `function_exists` guard, so it replaces the
+original file rather than joining it: a file that also defines classes or `public static` methods
+cannot simply be required alongside it (the second load redeclares the function), so split those
+declarations into their own file first, or leave the unit's functions in a file of their own. A PHP server (anything but the CLI) needs
 `ffi.enable=1` for this: `ext-ffi` is limited to the CLI SAPI by default. Each
 call crosses as JSON, about 1 µs, so `bench` shows small functions slower than PHP; there is no `shadow` for PHP yet
 ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
