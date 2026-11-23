@@ -183,6 +183,23 @@ fn state(card: &Card) -> &'static str {
     }
 }
 
+/// The fallback share as a reader sees it: the card carries no counts, so a non-zero rate must not
+/// round to `0.0%` and a rate below one must not round to `100.0%`.
+fn share(rate: f64) -> String {
+    let percent = 100.0 * rate;
+    if percent <= 0.0 {
+        "0.0%".into()
+    } else if percent < 0.05 {
+        "<0.1%".into()
+    } else if percent >= 100.0 {
+        "100.0%".into()
+    } else if percent >= 99.95 {
+        ">99.9%".into()
+    } else {
+        format!("{percent:.1}%")
+    }
+}
+
 pub fn markdown(card: &Card) -> String {
     let mut out = format!(
         "## `{}` in Rust\n\n![{} report card](card.svg)\n\n\
@@ -190,7 +207,7 @@ pub fn markdown(card: &Card) -> String {
          | Unit | `{}` ({}) |\n\
          | Recorded cases matched | {} / {} |\n\
          | Speedup, call included | {} (geometric mean) |\n\
-         | Fallback to the original | {:.1}% ({} of {} cases) |\n\
+         | Fallback to the original | {} ({} of {} cases) |\n\
          | Switched on | {} |\n\n",
         card.crate_name,
         card.crate_name,
@@ -287,7 +304,7 @@ pub fn svg(card: &Card) -> String {
 <text x="648" y="318" font-family="{mono}" font-size="64" font-weight="700" fill="#e8561a">{rust_t}</text>
 <rect x="648" y="360" width="{rust_w:.0}" height="14" rx="7" fill="#e8561a"/>
 <text x="600" y="460" font-size="28" fill="#1a1a1a" text-anchor="middle">{headline}: <tspan font-weight="700" fill="#e8561a">{speed}</tspan></text>
-<text x="600" y="500" font-size="18" fill="#777777" text-anchor="middle">Fallback to the original: {fallback:.1}% of cases · call included · {machine}</text>
+<text x="600" y="500" font-size="18" fill="#777777" text-anchor="middle">Fallback to the original: {fallback} of cases · call included · {machine}</text>
 <text x="600" y="556" font-size="17" fill="#888888" text-anchor="middle">github.com/erkamyaman/rust-anything</text>
 </g>
 </svg>
@@ -323,7 +340,7 @@ pub fn svg(card: &Card) -> String {
             format!("{} slower", times(1.0 / card.speedup.max(1e-9)))
         },
         crab = include_str!("card_crab.svg").trim(),
-        fallback = 100.0 * card.fallback_rate(),
+        fallback = share(card.fallback_rate()),
         machine = esc(&card.machine),
     )
 }
@@ -331,6 +348,17 @@ pub fn svg(card: &Card) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_fallback_rate_never_reads_as_none_or_as_all() {
+        // The card carries no counts, so the share alone has to be honest at both ends.
+        assert_eq!(share(1.0 / 2001.0), "<0.1%");
+        assert_eq!(share(1999.0 / 2000.0), ">99.9%");
+        assert_eq!(share(0.0), "0.0%");
+        assert_eq!(share(1.0), "100.0%");
+        assert_eq!(share(1.0 / 2000.0), "0.1%");
+        assert_eq!(share(0.5), "50.0%");
+    }
 
     #[test]
     fn a_value_that_rounds_up_to_the_next_unit_prints_in_that_unit() {
