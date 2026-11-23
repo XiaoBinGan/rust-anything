@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- `profile` says when the time goes to child processes, not code (#208). Time under Node's
+  `execSync`, `execFileSync` and `spawnSync`, and under Python's `subprocess` calls and
+  `os.system`, is a new "Child processes" section and a `child_processes` field in `--json`
+  (command, file, line, function, ms, share; left out when empty), with the advice to keep one
+  long-lived process open, batch the commands, or call the API directly; `child_pct` gives the
+  total. A hot function that waits gets its own `child_pct`, and from half its time that advice
+  instead of "port it"; `go` passes over such a function, says why when `--function` names it,
+  and stops when waiting is half the run or more (`--function` still names a function that does
+  not itself mostly wait). A function's `child_pct` counts only waits known to happen under it:
+  a helper shared by several callers, or a recursive call, does not pass its waits to every
+  caller. `child_pct` for the run also counts waits that no user function owns (a library's
+  timer callback); Python waits count only in the interpreter's own `subprocess` and `os`
+  modules, not a dependency's file of the same name; `go` looks past the 25 rows the report
+  shows; an executable named on its own (`execFileSync("/opt/My Tools/worker")`, an argv list)
+  is shown whole.
 - `profile` and `go` judge each hot exported function with the rules `bridge` applies. A hot
   function `bridge` keeps in the source language (one taking a callback, typed in TypeScript or
   in a sibling `.d.ts`; a Python generator) was advised as "port it", and `go` picked it and

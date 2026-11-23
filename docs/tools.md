@@ -108,7 +108,7 @@ Runs the original's code or commands.
 
 Tool `profile` · CLI `rust-anything profile`
 
-Run a real workload (a command: node or python3 script, `go test -bench`, java, ruby) under the language's profiler and rank the repository's hot functions by inclusive time, with their callers, call counts and advice: what to port together, and which loops to batch (`bridge` with `batch`). Profile before porting: leaf functions called one at a time are slower in Rust.
+Run a real workload (a command: node or python3 script, `go test -bench`, java, ruby) under the language's profiler and rank the repository's hot functions by inclusive time, with their callers, call counts and advice: what to port together, and which loops to batch (`bridge` with `batch`). Time spent waiting on child processes (`execSync`, `subprocess.run`, `os.system`) is listed apart, with the command and the call, and a function that mostly waits is not offered for porting. Profile before porting: leaf functions called one at a time are slower in Rust.
 
 Runs the original's code or commands.
 
@@ -122,7 +122,7 @@ Runs the original's code or commands.
 
 Tool `go` · CLI `rust-anything go`
 
-The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.
+The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so; passing over one that mostly waits on child processes, and stopping when waiting is half the run or more; `function` still names one to port then, unless that function itself mostly waits), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.
 
 Runs the original's code or commands.
 

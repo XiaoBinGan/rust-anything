@@ -84,9 +84,21 @@ pub struct Outcome {
 /// The function to port: the first hot one (most time, so the outermost loop) that is exported
 /// by a portable unit, can cross the bridge, and takes arguments to record.
 pub fn pick(report: &Report, function: Option<&str>) -> Result<Pick> {
-    let eligible = |h: &&Hot| {
+    let crosses = |h: &&Hot| {
         h.unit.is_some() && h.portable && h.js_only.is_none() && h.exported && !h.params.is_empty()
     };
+    let eligible = |h: &&Hot| crosses(h) && !h.mostly_waits();
+    if function.is_none()
+        && report.child_pct >= 50.0
+        && let Some(summary) = report.child_summary()
+    {
+        let anyway = if report.hot.iter().any(|h| eligible(&h)) {
+            " To port a function anyway, name it with `--function`."
+        } else {
+            ""
+        };
+        bail!("{summary} {}{anyway}", crate::profile::CHILD_ADVICE);
+    }
     let hot = match function {
         Some(name) => report
             .hot
@@ -98,6 +110,16 @@ pub fn pick(report: &Report, function: Option<&str>) -> Result<Pick> {
                 format!("`{name}` is not among the hot functions of this run (see `rust-anything profile`)")
             })?,
         None => report.hot.iter().find(eligible).with_context(|| {
+            if report.hot.iter().any(|h| crosses(&h) && h.mostly_waits()) {
+                let summary = report
+                    .child_summary()
+                    .map_or_else(String::new, |s| format!(" {s}"));
+                return format!(
+                    "no hot function to port: the ones that could cross the bridge mostly wait on \
+                     child processes.{summary} {}",
+                    crate::profile::CHILD_ADVICE
+                );
+            }
             format!(
                 "no hot function to port: none of the {} hot functions is exported by a portable \
                  unit, can cross the bridge and takes arguments. `rust-anything profile` shows why.",
@@ -111,6 +133,14 @@ pub fn pick(report: &Report, function: Option<&str>) -> Result<Pick> {
                 "`{}` cannot be bridged: `bridge` keeps it in {}: {reason}",
                 hot.name,
                 report.language.name()
+            );
+        }
+        if hot.mostly_waits() {
+            bail!(
+                "`{}` spends {:.0}% of its time waiting on child processes. {}",
+                hot.name,
+                hot.child_pct.unwrap_or_default(),
+                crate::profile::CHILD_ADVICE
             );
         }
         bail!("`{}` cannot be bridged: {}", hot.name, hot.advice);
@@ -646,6 +676,7 @@ mod tests {
             js_only: None,
             params: params.iter().map(|p| p.to_string()).collect(),
             batch: batch.map(str::to_string),
+            child_pct: None,
         }
     }
 
@@ -658,6 +689,8 @@ mod tests {
             repo_pct: 100.0,
             hot,
             compiled: Vec::new(),
+            child_pct: 0.0,
+            child_processes: Vec::new(),
         }
     }
 
@@ -703,6 +736,46 @@ mod tests {
         assert!(pick(&r, Some("load")).is_err());
         assert!(pick(&r, Some("missing")).is_err());
         assert!(pick(&r, None).is_err());
+    }
+
+    #[test]
+    fn a_function_that_mostly_waits_on_child_processes_is_passed_over() {
+        let waits = || {
+            let mut h = hot("run_all", 40.0, true, &["n"], None);
+            h.child_pct = Some(95.0);
+            h
+        };
+        let mut r = report(vec![waits(), hot("main", 99.0, true, &[], None)]);
+        r.child_pct = 38.0;
+        r.child_processes = vec![crate::profile::ChildProcess {
+            command: Some("git".into()),
+            file: "app.py".into(),
+            line: 4,
+            function: "run_all".into(),
+            ms: 38.0,
+            share: 38.0,
+        }];
+        let none = pick(&r, None).unwrap_err().to_string();
+        assert!(
+            none.starts_with("no hot function to port: the ones that could cross the bridge mostly wait on child processes. 38% of the run waits on child processes (`git` from `app.py:4`)."),
+            "{none}"
+        );
+        r.hot.push(hot("parse", 30.0, true, &["text"], None));
+        assert_eq!(pick(&r, None).unwrap().function, "parse");
+    }
+
+    #[test]
+    fn a_named_function_bridge_keeps_says_so_even_when_it_waits() {
+        let mut h = hot("each", 80.0, true, &["items"], None);
+        h.js_only = Some("takes or returns a function".into());
+        h.child_pct = Some(70.0);
+        let named = pick(&report(vec![h]), Some("each"))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            named.contains("cannot be bridged") && named.contains("takes or returns a function"),
+            "{named}"
+        );
     }
 
     #[test]

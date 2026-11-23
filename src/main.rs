@@ -40,9 +40,10 @@ enum KindArg {
 
 #[derive(Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum Profile {
-    /// Build for this machine.
+    /// Run on this machine.
     Host,
-    /// Build the JNI library for Android ABIs, into `jniLibs/`.
+    /// Run on Android: the JNI library for the ABIs in `jniLibs/`, and on a connected device when
+    /// replaying.
     Android,
 }
 
@@ -54,6 +55,7 @@ enum Cmd {
         #[arg(default_value = ".")]
         root: PathBuf,
         /// Print the machine-readable report (schema `rust-anything/analyze@1`) instead of Markdown.
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
         /// Write to this file instead of stdout.
@@ -67,7 +69,7 @@ enum Cmd {
         #[arg(long)]
         whole_app: bool,
     },
-    /// 2. Scaffold a Rust crate with JS bindings for one unit.
+    /// 2. Scaffold a Rust crate with bindings for one unit.
     Bridge {
         /// Repository root.
         root: PathBuf,
@@ -85,7 +87,7 @@ enum Cmd {
         /// Bridge a unit the plan marks blocked or keep.
         #[arg(long)]
         force: bool,
-        /// Keep an export in TS: `name` or `"name: reason"`. Repeatable.
+        /// Keep an export in the original language: `name` or `"name: reason"`. Repeatable.
         #[arg(long)]
         keep: Vec<String>,
         /// Add a batch class: `function:param` runs `function` over many `param` values kept in
@@ -103,6 +105,7 @@ enum Cmd {
     },
     /// 2b. Regenerate the bindings (`lib.rs`, `index.cjs`, `js.rs`) from the signatures in `port.rs`.
     Refresh {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Add a batch class: `function:param` runs `function` over many `param` values kept in
@@ -110,8 +113,9 @@ enum Cmd {
         #[arg(long)]
         batch: Vec<String>,
     },
-    /// 3a. Record what the TS functions return on generated and given inputs.
+    /// 3a. Record what the original's functions return on generated and given inputs.
     Record {
+        /// Crate folder made by `bridge`.
         /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
@@ -128,6 +132,7 @@ enum Cmd {
         /// Resolve npm packages from this folder's `node_modules` (when the repo has none installed).
         #[arg(long)]
         resolve_from: Option<PathBuf>,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
@@ -161,6 +166,7 @@ enum Cmd {
     /// 3b. Build the crate's JS module (napi-rs `.node`, wasm-bindgen output) or, with
     /// `--profile android`, the JNI library for Android ABIs into `jniLibs/`.
     Build {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Target: this machine, or Android (needs the NDK and the Rust Android targets).
@@ -181,6 +187,7 @@ enum Cmd {
     },
     /// 3c. Replay recorded cases against the Rust module.
     Diff {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Target: this machine, or a connected Android device (for JVM crates).
@@ -201,13 +208,16 @@ enum Cmd {
         /// Floats match within this tolerance for this run (the one saved by `record` otherwise).
         #[arg(long)]
         float_tolerance: Option<f64>,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
     },
-    /// 3d. Time the recorded cases on the TS original and on Rust, bridge included.
+    /// 3d. Time the recorded cases on the original and on Rust, bridge included.
     Bench {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Minimum measured time per function and side, in milliseconds.
@@ -216,14 +226,17 @@ enum Cmd {
         /// Resolve npm packages the original imports from this folder's `node_modules`.
         #[arg(long)]
         resolve_from: Option<PathBuf>,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
     },
     /// 3e. Run fresh inputs from a new seed through the original and the port and report where
     /// they differ: what the recorded cases did not cover.
     Fuzz {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Fresh cases per function (and scenarios per class) in each round.
@@ -242,8 +255,10 @@ enum Cmd {
         /// Resolve npm packages the original imports from this folder's `node_modules`.
         #[arg(long)]
         resolve_from: Option<PathBuf>,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
     },
@@ -253,6 +268,7 @@ enum Cmd {
     Profile {
         /// Repository root.
         root: PathBuf,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
         /// Source language; detected from the repository when omitted.
@@ -288,6 +304,7 @@ enum Cmd {
         /// Agent turns: the port, then one more per failing diff or gate.
         #[arg(long, default_value_t = 3)]
         rounds: usize,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
         /// The workload, after `--`.
@@ -297,24 +314,29 @@ enum Cmd {
     /// Switch a ported unit on: one marked block in the original source files rebinds its
     /// functions to the Rust module, for every caller (TS/JS and Python). `disable` removes it.
     Enable {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Switch it on even when recorded cases differ.
         #[arg(long)]
         force: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
     /// Switch a unit off: removes exactly the lines `enable` added.
     Disable {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
     /// Write a unit's result for a pull request or README: REPORT.md and card.svg with the
     /// recorded cases matched, the speedup from bench, the fallback rate and the machine.
     Report {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Output folder; defaults to `<crate>/report`.
@@ -323,8 +345,10 @@ enum Cmd {
         /// Minimum measured time per function and side, in milliseconds.
         #[arg(long, default_value_t = 200)]
         min_ms: u64,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
     },
@@ -337,11 +361,13 @@ enum Cmd {
         /// Remove it even when CARGO_TARGET_DIR names it (other cargo projects may build there).
         #[arg(long)]
         force: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
-    /// 4. Generate a drop-in module that runs TS and Rust side by side.
+    /// 4. Generate a drop-in module that runs the original and Rust side by side.
     Shadow {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Where to write the module; defaults to `<crate>/shadow/<name>.shadow.ts`.
@@ -350,15 +376,19 @@ enum Cmd {
     },
     /// 5. Check the definition of done for a port.
     Gate {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
+        /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
     },
     /// 6. Lay out installable packages and a CI workflow for every platform; never publishes.
     Package {
+        /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
         /// Package name on npm or PyPI; defaults to the crate name.
@@ -385,10 +415,11 @@ enum Cmd {
         /// List the files, write nothing.
         #[arg(long)]
         dry_run: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
-    /// Record the whole app's behavior and replay any build against it (CLIs).
+    /// Record the whole app's behavior and replay any build against it (CLIs and servers).
     App {
         #[command(subcommand)]
         command: AppCmd,
@@ -411,6 +442,7 @@ enum Cmd {
         /// Change settings files in place without saving a `.rust-anything.bak` copy first.
         #[arg(long)]
         no_backup: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
@@ -430,12 +462,14 @@ enum Cmd {
         /// Exit 1 when the original changed since any port was recorded.
         #[arg(long)]
         check: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
     /// Check the language runtimes, the agent setup and the MCP server, with the command that
     /// fixes each problem. Exits 1 when something required is missing.
     Doctor {
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
@@ -519,6 +553,7 @@ enum AppCmd {
         /// after each case or request; its output is recorded with the effects.
         #[arg(long, value_name = "COMMAND")]
         db_dump: Option<String>,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
         /// The command that runs the original, after `--`; paths are relative to the repository.
@@ -547,6 +582,7 @@ enum AppCmd {
         /// The fast, repeatable loop for fixing one mismatch.
         #[arg(long)]
         case: Option<String>,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
@@ -564,6 +600,7 @@ enum AppCmd {
         /// crate with the public API (found by default when there is no main and no server).
         #[arg(long)]
         library: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
@@ -588,6 +625,7 @@ enum AppCmd {
         /// Only write the files; skip the build and replay.
         #[arg(long)]
         no_check: bool,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },
@@ -599,6 +637,7 @@ enum AppCmd {
         /// Repository root.
         #[arg(default_value = ".")]
         repo: PathBuf,
+        /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
     },

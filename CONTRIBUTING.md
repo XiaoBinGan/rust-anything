@@ -60,7 +60,36 @@ paths in what you commit. CI runs it on every file.
   - `tests/native.rs`: bridges built for real, then loaded and replayed.
   - `tests/app.rs` and `tests/http.rs`: whole-app record, replay, front door and lift, for CLIs and
     servers.
+  - `tests/app_fresh.rs`: `app record --fresh`, where each case starts from a snapshot of a project
+    folder.
   - `tests/library.rs`: whole-library ports.
+  - `tests/effects.rs`: side effects (mail sent, rows written) that make a replay fail even when
+    the output matches.
+  - `tests/fuzz.rs`: `fuzz` and `record --pin-clock`.
+  - `tests/switch.rs`: `enable` and `disable` on real source files.
+  - `tests/package.rs`: `package` layouts and an installed napi port.
+  - `tests/doctor.rs`: `doctor --json` and its exit code.
+  - `tests/report.rs`: what the plan says about units you cannot start with.
+  - `tests/port_map.rs`: the port map, upstream changes and unreadable manifests.
+  - `tests/overloads.rs`: Java, C# and Kotlin overloads kept in the original while the rest is
+    bridged.
+  - `tests/tools.rs`: the MCP tools and the CLI expose the same options, and `docs/tools.md`
+    matches the tool list.
+  - `tests/plugin.rs`: the plugin ships the same skill and MCP server, at the crate version.
+  - `tests/recording.rs`, `tests/record_cwd.rs` and `tests/record_timeout.rs`: `record` flags a
+    stale recording, leaves the working directory alone, and stops a case that never returns.
+  - `tests/float_files.rs`: float files compared within the tolerance.
+  - `tests/c_pointers.rs` and `tests/c_structs.rs`: C buffers and out-pointers, and structs passed
+    or returned by value.
+  - `tests/go_internal_packages.rs`, `tests/go_mod_directives.rs`, `tests/go_module_paths.rs` and
+    `tests/go_record_cgo.rs`: recording Go modules (internal packages, `go.mod` directives,
+    versioned paths with spaces, cgo).
+  - `tests/java_package_declaration.rs` and `tests/java_replay.rs`: Java recording with comments in
+    the package declaration, and replay that tells `null` from a rejected argument.
+  - `tests/ruby_recording.rs`: Ruby results that cannot be encoded.
+  - `tests/untyped_js_types.rs`: types for untyped JavaScript from JSDoc or a sibling declaration
+    file.
+  - `tests/android_device.rs`: on-device recording over adb; skipped without a device.
   - Unit tests live next to the code.
 - **Fixtures** are small apps under `tests/fixtures/`. The CLI and HTTP fixtures implement the same
   commands and routes in every language (`tcli upper|len|div|words|copy|now`, `/hello`, `/upper`,
@@ -122,7 +151,11 @@ cargo test
 - Note anything you couldn't test (another OS, a runtime you don't have).
 - Keep it to one change: two fixes are easier to review as two pull requests.
 
-CI runs on Ubuntu and macOS with every runtime installed. For a first-time contributor, GitHub
+CI runs on Ubuntu, macOS and Windows. The Ubuntu `check` job has Node and cargo
+(`RUST_ANYTHING_REQUIRE=node,cargo`); macOS adds Python, Go, Ruby, Java and the wasm-bindgen CLI, and
+Windows runs the native bridge integration tests. PHP, .NET and Kotlin are installed nowhere, so their
+tests skip there: run `cargo test` locally with those on `PATH` before a change that touches them
+(`docs/STATUS.md`, "Where the tests run", has the same split). For a first-time contributor, GitHub
 waits for a maintainer to approve the CI run, so expect a short delay before the checks start.
 
 Pull requests are merged with their commits kept, so your history stays yours. If a change needs

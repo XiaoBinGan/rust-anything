@@ -45,6 +45,14 @@ The overloads of one name in one file are now one kept entry, also under `--keep
 kept functions that share a name still clash. `tests/overloads.rs` covers Java, Kotlin, C# and
 Ruby.
 
+**`profile` advised porting a function that was waiting.** A loop of `execSync("sleep 0.2")`
+took 41% of a run and was "port it", and `go` picked it when it was the hottest; the same loop in
+Rust still waits for every process. `profile` now counts the time under Node's blocking
+`child_process` calls and Python's `subprocess` and `os.system` as waiting, lists it with the
+command and the call, and `go` passes over a function that mostly waits (and stops when waiting
+is most of the run). An asynchronous `spawn` or `exec` waits while the thread is idle, so it
+makes nothing look hot and is not listed.
+
 **A bridge found no functions in a module that exports a list.** `export { a, b as c }` was not
 read. `ts/exports.rs` reads export lists; check `bridge` on a unit written that way.
 
