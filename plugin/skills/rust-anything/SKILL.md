@@ -1,6 +1,6 @@
 ---
 name: rust-anything
-description: Port TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP or C# to Rust with the rust-anything CLI or MCP tools, from one hot function up to a whole app rewritten as a pure Rust app - profile, plan, bridge one unit at a time, record the original's behavior, port, diff, bench, shadow and gate; batch hot loops so they run in Rust on all cores. Use when asked to rewrite, port or migrate code or an app to Rust, to plan such a migration, or to make slow code faster with Rust.
+description: Port TypeScript/JavaScript, Python, C, Go, Ruby or Java to Rust with the rust-anything CLI or MCP tools, from one hot function up to a whole app rewritten as a pure Rust app - profile, plan, bridge one unit at a time, record the original's behavior, port, diff, bench, shadow and gate; batch hot loops so they run in Rust on all cores. Use when asked to rewrite, port or migrate code or an app to Rust, to plan such a migration, or to make slow code faster with Rust.
 ---
 
 # Migration to Rust with rust-anything
@@ -14,14 +14,16 @@ the decisions, researches the dependencies, records the whole app, puts a Rust f
 of the original, runs the steps below for every unit, then lifts the app to a standalone Rust
 binary (or, for a library, one pure Rust crate). CLIs, HTTP servers and libraries.
 
-Languages: TypeScript/JavaScript, Python, C, Go, Ruby, Java. The language is detected; `--lang`
-overrides it. The steps are the same everywhere; only the bridge differs (napi-rs or wasm for
-TS, PyO3, a C ABI, cgo, a magnus extension, JNI), and the original's callers keep their API.
-For PHP: `analyze`, and for a whole app `app record`, `app replay` and
-`app front-door` (CLIs, and servers run with `php -S 127.0.0.1:{port} router.php`); `bridge` does not
-take PHP units yet, so tell the user before planning a PHP port past the front door. C# works
-the same way: record a built app (`dotnet out/app.dll`, servers with
-`--urls http://127.0.0.1:{port}`); `bridge` does not take C# units yet.
+Languages: TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP, C# and PowerShell. The
+language is detected; `--lang` overrides it. The steps are the same everywhere; only the bridge
+differs (napi-rs or wasm for TS, PyO3, a C ABI, cgo, a magnus extension, JNI, PHP's `ext-ffi`,
+P/Invoke), and the original's callers keep their API.
+For PHP, a unit's top-level functions are bridged through `ext-ffi` (PHP with FFI; static methods
+stay in PHP), and a whole app goes through `app record`, `app replay` and `app front-door` (CLIs, and
+servers run with `php -S 127.0.0.1:{port} router.php`). C# and PowerShell units are bridged the same
+shape over P/Invoke: C# public static methods (`dotnet` on PATH), and PowerShell functions from a
+`.psm1` (`pwsh` 7.4+). `shadow` covers every language but PHP, C# and PowerShell, and PowerShell units
+have no `profile` and no `--batch`; say so before planning one of those steps.
 
 Tools: the `rust-anything` CLI, or the same steps as MCP tools (`rust-anything mcp`): `go`,
 `profile`, `analyze`, `bridge`, `refresh`, `record`, `build`, `diff`, `bench`, `shadow`, `gate`,
