@@ -544,7 +544,9 @@ pub fn exports(path: &str, source: &str) -> Vec<ExportedFn> {
                             let dims = named_children(p)
                                 .iter()
                                 .find(|c| c.kind() == "dimensions")
-                                .map_or(String::new(), |d| text(*d, source).replace(' ', ""));
+                                .map_or(String::new(), |d| {
+                                    text(*d, source).split_whitespace().collect::<String>()
+                                });
                             (
                                 format!("{base}{dims}"),
                                 p.child_by_field_name("name")
@@ -631,7 +633,8 @@ mod tests {
     fn a_c_style_array_parameter_keeps_its_dimensions() {
         // `int values[]` is `int[] values`: tree-sitter keeps the brackets in a `dimensions` child,
         // which used to be dropped, so the parameter came out as a plain `int`.
-        let src = "package acme;\npublic class Stats {\n    public static int sum(int values[]) { return 0; }\n    public static int plain(int[] values) { return 0; }\n    public static int grid(int rows[][]) { return 0; }\n}\n";
+        // The brackets can hold a tab: `int values[\t]` is the same type as `int values[]`.
+        let src = "package acme;\npublic class Stats {\n    public static int sum(int values[]) { return 0; }\n    public static int plain(int[] values) { return 0; }\n    public static int grid(int rows[][]) { return 0; }\n    public static int tabbed(int xs[\t]) { return 0; }\n}\n";
         let fns = exports("acme/Stats.java", src);
         let types: Vec<(&str, &str)> = fns
             .iter()
@@ -639,7 +642,12 @@ mod tests {
             .collect();
         assert_eq!(
             types,
-            [("sum", "int[]"), ("plain", "int[]"), ("grid", "int[][]"),]
+            [
+                ("sum", "int[]"),
+                ("plain", "int[]"),
+                ("grid", "int[][]"),
+                ("tabbed", "int[]"),
+            ]
         );
     }
 
