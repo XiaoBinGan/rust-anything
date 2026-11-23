@@ -216,7 +216,7 @@ Runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `crate` | string | yes | Folder of the generated crate (holds rust-anything.json). |
-| `out` | string |  | Where to write the module; defaults per target: `<crate>/shadow/` (TS, Python, C, Ruby), `<crate>/go/shadow/` (Go), `<crate>/java/` (Java, Kotlin). |
+| `out` | string |  | Where to write the module; defaults per target: `<crate>/shadow/` (TS, Python, C), `<crate>/ruby/` (Ruby), `<crate>/go/shadow/` (Go), `<crate>/java/` (Java, Kotlin). |
 
 ## Map the port
 
