@@ -357,12 +357,11 @@ pub fn kotlin_to_ts(t: &str) -> Result<String, String> {
         "Boolean" => "boolean".into(),
         "Unit" | "Nothing" => "void".into(),
         "List" | "MutableList" | "Collection" | "Iterable" | "Array" | "IntArray" | "LongArray"
-        | "DoubleArray" | "BooleanArray" => {
+        | "ShortArray" | "ByteArray" | "FloatArray" | "DoubleArray" | "BooleanArray" => {
             let inner = if head.ends_with("Array") && !matches!(head, "Array") {
                 match head {
-                    "IntArray" => "int".into(),
-                    "LongArray" => "int".into(),
-                    "DoubleArray" => "number".into(),
+                    "IntArray" | "LongArray" | "ShortArray" | "ByteArray" => "int".into(),
+                    "FloatArray" | "DoubleArray" => "number".into(),
                     "BooleanArray" => "boolean".into(),
                     _ => arg(0)?,
                 }
@@ -811,6 +810,28 @@ pub fn receiver(f: &ExportedFn) -> (String, String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_primitive_array_has_a_dialect_type() {
+        // `IntArray` and friends are the usual parameter type for buffers in Kotlin.
+        for (kotlin, ts) in [
+            ("IntArray", "int[]"),
+            ("LongArray", "int[]"),
+            ("ShortArray", "int[]"),
+            ("ByteArray", "int[]"),
+            ("FloatArray", "number[]"),
+            ("DoubleArray", "number[]"),
+            ("BooleanArray", "boolean[]"),
+        ] {
+            assert_eq!(kotlin_to_ts(kotlin), Ok(ts.to_string()), "{kotlin}");
+        }
+        // `CharArray` is UTF-16 code units, like `Char`: still refused, with that reason.
+        assert!(kotlin_to_ts("CharArray").is_err());
+        // The Java side already knew all of them; `ByteArray` stays `byte[]` there.
+        assert_eq!(kotlin_to_java("ByteArray"), Some("byte[]".to_string()));
+        assert_eq!(kotlin_to_java("ShortArray"), Some("short[]".to_string()));
+        assert_eq!(kotlin_to_java("FloatArray"), Some("float[]".to_string()));
+    }
 
     #[test]
     fn scans_risks_and_imports() {
