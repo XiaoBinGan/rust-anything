@@ -411,6 +411,9 @@ fn record_node(opts: &RecordOptions, manifest: &Manifest, cases: &[Value]) -> Re
     let record = |transform: bool| {
         record_cases(cases, &work, &out, "node", |inputs, part| {
             let mut cmd = Command::new("node");
+            if let Some(flag) = strip_flag() {
+                cmd.arg(flag).arg("--no-warnings=ExperimentalWarning");
+            }
             if transform {
                 // Enums and parameter properties need Node to transform TS, not only strip types.
                 cmd.args(transform_flag())
@@ -432,12 +435,38 @@ fn record_node(opts: &RecordOptions, manifest: &Manifest, cases: &[Value]) -> Re
         })
     };
     if let Err(error) = record(false) {
-        if !format!("{error:#}").contains("ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX") {
+        let message = format!("{error:#}");
+        if !message.contains("ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX")
+            && !message.contains("ERR_UNKNOWN_FILE_EXTENSION")
+        {
             return Err(error);
         }
         record(true)?;
     }
     Ok(out)
+}
+
+/// Node loads a `.ts` source without a flag from 22.18 and 23.6; before that `record`, `fuzz` and
+/// `bench` need `--experimental-strip-types`, or `.ts` fails with `ERR_UNKNOWN_FILE_EXTENSION`.
+fn needs_strip(major: u32, minor: u32) -> bool {
+    (major, minor) < (22, 18) || (major == 23 && minor < 6)
+}
+
+/// The flag for a parsed Node version, or nothing when Node strips types by itself.
+fn strip_flag_for(major: u32, minor: u32) -> Option<&'static str> {
+    needs_strip(major, minor).then_some("--experimental-strip-types")
+}
+
+fn strip_flag() -> Option<&'static str> {
+    static FLAG: std::sync::OnceLock<Option<&'static str>> = std::sync::OnceLock::new();
+    *FLAG.get_or_init(|| {
+        let out = Command::new("node").arg("--version").output().ok()?;
+        let text = String::from_utf8_lossy(&out.stdout);
+        let mut parts = text.trim().trim_start_matches('v').split('.');
+        let major: u32 = parts.next()?.parse().ok()?;
+        let minor: u32 = parts.next()?.parse().ok()?;
+        strip_flag_for(major, minor)
+    })
 }
 
 fn transform_flag() -> Option<&'static str> {
@@ -809,8 +838,9 @@ pub fn bench(opts: &BenchOptions) -> Result<Vec<BenchRow>> {
     let register = work.canonical()?.join("register.mjs");
     let mut cmd = Command::new("node");
     crate::enable::original_only(&mut cmd, &manifest);
-    cmd.args(transform_flag())
+    cmd.args(strip_flag())
         .arg("--no-warnings")
+        .args(transform_flag())
         .arg(format!("--import={}", file_url(&register)))
         .args(opts.node_args)
         .arg(&script)
@@ -843,81 +873,7 @@ pub struct DiffOptions<'a> {
 const SHOWN_MISMATCHES: usize = 20;
 
 pub fn diff(opts: &DiffOptions) -> Result<DiffOutcome> {
-    let mut outcome = diff_full(opts)?;
-    outcome.mismatches.truncate(SHOWN_MISMATCHES);
-    Ok(outcome)
-}
-
-/// Like `diff`, without truncating `mismatches`, so callers can inspect per-function results.
-pub fn diff_full(opts: &DiffOptions) -> Result<DiffOutcome> {
-    let mut outcome = settle(opts, diff_exact(opts)?)?;
-    anyhow::ensure!(
-        outcome.total > 0,
-        "no recorded cases to compare; run `rust-anything record` first"
-    );
-    if opts.module.is_none() {
-        outcome.trend = crate::recording::track(opts.crate_dir, outcome.passed, outcome.total);
-    }
-    Ok(outcome)
-}
-
-/// `(passed, total)` recorded cases per function name.
-pub type FunctionCounts = BTreeMap<String, (usize, usize)>;
-
-/// `(passed, total)` recorded cases for each function in `cases.jsonl`, using the full
-/// (untruncated) mismatches in `outcome`.
-pub fn per_function_counts(crate_dir: &Path, outcome: &DiffOutcome) -> Result<FunctionCounts> {
-    let cases_path = crate_dir.join(CASES);
-    let text = std::fs::read_to_string(&cases_path)
-        .with_context(|| format!("reading {}", cases_path.display()))?;
-    counts_from_cases_text(&text, outcome)
-}
-
-/// Runs `diff_full` and computes [`per_function_counts`] from the exact `cases.jsonl` snapshot
-/// that `diff_full` verified, failing if `cases.jsonl` was modified concurrently.
-pub fn diff_full_with_counts(opts: &DiffOptions) -> Result<(DiffOutcome, FunctionCounts)> {
-    let cases_path = opts.crate_dir.join(CASES);
-    let snapshot = std::fs::read_to_string(&cases_path)
-        .with_context(|| format!("reading {}", cases_path.display()))?;
-    let outcome = diff_full(opts)?;
-    let current = std::fs::read_to_string(&cases_path)
-        .with_context(|| format!("reading {}", cases_path.display()))?;
-    anyhow::ensure!(
-        current == snapshot,
-        "{CASES} changed while diff was running; rerun `enable`"
-    );
-    let counts = counts_from_cases_text(&snapshot, &outcome)?;
-    Ok((outcome, counts))
-}
-
-fn counts_from_cases_text(
-    text: &str,
-    outcome: &DiffOutcome,
-) -> Result<BTreeMap<String, (usize, usize)>> {
-    let mut totals: BTreeMap<String, usize> = BTreeMap::new();
-    for line in text.lines().filter(|l| !l.is_empty()) {
-        let case: Value = parse_deep(line)?;
-        if let Some(name) = case["fn"].as_str().or_else(|| case["class"].as_str()) {
-            *totals.entry(name.to_string()).or_default() += 1;
-        }
-    }
-    let mut failed: BTreeMap<String, usize> = BTreeMap::new();
-    for m in &outcome.mismatches {
-        if let Some(name) = m["fn"].as_str().or_else(|| m["class"].as_str()) {
-            *failed.entry(name.to_string()).or_default() += 1;
-        }
-    }
-    Ok(totals
-        .into_iter()
-        .map(|(name, total)| {
-            let passed = if outcome.missing.contains(&name) {
-                0
-            } else {
-                total.saturating_sub(failed.get(&name).copied().unwrap_or(0))
-            };
-            (name, (passed, total))
-        })
-        .collect())
+    diff_after(opts, diff_exact(opts)?)
 }
 
 /// Diffs on a connected Android device, using the port built for the device's ABI.
@@ -2309,6 +2265,29 @@ writeFileSync(outPath, JSON.stringify(summary, null, 2))
 mod tests {
     use super::*;
     use crate::ts::exports::{ExportedFn, Param};
+
+    #[test]
+    fn node_needs_the_strip_flag_before_22_18_and_23_6() {
+        // Node strips types on its own from 22.18.0 and 23.6.0; on 22.14 `record` fails with
+        // ERR_UNKNOWN_FILE_EXTENSION without the flag, while `doctor` accepts that version.
+        for (major, minor, needs) in [
+            (22, 6, true),
+            (22, 14, true),
+            (22, 17, true),
+            (22, 18, false),
+            (22, 22, false),
+            (23, 5, true),
+            (23, 6, false),
+            (24, 0, false),
+        ] {
+            assert_eq!(needs_strip(major, minor), needs, "{major}.{minor}");
+            assert_eq!(
+                strip_flag_for(major, minor),
+                needs.then_some("--experimental-strip-types"),
+                "{major}.{minor}"
+            );
+        }
+    }
 
     #[test]
     fn the_js_codec_keeps_marker_shaped_data_and_typed_arrays() {
