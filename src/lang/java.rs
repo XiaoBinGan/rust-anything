@@ -384,7 +384,8 @@ fn java_to_ts_inner(t: &str, in_param: bool) -> Result<String, String> {
         Some(i) if t.ends_with('>') => (&t[..i], split_top(&t[i + 1..t.len() - 1])),
         _ => (t, Vec::new()),
     };
-    let head = head.trim().rsplit('.').next().unwrap_or(head);
+    let qualified = head.trim();
+    let head = qualified.rsplit('.').next().unwrap_or(qualified);
     let arg = |i: usize| -> Result<String, String> {
         args.get(i).map_or_else(
             || Err(format!("raw `{head}`")),
@@ -423,16 +424,34 @@ fn java_to_ts_inner(t: &str, in_param: bool) -> Result<String, String> {
         "Stream" | "Iterator" | "IntStream" => {
             return Err(format!("uses `{head}`, a lazy sequence"));
         }
-        // A collected set is not a class of the project: say what it is, as Kotlin already does, and
-        // name the ordered ones separately, whose order the bridge does not build yet.
-        "Set" | "HashSet" => return Err("uses `Set`, an unordered collection".into()),
-        "SortedSet" | "NavigableSet" | "TreeSet" | "LinkedHashSet" => {
+        // A JDK set is not a class of the project: say what it is, as Kotlin already does, and name
+        // the ordered ones separately, whose order the bridge does not build yet. A *qualified* name
+        // outside `java.util` is the project's own `Set`, so it keeps the class wording.
+        "Set" | "HashSet" if jdk_set(qualified) => {
+            return Err(format!("uses `{head}`, an unordered collection"));
+        }
+        "SortedSet" | "NavigableSet" | "TreeSet" if jdk_set(qualified) => {
             return Err(format!(
                 "uses `{head}`, a sorted set the bridge does not build yet"
             ));
         }
+        "LinkedHashSet" if jdk_set(qualified) => {
+            return Err(
+                "uses `LinkedHashSet`, an insertion-ordered set the bridge does not build yet"
+                    .into(),
+            );
+        }
         other => return Err(format!("uses the class `{other}`")),
     })
+}
+
+/// Whether a collected set is the JDK's: unqualified in a file that imports it, or under `java.util`.
+/// `com.acme.Set` is the project's own type and keeps the "uses the class" wording.
+fn jdk_set(qualified: &str) -> bool {
+    match qualified.rsplit_once('.') {
+        Some((package, _)) => package == "java.util",
+        None => true,
+    }
 }
 
 fn split_top(text: &str) -> Vec<String> {
@@ -768,16 +787,24 @@ public class Totals {
     #[test]
     fn a_java_set_is_named_for_what_it_is() {
         // `Set` and `HashSet` are not project classes: the plan used to say "uses the class `Set`".
-        for t in ["Set", "HashSet", "java.util.Set"] {
+        for t in ["Set", "HashSet", "java.util.Set", "java.util.HashSet"] {
             let reason = java_to_ts(t).unwrap_err();
             assert!(reason.contains("unordered collection"), "{t}: {reason}");
             assert!(!reason.contains("uses the class"), "{t}: {reason}");
         }
         // The ordered ones say which they are, and that the bridge does not build them yet.
-        for t in ["SortedSet", "NavigableSet", "TreeSet", "LinkedHashSet"] {
+        for t in ["SortedSet", "NavigableSet", "TreeSet", "java.util.TreeSet"] {
             let reason = java_to_ts(t).unwrap_err();
             assert!(reason.contains("sorted set"), "{t}: {reason}");
             assert!(!reason.contains("uses the class"), "{t}: {reason}");
+        }
+        // `LinkedHashSet` keeps insertion order; it does not sort by value.
+        let linked = java_to_ts("LinkedHashSet").unwrap_err();
+        assert!(linked.contains("insertion-ordered set"), "{linked}");
+        // A project class that happens to be called `Set` keeps the class wording: it is not the JDK's.
+        for t in ["com.acme.Set", "acme.util.TreeSet"] {
+            let reason = java_to_ts(t).unwrap_err();
+            assert!(reason.contains("uses the class"), "{t}: {reason}");
         }
         // A real project class keeps the old wording.
         assert_eq!(
