@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 ligações",
     "benchNote": "Onde a diferença é pequena: uma ligação a ler a lista completa de 10,000 posts (1.2x), e escritas na base de dados grande (1.1 a 1.2x), já que ambos reescrevem o ficheiro inteiro a cada escrita. [Tabelas completas](/docs/real-world/json-server)",
     "langsTitle": "Linguagens",
-    "langsDesc": "A linguagem é detetada a partir do repositório. Todas as linguagens exceto C têm também lotes: os itens atravessam a bridge uma vez e ficam em Rust, em todos os núcleos.",
+    "langsDesc": "A linguagem é detetada a partir do repositório. Todas as linguagens exceto C, PHP, C# e PowerShell têm também lotes: os itens atravessam a bridge uma vez e ficam em Rust, em todos os núcleos.",
     "verified": "Verificado",
     "wholeApps": "Aplicações completas",
     "langMeta": {

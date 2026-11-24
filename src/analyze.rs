@@ -174,6 +174,9 @@ pub struct UnitReport {
     pub exports: usize,
     pub bridgeable: usize,
     pub notes: Vec<String>,
+    /// The notes that explain `status` when it is blocked or keep, for `map`.
+    #[serde(skip)]
+    pub reasons: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -735,6 +738,7 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
     } else {
         Status::Ready
     };
+    let reasons = notes.clone();
     if unit.parse_errors > 0 {
         notes.push(format!(
             "{} parse errors: results for this unit are partial.",
@@ -764,7 +768,19 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
             others.join(", ")
         ));
     }
-    if unit.deps.is_empty() && !keep {
+    if !keep && !unit.deps.is_empty() {
+        // A unit in wave 1 because it imports a sibling: say which, or the wave order is unexplained.
+        let names: Vec<String> = unit
+            .deps
+            .iter()
+            .map(|&v| format!("`{}`", all[v].id))
+            .collect();
+        notes.push(format!(
+            "Imports {}: port {} first, or port them together.",
+            names.join(", "),
+            if names.len() == 1 { "it" } else { "them" }
+        ));
+    } else if unit.deps.is_empty() && !keep {
         if unit.workspace_deps.is_empty() {
             notes.push("Leaf: imports no other unit.".into());
         } else {
@@ -865,6 +881,7 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
         exports: 0,
         bridgeable: 0,
         notes,
+        reasons,
     }
 }
 
@@ -1216,6 +1233,65 @@ mod tests {
         let (wave, members) = waves(&edges);
         assert_eq!(wave, [2, 1, 0, 1, 1]);
         assert_eq!(members[3].len(), 2);
+    }
+
+    #[test]
+    fn only_the_verdict_notes_are_reasons() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/mini");
+        let report = analyze_lang(&root, Lang::Ts).unwrap();
+        let svelte = report
+            .units
+            .iter()
+            .find(|u| u.id == "packages/a/src/svelte.ts")
+            .unwrap();
+        assert_eq!(svelte.status, Status::Blocked);
+        assert!(
+            svelte.notes.len() > svelte.reasons.len(),
+            "{:?}",
+            svelte.notes
+        );
+        assert_eq!(svelte.reasons, ["`svelte` has no Rust equivalent."]);
+        let ready = report
+            .units
+            .iter()
+            .find(|u| u.status == Status::Ready)
+            .unwrap();
+        assert!(ready.reasons.is_empty(), "{:?}", ready.reasons);
+    }
+
+    #[test]
+    fn a_unit_that_imports_a_sibling_says_which_one() {
+        // `fs.ts` is in wave 1 because it imports `util.ts`; the details used to say nothing, so the
+        // wave order looked arbitrary.
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/mini");
+        let report = analyze_lang(&root, Lang::Ts).unwrap();
+        let fs = report
+            .units
+            .iter()
+            .find(|u| u.id.ends_with("fs.ts"))
+            .expect("fixture has packages/a/src/fs.ts");
+        assert_eq!(fs.internal_deps, ["packages/a/src/util.ts"]);
+        assert!(
+            fs.notes
+                .iter()
+                .any(|n| n
+                    == "Imports `packages/a/src/util.ts`: port it first, or port them together."),
+            "{:?}",
+            fs.notes
+        );
+        // A unit with no sibling import keeps the leaf wording.
+        let leaf = report
+            .units
+            .iter()
+            .find(|u| u.id.ends_with("parse/"))
+            .expect("fixture has packages/a/src/parse/");
+        assert!(
+            leaf.notes
+                .iter()
+                .any(|n| n == "Leaf: imports no other unit."),
+            "{:?}",
+            leaf.notes
+        );
     }
 
     #[test]

@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 birikme",
     "benchNote": "Tapawudyň kiçi ýerleri: bir birikme 10,000 ýazgynyň doly sanawyny okaýar (1.2x) we uly maglumat binasyna ýazmak (1.1-den 1.2x çenli), sebäbi ikisi hem her ýazuwda tutuş faýly täzeden ýazýar. [Doly tablisalar](/docs/real-world/json-server)",
     "langsTitle": "Diller",
-    "langsDesc": "Dil repozitoriýden kesgitlenýär. C-den başga her dil batch-lary hem alýar: elementler serhetden bir gezek geçýär we ähli ýadrolarda Rust-da galýar.",
+    "langsDesc": "Dil repozitoriýden kesgitlenýär. C, PHP, C# we PowerShell-den başga her dil batch-lary hem alýar: elementler serhetden bir gezek geçýär we ähli ýadrolarda Rust-da galýar.",
     "verified": "Barlanan",
     "wholeApps": "Tutuş programmalar",
     "langMeta": {

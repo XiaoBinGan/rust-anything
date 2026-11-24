@@ -15,6 +15,13 @@ import tk from './tk.json'
 import tt from './tt.json'
 import ug from './ug.json'
 import pt from './pt.json'
+import ar from './ar.json'
+import fa from './fa.json'
+import vi from './vi.json'
+import hi from './hi.json'
+import es from './es.json'
+import it from './it.json'
+import id from './id.json'
 
 export const translations: Record<string, unknown> = {
   'tr': tr,
@@ -34,4 +41,11 @@ export const translations: Record<string, unknown> = {
   'tt': tt,
   'ug': ug,
   'pt': pt,
+  'ar': ar,
+  'fa': fa,
+  'vi': vi,
+  'hi': hi,
+  'es': es,
+  'it': it,
+  'id': id,
 }

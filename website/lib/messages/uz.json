@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 ulanish",
     "benchNote": "Farq kichik bo'lgan joylar: bitta ulanish 10,000 postdan iborat butun ro'yxatni o'qiganda (1.2x) va katta bazaga yozishda (1.1 dan 1.2x gacha), chunki ikkalasi ham har bir yozuvda butun faylni qayta yozadi. [To'liq jadvallar](/docs/real-world/json-server)",
     "langsTitle": "Tillar",
-    "langsDesc": "Til repozitoriydan aniqlanadi. C'dan tashqari har bir til batch'larni ham oladi: elementlar ko'prikdan bir marta o'tadi va Rust'da, barcha yadrolarda qoladi.",
+    "langsDesc": "Til repozitoriydan aniqlanadi. C, PHP, C# va PowerShell'dan tashqari har bir til batch'larni ham oladi: elementlar ko'prikdan bir marta o'tadi va Rust'da, barcha yadrolarda qoladi.",
     "verified": "Tekshirilgan",
     "wholeApps": "Butun ilovalar",
     "langMeta": {

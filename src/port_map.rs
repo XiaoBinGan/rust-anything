@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use serde::Serialize;
 
+use crate::analyze::Status;
 use crate::bridge::{MANIFEST, Manifest, SCHEMA};
 use crate::front_door::APP_DIR;
 use crate::harness::CASES;
@@ -55,6 +56,10 @@ pub struct Unported {
     pub loc: usize,
     pub readiness: u32,
     pub exports: usize,
+    /// `analyze`'s verdict: ready, caution, blocked or keep.
+    pub status: Status,
+    /// Why `analyze` calls it blocked or keep, when it says.
+    pub reasons: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -175,6 +180,8 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                     loc: u.loc,
                     readiness: u.readiness,
                     exports: u.exports,
+                    status: u.status,
+                    reasons: u.reasons.clone(),
                 })
                 .collect();
             (units, covered.len(), None)
@@ -255,6 +262,16 @@ fn glue(root: &Path) -> Vec<Glue> {
         .collect();
     glue.sort_by(|a, b| a.file.cmp(&b.file));
     glue
+}
+
+/// The status word `analyze` uses, for the table and the list under it.
+fn status_name(status: Status) -> &'static str {
+    match status {
+        Status::Ready => "ready",
+        Status::Caution => "caution",
+        Status::Blocked => "blocked",
+        Status::Keep => "keep",
+    }
 }
 
 pub fn markdown(map: &PortMap) -> String {
@@ -365,16 +382,69 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
         writeln!(out, "Every unit `analyze` found has a port.\n")?;
     } else {
         writeln!(out, "In the order `analyze` suggests.\n")?;
-        writeln!(out, "| Unit | Lines | Exports | Readiness |")?;
-        writeln!(out, "| --- | ---: | ---: | ---: |")?;
+        writeln!(out, "| Unit | Status | Lines | Exports | Readiness |")?;
+        writeln!(out, "| --- | --- | ---: | ---: | ---: |")?;
         for u in &map.not_ported {
             writeln!(
                 out,
-                "| `{}` | {} | {} | {} |",
-                u.unit, u.loc, u.exports, u.readiness
+                "| `{}` | {} | {} | {} | {} |",
+                u.unit,
+                status_name(u.status),
+                u.loc,
+                u.exports,
+                u.readiness
             )?;
         }
         writeln!(out)?;
+        // A unit that stays in the original is not work to do: say so in its own short list,
+        // with the reason `analyze` gave, or the table above reads as remaining work.
+        let left: Vec<&Unported> = map
+            .not_ported
+            .iter()
+            .filter(|u| !matches!(u.status, Status::Keep | Status::Blocked))
+            .collect();
+        let stays: Vec<&Unported> = map
+            .not_ported
+            .iter()
+            .filter(|u| matches!(u.status, Status::Keep | Status::Blocked))
+            .collect();
+        if !stays.is_empty() {
+            writeln!(
+                out,
+                "{} of these {} no port on purpose ({} blocked, {} kept in the original), so {} {} left to port:\n",
+                stays.len(),
+                if stays.len() == 1 {
+                    "unit has"
+                } else {
+                    "units have"
+                },
+                map.not_ported
+                    .iter()
+                    .filter(|u| matches!(u.status, Status::Blocked))
+                    .count(),
+                map.not_ported
+                    .iter()
+                    .filter(|u| matches!(u.status, Status::Keep))
+                    .count(),
+                left.len(),
+                if left.len() == 1 {
+                    "unit is"
+                } else {
+                    "units are"
+                },
+            )?;
+            for u in stays {
+                let why = if u.reasons.is_empty() {
+                    String::new()
+                } else {
+                    let reasons: Vec<&str> =
+                        u.reasons.iter().map(|n| n.trim_end_matches('.')).collect();
+                    format!(", {}", reasons.join("; "))
+                };
+                writeln!(out, "- `{}`: {}{why}", u.unit, status_name(u.status))?;
+            }
+            writeln!(out)?;
+        }
     }
     writeln!(
         out,
@@ -409,6 +479,60 @@ mod tests {
             covered_by_broken: 0,
             analyze_error: None,
         }
+    }
+
+    #[test]
+    fn a_unit_that_stays_in_the_original_is_not_counted_as_work_to_do() {
+        // `analyze` says why a unit is blocked or kept; without that column and the list under the
+        // table, `map` reads as if every unported unit were remaining work.
+        let mut map = empty_map();
+        map.not_ported = vec![
+            Unported {
+                unit: "src/util.ts".into(),
+                loc: 19,
+                readiness: 94,
+                exports: 3,
+                status: crate::analyze::Status::Ready,
+                reasons: Vec::new(),
+            },
+            Unported {
+                unit: "src/view/".into(),
+                loc: 3,
+                readiness: 100,
+                exports: 0,
+                status: crate::analyze::Status::Keep,
+                reasons: vec!["UI code: keep in the original language.".into()],
+            },
+            Unported {
+                unit: "src/svelte.ts".into(),
+                loc: 4,
+                readiness: 92,
+                exports: 0,
+                status: crate::analyze::Status::Blocked,
+                reasons: vec!["`svelte` has no Rust equivalent.".into()],
+            },
+        ];
+        let text = markdown(&map);
+        assert!(
+            text.contains("| Unit | Status | Lines | Exports | Readiness |"),
+            "{text}"
+        );
+        assert!(text.contains("| `src/util.ts` | ready |"), "{text}");
+        assert!(text.contains("| `src/view/` | keep |"), "{text}");
+        assert!(text.contains("| `src/svelte.ts` | blocked |"), "{text}");
+        // The two that stay are named with their reason, and only the ready one counts as work.
+        assert!(
+            text.contains("2 of these units have no port on purpose (1 blocked, 1 kept in the original), so 1 unit is left to port:"),
+            "{text}"
+        );
+        assert!(
+            text.contains("- `src/svelte.ts`: blocked, `svelte` has no Rust equivalent\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("- `src/view/`: keep, UI code: keep in the original language\n"),
+            "{text}"
+        );
     }
 
     #[test]

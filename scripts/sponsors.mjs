@@ -7,7 +7,7 @@ const MAINTAINER = 'erkamyaman'
 
 const COMPANIES = [{ login: 'coderabbitai', name: 'CodeRabbit', url: 'coderabbit.ai' }]
 
-const KNOWN_ORDER = ['santoshyadavdev', 'hakansoyturk', 'aliyilmazco', 'ashley-hunter', 'fatihuzuntas']
+const KNOWN_ORDER = ['santoshyadavdev', 'hakansoyturk', 'aliyilmazco', 'ashley-hunter', 'fatihuzuntas', 'bugrcvi']
 const rank = (login) => {
   const i = KNOWN_ORDER.indexOf(login)
   return i === -1 ? KNOWN_ORDER.length : i
@@ -30,6 +30,7 @@ function individuals() {
       { login: 'aliyilmazco', name: 'Ali Yilmaz' },
       { login: 'ashley-hunter', name: 'Ashley Hunter' },
       { login: 'fatihuzuntas', name: 'Fatih Uzuntaş' },
+      { login: 'bugrcvi', name: 'bugrcvi' },
     ]
   }
 }
@@ -44,7 +45,7 @@ async function avatar(login, size) {
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 const THEMES = {
-  dark: { text: '#f0f6fc', muted: '#9198a1', ring: '#e0763f', line: '#3d444d' },
+  dark: { text: '#9198a1', muted: '#9198a1', ring: '#e0763f', line: '#3d444d' },
   light: { text: '#1f2328', muted: '#59636e', ring: '#c4521d', line: '#d1d9e0' },
 }
 

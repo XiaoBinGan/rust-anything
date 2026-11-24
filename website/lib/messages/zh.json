@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments，10 个连接",
     "benchNote": "差距较小的地方：单个连接读取完整的 10,000 条帖子列表（1.2x），以及大数据库上的写入（1.1 到 1.2x），因为两者每次写入都会重写整个文件。[完整表格](/docs/real-world/json-server)",
     "langsTitle": "支持语言",
-    "langsDesc": "语言会根据仓库自动检测。除 C 以外的每种语言都支持批处理：数据只跨边界一次并留在 Rust 侧，在全部 CPU 核心上运行。",
+    "langsDesc": "语言会根据仓库自动检测。除 C、PHP、C# 和 PowerShell 以外的每种语言都支持批处理：数据只跨边界一次并留在 Rust 侧，在全部 CPU 核心上运行。",
     "verified": "已验证",
     "wholeApps": "整个应用",
     "langMeta": {

@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments，10 個連線",
     "benchNote": "差距較小的情況：單一連線讀取完整 10,000 篇文章列表（1.2x），以及在大型資料庫上寫入（1.1 到 1.2x），因為兩者每次寫入都會重寫整個檔案。[完整表格](/docs/real-world/json-server)",
     "langsTitle": "語言",
-    "langsDesc": "語言會從儲存庫自動偵測。除了 C 以外，每種語言都支援批次：資料只跨越一次邊界，之後留在 Rust 中，使用所有核心處理。",
+    "langsDesc": "語言會從儲存庫自動偵測。除了 C、PHP、C# 和 PowerShell 以外，每種語言都支援批次：資料只跨越一次邊界，之後留在 Rust 中，使用所有核心處理。",
     "verified": "已驗證",
     "wholeApps": "整個應用程式",
     "langMeta": {

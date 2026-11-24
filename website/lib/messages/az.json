@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 bağlantı",
     "benchNote": "Fərqin kiçik olduğu yerlər: bütöv 10,000 postluq siyahını oxuyan bir bağlantı (1.2x) və böyük verilənlər bazasına yazmalar (1.1-dən 1.2x-ə qədər), çünki hər ikisi hər yazmada bütün faylı yenidən yazır. [Tam cədvəllər](/docs/real-world/json-server)",
     "langsTitle": "Dillər",
-    "langsDesc": "Dil repozitoriyadan müəyyən edilir. C-dən başqa hər dil batch-lər də alır: elementlər körpünü bir dəfə keçir və bütün nüvələrdə Rust-da qalır.",
+    "langsDesc": "Dil repozitoriyadan müəyyən edilir. C, PHP, C# və PowerShell-dən başqa hər dil batch-lər də alır: elementlər körpünü bir dəfə keçir və bütün nüvələrdə Rust-da qalır.",
     "verified": "Yoxlanılıb",
     "wholeApps": "Bütöv tətbiqlər",
     "langMeta": {

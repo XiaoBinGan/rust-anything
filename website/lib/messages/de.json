@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 Verbindungen",
     "benchNote": "Wo der Abstand klein ist: eine Verbindung, die die ganze Liste mit 10,000 Posts liest (1.2x), und Schreibzugriffe auf die große Datenbank (1.1 bis 1.2x), da beide bei jedem Schreiben die ganze Datei neu schreiben. [Vollständige Tabellen](/docs/real-world/json-server)",
     "langsTitle": "Sprachen",
-    "langsDesc": "Die Sprache wird aus dem Repository erkannt. Jede Sprache außer C bekommt auch Batches: Die Elemente wechseln einmal hinüber und bleiben in Rust, auf allen Kernen.",
+    "langsDesc": "Die Sprache wird aus dem Repository erkannt. Jede Sprache außer C, PHP, C# und PowerShell bekommt auch Batches: Die Elemente wechseln einmal hinüber und bleiben in Rust, auf allen Kernen.",
     "verified": "Verifiziert",
     "wholeApps": "Ganze Apps",
     "langMeta": {

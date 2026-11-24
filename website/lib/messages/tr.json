@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 10 bağlantı",
     "benchNote": "Farkın küçük olduğu yerler: 10,000 gönderilik listenin tamamını okuyan tek bağlantı (1.2x) ve büyük veritabanındaki yazmalar (1.1 ila 1.2x); çünkü ikisi de her yazmada dosyanın tamamını yeniden yazar. [Tüm tablolar](/docs/real-world/json-server)",
     "langsTitle": "Diller",
-    "langsDesc": "Dil, depodan otomatik algılanır. C dışındaki her dil batch'leri de alır: öğeler sınırı bir kez geçer ve tüm çekirdeklerde Rust içinde kalır.",
+    "langsDesc": "Dil, depodan otomatik algılanır. C, PHP, C# ve PowerShell dışındaki her dil batch'leri de alır: öğeler sınırı bir kez geçer ve tüm çekirdeklerde Rust içinde kalır.",
     "verified": "Doğrulanmış",
     "wholeApps": "Tüm uygulamalar",
     "langMeta": {

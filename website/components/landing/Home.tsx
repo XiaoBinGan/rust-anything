@@ -251,7 +251,10 @@ export default function Home({ hero, install, locale = 'en' }: { hero: React.Rea
           <div className="ports">
             {m.ports.map((p) => (
               <a key={p.href} href={L(p.href)} className="port-card">
-                <div className="port-kind">{p.kind}</div>
+                <div className="port-top">
+                  <span className="port-kind">{p.kind}</span>
+                  <span className="badge">{m.verified}</span>
+                </div>
                 <div className="big">{p.big}</div>
                 <p>
                   <Rich text={p.text} />
@@ -265,10 +268,17 @@ export default function Home({ hero, install, locale = 'en' }: { hero: React.Rea
             ))}
           </div>
 
-          <div className="panel bench-panel">
-            <div className="titlebar">
+          <p className="ports-legend">
+            <span className="slow-dot" aria-hidden /> {m.slowLegend}
+          </p>
+
+          <details className="panel bench-panel">
+            <summary className="titlebar">
               <span>{m.benchTitle}</span>
-            </div>
+              <svg className="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
             <div className="overflow-x-auto">
               <table className="bench">
                 <thead>
@@ -301,7 +311,7 @@ export default function Home({ hero, install, locale = 'en' }: { hero: React.Rea
             <p className="panel-note">
               <Rich text={m.benchNote} locale={locale} />
             </p>
-          </div>
+          </details>
         </div>
       </section>
 
@@ -317,9 +327,12 @@ export default function Home({ hero, install, locale = 'en' }: { hero: React.Rea
             {LANGS.map((l) => (
               <li key={l.key}>
                 <a href={'tested' in l ? `${REPO_URL}#languages` : L(`/docs/languages/${l.key}`)} className="lang">
-                  <span className="name">{l.name}</span>
-                  <span className={`badge${'tested' in l ? ' preview' : ''}`}>{'tested' in l ? m.tested : m.verified}</span>
-                  <span className="meta">{m.langMeta[l.key]}</span>
+                  <span className="lang-top">
+                    <img src={`/langs/${l.key}.svg`} width={28} height={28} alt="" decoding="async" />
+                    <span className={`badge${'tested' in l ? ' preview' : ''}`}>{'tested' in l ? m.tested : m.verified}</span>
+                  </span>
+                  <span className="name">{l.name.replace('/', '/\u200b')}</span>
+                  <LangMeta text={m.langMeta[l.key]} />
                 </a>
               </li>
             ))}
@@ -362,6 +375,21 @@ function Row({ k, v, slow }: { k: string; v: string; slow: boolean }) {
     <>
       <dt className={slow ? 'slow' : undefined}>{k}</dt>
       <dd className={slow ? 'slow' : undefined}>{v}</dd>
+    </>
+  )
+}
+
+function LangMeta({ text }: { text: string }) {
+  const cut = /\.\s|。/.exec(text)
+  const bridge = cut ? text.slice(0, cut.index) : ''
+  const rest = cut ? text.slice(cut.index + cut[0].length).trim() : text
+  const count = /([\d][\d,.\s]*\/\s*[\d][\d,.\s]*)$/.exec(rest)
+  const what = count ? rest.slice(0, count.index).replace(/[:：]\s*$/, '').trim() : rest
+  return (
+    <>
+      {count && <span className="count">{count[1].trim()}</span>}
+      <span className="what">{what}</span>
+      {bridge && <span className="bridge">{bridge}</span>}
     </>
   )
 }

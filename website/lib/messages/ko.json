@@ -258,7 +258,7 @@
     "benchPostRow": "POST /comments, 연결 10개",
     "benchNote": "차이가 작은 경우: 연결 하나로 게시물 10,000개 전체 목록을 읽을 때(1.2x)와 큰 데이터베이스에 쓸 때(1.1 to 1.2x)입니다. 두 경우 모두 쓰기마다 파일 전체를 다시 쓰기 때문입니다. [전체 표](/docs/real-world/json-server)",
     "langsTitle": "언어",
-    "langsDesc": "언어는 저장소에서 자동으로 감지됩니다. C를 제외한 모든 언어는 배치도 지원합니다. 항목이 경계를 한 번만 넘고 Rust 안에 머물며 모든 코어에서 처리됩니다.",
+    "langsDesc": "언어는 저장소에서 자동으로 감지됩니다. C, PHP, C#, PowerShell을 제외한 모든 언어는 배치도 지원합니다. 항목이 경계를 한 번만 넘고 Rust 안에 머물며 모든 코어에서 처리됩니다.",
     "verified": "검증됨",
     "wholeApps": "앱 전체",
     "langMeta": {

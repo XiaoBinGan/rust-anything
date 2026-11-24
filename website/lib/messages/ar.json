@@ -1,0 +1,277 @@
+{
+  "meta": {
+    "title": "أعد كتابة تطبيقك كله بلغة Rust قطعة قطعة",
+    "description": "أعد كتابة تطبيقك بلغة Rust قطعة قطعة، مع التحقق من كل خطوة مقابل الأصل. أدوات سطر الأوامر والخوادم والمكتبات بلغات TypeScript/JavaScript وPython وC وGo وRuby وJava وKotlin وPHP وPowerShell وC#."
+  },
+  "ui": {
+    "docs": "التوثيق",
+    "languages": "اللغات",
+    "realWorld": "نقل حقيقي",
+    "searchButton": "ابحث في التوثيق…",
+    "searchDocs": "ابحث في التوثيق",
+    "searchPlaceholder": "ابحث: record، known-diffs، front door…",
+    "searchQuery": "عبارة البحث",
+    "searchEmpty": "اكتب للبحث في جميع صفحات التوثيق.",
+    "searchNone": "لا توجد صفحات مطابقة.",
+    "openMenu": "افتح القائمة",
+    "closeMenu": "أغلق القائمة",
+    "menu": "القائمة",
+    "language": "اللغة",
+    "home": "الصفحة الرئيسية لـ rust-anything",
+    "github": "rust-anything على GitHub",
+    "onThisPage": "في هذه الصفحة",
+    "editPage": "حرّر هذه الصفحة على GitHub",
+    "previous": "السابق",
+    "next": "التالي",
+    "pager": "الصفحة السابقة والتالية",
+    "breadcrumb": "مسار التنقل",
+    "themeDark": "داكن",
+    "themeLight": "فاتح",
+    "themeSystem": "النظام",
+    "theme": "المظهر",
+    "themeSwitch": "التبديل إلى",
+    "copy": "نسخ",
+    "copied": "تم النسخ",
+    "copyInstall": "انسخ أوامر التثبيت",
+    "installWith": "ثبّت باستخدام",
+    "skip": "تخطَّ إلى المحتوى",
+    "legal": "برخصة MIT. عمليات النقل والشيفرة المولدة في مستودعك ملك لك. مشروع مستقل، لا صلة له بمشروع Rust ولا بمؤسسة Rust ولا يحظى بتأييدهما. \"Rust\" علامة تجارية لمؤسسة Rust.",
+    "quickStart": "البدء السريع",
+    "cliReference": "مرجع CLI",
+    "issues": "المشكلات",
+    "status": "الحالة",
+    "sponsor": "ادعم المشروع",
+    "madeBy": "من صنع"
+  },
+  "nav": {
+    "groups": {
+      "introduction": "مقدمة",
+      "concepts": "المفاهيم",
+      "languages": "اللغات",
+      "wholeApps": "التطبيقات الكاملة",
+      "reference": "المرجع",
+      "realWorld": "نقل حقيقي",
+      "project": "المشروع"
+    },
+    "items": {
+      "/docs/introduction/what-is-rust-anything": "ما هو rust-anything",
+      "/docs/introduction/quick-start": "البدء السريع",
+      "/docs/introduction/install": "التثبيت",
+      "/docs/introduction/agents": "إعداد الوكيل",
+      "/docs/introduction/doctor": "Doctor",
+      "/docs/concepts/the-loop": "الحلقة",
+      "/docs/concepts/analyze": "التحليل والتنميط",
+      "/docs/concepts/bridge": "Bridge",
+      "/docs/concepts/record": "Record",
+      "/docs/concepts/port": "Port",
+      "/docs/concepts/diff": "Diff والفروق المعروفة",
+      "/docs/concepts/bench": "Bench",
+      "/docs/concepts/shadow": "Shadow",
+      "/docs/concepts/gate": "Gate",
+      "/docs/concepts/coverage": "التغطية",
+      "/docs/concepts/batches": "الدفعات والمسارات الساخنة",
+      "/docs/concepts/float-tolerance": "تسامح الأعداد العشرية",
+      "/docs/concepts/limits": "ما لا يلتقطه",
+      "/docs/languages/overview": "نظرة عامة",
+      "/docs/languages/typescript": "TypeScript/JavaScript",
+      "/docs/languages/python": "Python",
+      "/docs/languages/c": "C",
+      "/docs/languages/go": "Go",
+      "/docs/languages/ruby": "Ruby",
+      "/docs/languages/java": "Java",
+      "/docs/languages/php": "PHP",
+      "/docs/languages/csharp": "C#",
+      "/docs/whole-apps/overview": "نقل تطبيق كامل",
+      "/docs/whole-apps/record-replay": "التسجيل وإعادة التشغيل",
+      "/docs/whole-apps/front-door": "Front Door وWire",
+      "/docs/whole-apps/lift": "Lift",
+      "/docs/whole-apps/servers": "الخوادم",
+      "/docs/whole-apps/libraries": "المكتبات",
+      "/docs/reference/cli": "CLI",
+      "/docs/reference/mcp-tools": "أدوات MCP",
+      "/docs/real-world/overview": "نظرة عامة",
+      "/docs/real-world/json-server": "json-server",
+      "/docs/real-world/fuse-js": "Fuse.js",
+      "/docs/real-world/vercel-ms": "vercel/ms",
+      "/docs/real-world/x18n": "x18n",
+      "/docs/real-world/six-languages": "ست لغات",
+      "/docs/real-world/fixtures": "الاختبارات الثابتة والتشغيل الساكن",
+      "/docs/project/status": "الحالة",
+      "/docs/project/faq": "الأسئلة الشائعة",
+      "/docs/project/contributing": "المساهمة"
+    }
+  },
+  "hero": {
+    "title1": "أعد كتابة تطبيقك بلغة Rust.",
+    "title2": "وأثبت أنه يتصرف بالطريقة نفسها.",
+    "sub": "يسجّل rust-anything ما تفعله شيفرتك، ثم يعيد تشغيل كل حالة مسجلة على نسخة Rust. وكيلك هو من يكتب Rust. ولا يُشحن شيء قبل أن تتطابق المخرجات.",
+    "cta": "اقرأ البدء السريع",
+    "source": "الشيفرة المصدرية على GitHub",
+    "sourceLanguage": "لغة المصدر",
+    "bridge": "Bridge",
+    "verified": "نقل {lang} موثّق، {what}: تتطابق {count} حالة مسجلة",
+    "wholeApp": "تطبيقات {lang} تُسجَّل وتُعاد مقابل الأصل اليوم، من Front Door."
+  },
+  "home": {
+    "stats": [
+      {
+        "v": "32",
+        "unit": "x",
+        "k": "بحث Fuse.js لكل طلب على 50,000 سلسلة، Apple M4"
+      },
+      {
+        "v": "3.5",
+        "unit": "MB",
+        "k": "ذاكرة json-server في وضع الخمول بعد lift، مقابل 74 MB في Node"
+      },
+      {
+        "v": "514/514",
+        "unit": "",
+        "k": "حالة HTTP لـ json-server تتطابق على ملف Rust ثنائي خالص"
+      },
+      {
+        "v": "10",
+        "unit": "",
+        "k": "لغات: ثمانٍ منها بنقل موثّق، وKotlin وPowerShell مختبرتان من البداية إلى النهاية"
+      }
+    ],
+    "installTitle": "التثبيت",
+    "installDesc": "ثبّت CLI، ثم سجّل خادم MCP ومهارة سير العمل في Claude Code وCodex وCursor وGemini CLI.",
+    "installNote": "تتوفر ملفات ثنائية جاهزة لـ macOS وLinux وWindows في كل [إصدار على GitHub]({releases}).",
+    "agentPrompt": "ثبّت rust-anything: شغّل `cargo install rust-anything` ثم `rust-anything setup`.",
+    "agentRestart": "أخبرني متى يجب أن أعيد تشغيلك.",
+    "loopTitle": "كيف يتم النقل",
+    "loopDesc": "يبقى الأصل هو المرجع. لا يترجم rust-anything الشيفرة: بل يقدّم ما لا يستطيع الوكيل تخمينه، وبوابة تخبرك متى اكتمل النقل.",
+    "steps": [
+      {
+        "title": "سجّل",
+        "text": "يشغّل `record` الأصل بحالات حدّية مولدة وفخاخ دلالية ومدخلاتك الخاصة، ويحفظ ما يعيده أو يطلقه."
+      },
+      {
+        "title": "انقل",
+        "text": "ينشئ `bridge` حزمة Rust وغلافًا ليحتفظ المستدعون بالواجهة الأصلية. أنت أو وكيلك من يكتب Rust."
+      },
+      {
+        "title": "تحقق",
+        "text": "يعيد `diff` تشغيل كل حالة مسجلة على Rust، ولا يُشحن شيء قبل أن تتطابق جميعها ويجتاز `gate`."
+      },
+      {
+        "title": "Lift",
+        "text": "عندما ينجح إعادة التشغيل دون رجوع إلى الأصل وتجتاز كل وحدة `gate`، يحوّلها `app lift` إلى تطبيق Rust خالص. لا يُمسّ الأصل أبدًا."
+      }
+    ],
+    "vizSameApi": "الواجهة نفسها",
+    "vizCheck": "حالات Fuse.js متطابقة، من أول بناء",
+    "vizGate": "gate ناجح",
+    "vizLift": "الرجوع إلى الأصل في json-server، نجاح 514/514",
+    "vizLiftSteps": [
+      "Front Door",
+      "ربط عمليات القراءة",
+      "كل مسار"
+    ],
+    "demoTitle": "ما يكشفه التسجيل",
+    "demoDesc": "نقل أول لدالة `fuzzyScore` من x18n، يعتمد فهرسة `char` في Rust. اجتاز الاختبارات البسيطة وفشل في `diff`.",
+    "demoComments": {
+      "profile": "# أين يذهب الوقت ومن يستدعيه",
+      "write": "# اكتب src/port.rs (أو اترك الوكيل يكتبه)، ثم:",
+      "first": "# diff، النقل الأول",
+      "matchLine": "تتطابق 198/200 حالة",
+      "why": "# indexOf في JS تعدّ وحدات UTF-16،\n# لذا يشغل الرمز التعبيري موضعين.",
+      "fixed": "# مع مساعدات utf16 المولدة:\n# 2000/2000 حالة، ويجتاز gate"
+    },
+    "portsTitle": "مقاس على مشاريع حقيقية",
+    "portsDesc": "وراء كل رقم قياس أداء يتحقق أولًا من تطابق النتائج. والحالات البطيئة مذكورة هنا أيضًا: استدعاء Rust مرة لكل دالة صغيرة أبطأ في الغالب من JIT.",
+    "ports": [
+      {
+        "href": "/docs/real-world/json-server",
+        "kind": "json-server · خادم Node كامل",
+        "big": "514/514",
+        "text": "حالة HTTP تتطابق على ملف Rust ثنائي خالص (5.3 MB) بعد `app lift`، مع 0% رجوع إلى الأصل. ست وحدات تجتاز `gate`.",
+        "rows": [
+          {
+            "k": "ذاكرة الخمول، قاعدة بيانات الاختبار",
+            "v": "74 MB → 3.5 MB"
+          },
+          {
+            "k": "من البدء إلى أول استجابة",
+            "v": "85 / 79 ms → 9.9 / 7.9 ms"
+          },
+          {
+            "k": "قائمة كاملة من 10,000 منشور، اتصال واحد",
+            "v": "1.2x",
+            "slow": true
+          }
+        ]
+      },
+      {
+        "href": "/docs/real-world/fuse-js",
+        "kind": "Fuse.js · البحث في قوائم السلاسل",
+        "big": "32x",
+        "text": "أسرع لكل طلب على 50,000 سلسلة (91.2 ms → 2.8 ms، Apple M4). تتطابق 3,414/3,414 حالة مسجلة؛ والنتائج مطابقة لـ Fuse بايتًا ببايت في 360 عملية بحث.",
+        "rows": [
+          {
+            "k": "10,000 سلسلة",
+            "v": "27 إلى 30x"
+          },
+          {
+            "k": "1,000 سلسلة",
+            "v": "18x"
+          },
+          {
+            "k": "50,000 سلسلة، نواة واحدة",
+            "v": "5.3x",
+            "slow": true
+          }
+        ]
+      },
+      {
+        "href": "/docs/real-world/vercel-ms",
+        "kind": "vercel/ms · مكتبة صغيرة جدًا",
+        "big": "975/975",
+        "text": "حالة متطابقة، منها 340 التُقطت من اختبارات Jest الخاصة بها. نقل جيد وهدف سيئ للسرعة، و`bench` يقول ذلك أيضًا.",
+        "rows": [
+          {
+            "k": "لكل استدعاء، على الحالات المسجلة",
+            "v": "0.56x",
+            "slow": true
+          },
+          {
+            "k": "دفعة، parse x100,000",
+            "v": "18x"
+          },
+          {
+            "k": "دفعة، format x100,000",
+            "v": "0.8x",
+            "slow": true
+          }
+        ]
+      }
+    ],
+    "benchTitle": "قياس أداء json-server · طلبات في الثانية، التشغيل 1 / التشغيل 2 · Apple M4، Node 24.15.0",
+    "benchHead": [
+      "الطلب (قاعدة بيانات الاختبار)",
+      "Node، اتصال واحد",
+      "Rust، اتصال واحد",
+      "Node، 50 اتصالًا",
+      "Rust، 50 اتصالًا"
+    ],
+    "benchPostRow": "POST /comments، 10 اتصالات",
+    "benchNote": "حيث يكون الفارق صغيرًا: اتصال واحد يقرأ القائمة كاملة من 10,000 منشور (1.2x)، وعمليات الكتابة على قاعدة البيانات الكبيرة (1.1 إلى 1.2x)، لأن كليهما يعيد كتابة الملف كله عند كل كتابة. [الجداول الكاملة](/docs/real-world/json-server)",
+    "langsTitle": "اللغات",
+    "langsDesc": "تُكتشف اللغة من المستودع. وتحصل كل لغة عدا C، PHP، C# وPowerShell على الدفعات أيضًا: تعبر العناصر الحدود مرة واحدة وتبقى في Rust، على جميع النوى.",
+    "verified": "موثّق",
+    "wholeApps": "التطبيقات الكاملة",
+    "langMeta": {
+      "typescript": "napi-rs أو wasm-bindgen. json-server وFuse.js وvercel/ms وx18n",
+      "python": "PyO3. CPython colorsys: 2,400/2,400",
+      "c": "extern \"C\". واجهة glibc: 1,859/1,859",
+      "go": "cgo وwire ثنائي. Go path: 2,642/2,642",
+      "ruby": "magnus. shellwords: 1,617/1,617",
+      "java": "JNI وwire ثنائي. واجهة JDK: 4,492/4,492"
+    },
+    "sponsorsTitle": "الرعاة",
+    "sponsorsDesc": "rust-anything مجاني ومفتوح المصدر. إذا ساعدك في عملك، ففكّر في رعايته. دعمك يبقي التطوير مستمرًا.",
+    "companySponsor": "راعي الشركة",
+    "becomeSponsor": "كن راعيًا"
+  }
+}

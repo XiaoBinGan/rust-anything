@@ -201,6 +201,7 @@ export const en = {
         ],
       },
     ],
+    slowLegend: 'Orange rows are where Rust gains little or loses: the honest cases, shown on purpose.',
     benchTitle: 'json-server benchmark · requests per second, run 1 / run 2 · Apple M4, Node 24.15.0',
     benchHead: ['Request (fixture database)', 'Node, 1 conn.', 'Rust, 1 conn.', 'Node, 50 conn.', 'Rust, 50 conn.'],
     benchPostRow: 'POST /comments, 10 connections',
@@ -208,7 +209,7 @@ export const en = {
       'Where the gap is small: one connection reading the whole 10,000-post list (1.2x), and writes on the big database (1.1 to 1.2x), since both rewrite the whole file on every write. [Full tables](/docs/real-world/json-server)',
     langsTitle: 'Languages',
     langsDesc:
-      'The language is detected from the repository. Every language except C also gets batches: the items cross once and stay in Rust, on all cores.',
+      'The language is detected from the repository. Every language except C, PHP, C# and PowerShell also gets batches: the items cross once and stay in Rust, on all cores.',
     verified: 'Verified',
     wholeApps: 'Whole apps',
     tested: 'Tested',
