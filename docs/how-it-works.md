@@ -160,18 +160,42 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
   code; keep in JS for UI and editor code.
 - **Readiness** (how safe) and **priority** (safe and worth it: loops and string work, tests, size).
 
-| Risk | Severity | Example |
+Every risk below appears in plans as `title xN` with the lines that raised it; this table says how
+bad it usually is and gives one example. The severities are the ones `analyze` scores with.
+
+| Risk | Severity | Where it bites |
 | --- | --- | --- |
-| String offsets | high | `slice`, `indexOf`, `matchAll`, the `d` flag: UTF-16 vs UTF-8 |
-| Regex syntax | high | lookaround, backreferences, `y`: not in the `regex` crate |
-| Dynamic regex | high | `new RegExp(userPattern)`: JS syntax at runtime |
-| Dynamic code | high | `eval`, `new Function`, computed `import()` |
-| Dynamic typing | medium | `any`, `'key' in value` |
-| Ordered collections | medium | `Map`, `Set`, `Object.keys`: insertion order |
-| Async, generators | medium | promise and generator boundaries |
-| Class inheritance, reflection | medium | `extends`, `Proxy`, `Reflect`, `Symbol` |
-| Callback-shaped APIs | medium | function-typed params and methods: chatty bridges |
-| Exceptions, numbers, JSON | low | `throw`, bitwise ops, `JSON.stringify` order |
+| String offsets and slicing | high | TS/JS: `slice`, `indexOf`, `matchAll`, the `d` flag — UTF-16 vs UTF-8 |
+| Regex features the `regex` crate lacks | high | TS/JS, Python, Java, Kotlin, C#, PHP, Ruby: lookaround, backreferences, `y`, `\A` |
+| Regexes built at runtime | high | TS/JS, Python, Ruby, PHP: `new RegExp(pattern)`, `re.compile(s)` |
+| Dynamic code (eval, new Function, computed import) | high | TS/JS `eval`, `new Function`, computed `import()`; Python `exec`, `reload` |
+| Dynamic typing | medium | TS/JS `any`, `'key' in value`; Python `**kwargs` passed through |
+| Insertion-ordered maps and object keys | medium | TS/JS `Map`, `Set`, `Object.keys`; PHP arrays; Python `dict` |
+| Async and promises | medium | TS/JS promise and generator boundaries; C# `Task` |
+| Generators | medium | TS/JS `function*`; Python `yield`; C# `IEnumerable` with `yield` |
+| Class inheritance | medium | Java, Kotlin, C#, Ruby, Python, PHP: `extends`, mixins, `super` |
+| Reflection and prototypes | medium | TS/JS `Proxy`, `Reflect`, `Symbol`; C# `GetType()`, Java `getClass()` |
+| Callback-shaped APIs | medium | Java, C#, TS/JS: function-typed parameters make a chatty bridge |
+| Exceptions | low | all but Go and C: `throw`, `raise`, `panic` on divide by zero |
+| Number semantics | low | TS/JS `number`, C# `decimal`, Python `int` beyond 2^53 |
+| JSON round-trips | low | TS/JS, Python, PHP: key order, `undefined`, `NaN` |
+| Integer width and overflow | medium | Go `uint64`, Java `long`, C# `ulong`, C `unsigned long`: wrap vs panic |
+| Division and modulo | medium | Python `//` on negatives, Go `/` truncation, C `%` sign |
+| Hash iteration order | high | Go `map` range, Java `HashMap`, C# `Dictionary`, Python `set` |
+| Pointers and manual memory | high | C: pointer arithmetic, `malloc`, out-parameters |
+| Concurrency | medium | Go goroutines and channels, Java threads, C# `async` locks |
+| Null references | medium | Java, C#, Kotlin `!!`, C: `null`, nullable columns |
+| Runtime changes to code | high | Ruby `define_method`, Python `setattr`, PHP `eval`-free magic |
+| Already compiled (numba, Cython, JAX) | medium | Python: decorated code that is not plain Python any more |
+| numpy array parameters | high | Python: `np.ndarray` arguments and returns |
+| Platform-specific C (asm, volatile, bitfields, packing) | high | C: `asm`, `volatile`, `:3` bitfields, `#pragma pack` |
+| Clock and random numbers | low | all: `Date.now`, `time.time`, `time.Now`, `rand` — pin them with `record --pin-clock` |
+| Implicit output and the pipeline | medium | PowerShell: values written to the pipeline; Bash: stdout |
+| Case-insensitive comparison | medium | PowerShell `-eq`, SQL `LIKE`, C# `StringComparison`: culture rules |
+| Implicit type conversion | medium | PHP `==`, JS `==`, PowerShell `[int]"abc"` |
+
+These are the same 28 titles `analyze` can emit, with the severities it scores them at;
+`src/risks.rs` is the list.
 
 ## What it can't catch
 
