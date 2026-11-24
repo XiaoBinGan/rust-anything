@@ -94,9 +94,10 @@ rust-anything app replay . --build "target/release/mytool"
 
 `app record` writes `rust/app-cases/rust-anything.json`: the settings later runs read, so `app replay`
 and `lift` start the app the same way. `app front-door` reads them once, when it scaffolds `rust/app`,
-and then embeds `run` in that binary — edit the JSON afterwards and the front door keeps what it was
-built with until you re-run it. It is plain JSON: edit it by hand when a value is easier to change
-there, and the next `app record` picks it up.
+and then embeds `run` in that binary; it never overwrites an existing `rust/app`, so editing the JSON
+afterwards changes replay but not the front door — update `rust/app` yourself, or remove it and
+scaffold again. For everything else the file is plain JSON: edit it by hand when a value is easier to
+change there, and the next `app record` picks it up.
 
 | Field | Set by | On a re-record |
 | --- | --- | --- |
