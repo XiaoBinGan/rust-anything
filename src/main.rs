@@ -137,6 +137,13 @@ enum Cmd {
         /// below 1), e.g. 1e-9 for numeric code. Saved with the crate for diff and gate; 0 removes it.
         #[arg(long)]
         float_tolerance: Option<f64>,
+        /// Compare objects regardless of key order, now and in every later `diff`, `gate`, `enable`
+        /// and `report`. `--no-ignore-key-order` saves the opposite.
+        #[arg(long, overrides_with = "no_ignore_key_order")]
+        ignore_key_order: bool,
+        /// Save "keep the original's key order", undoing an earlier `--ignore-key-order`.
+        #[arg(long, overrides_with = "ignore_key_order")]
+        no_ignore_key_order: bool,
         /// Also record every call the original's own test suite makes to the unit's functions:
         /// `--from-tests -- npx jest` (TS/JS, any runner) or `-- pytest` (Python).
         #[arg(long)]
@@ -370,11 +377,7 @@ enum Cmd {
         /// Crate folder made by `bridge`.
         #[arg(default_value = ".", value_parser = absolute)]
         crate_dir: PathBuf,
-        /// Where to write the module. The default depends on the language:
-        /// `<crate>/shadow/<name>.shadow.ts` (TypeScript), `<crate>/shadow/<name>_shadow.py`
-        /// (Python), `<crate>/shadow/<name>_shadow.c` (C), `<crate>/go/shadow/<pkg>.go` (Go),
-        /// `<crate>/ruby/<lib>_shadow.rb` (Ruby), and a folder, `<crate>/java/`, for Java and
-        /// Kotlin. PHP, C# and PowerShell have no shadow module yet and stop with an error.
+        /// Where to write the module; defaults to `<crate>/shadow/<name>.shadow.ts`.
         #[arg(long, short)]
         out: Option<PathBuf>,
     },
@@ -774,6 +777,8 @@ fn run() -> Result<ExitCode> {
             resolve_from,
             node_args,
             float_tolerance,
+            ignore_key_order,
+            no_ignore_key_order,
             from_tests,
             test_command,
             profile,
@@ -813,6 +818,11 @@ fn run() -> Result<ExitCode> {
             if let Some(t) = float_tolerance {
                 let mut manifest = bridge::Manifest::load(&crate_dir)?;
                 manifest.float_tolerance = (rust_anything::tolerance::check(t)? > 0.0).then_some(t);
+                manifest.save(&crate_dir)?;
+            }
+            if ignore_key_order || no_ignore_key_order {
+                let mut manifest = bridge::Manifest::load(&crate_dir)?;
+                manifest.ignore_key_order = ignore_key_order;
                 manifest.save(&crate_dir)?;
             }
             if (pin_clock || no_pin_clock)

@@ -88,6 +88,9 @@ pub struct Manifest {
     /// Floats match within this relative tolerance (`record --float-tolerance`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub float_tolerance: Option<f64>,
+    /// Objects match regardless of key order (`record --ignore-key-order`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub ignore_key_order: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1297,6 +1300,7 @@ pub fn bridge(opts: &Options) -> Result<Outcome> {
         batches: parse_batches(&opts.batch)?,
         allocator: opts.allocator,
         float_tolerance: None,
+        ignore_key_order: false,
     };
     if kind == Kind::CAbi {
         return bridge_c(&manifest, &crate_dir, &js_only);

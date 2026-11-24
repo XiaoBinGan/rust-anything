@@ -62,6 +62,7 @@ Runs the original's code or commands.
 | `module` | string |  | JS only: import the original from this JS module instead of the TS source. |
 | `resolve_from` | string |  | Resolve npm packages from this folder's node_modules. |
 | `float_tolerance` | number |  | Numeric code: floats match when they differ by at most this times the larger magnitude (absolute below 1), e.g. 1e-9. Saved with the crate for diff and gate; 0 removes it. |
+| `ignore_key_order` | boolean |  | Compare objects regardless of key order, now and in every later diff, gate, enable and report; false saves the opposite. |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
 | `test_command` | string[] |  | TS/JS or Python: also record every call the original's own test suite makes to the unit's functions, e.g. ["npx", "jest"] or ["pytest"]. Runs in the original's folder. |
 | `profile` | string |  | Record on this machine (default) or on a connected Android device (JVM crates). |

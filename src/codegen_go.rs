@@ -1556,6 +1556,7 @@ func Json(raw uint64) uint64 { return raw }"#,
             batches: vec![],
             allocator: Default::default(),
             float_tolerance: None,
+            ignore_key_order: false,
         };
         let mut api = crate::codegen::parse_port(&crate::codegen::port_rs(&manifest));
         crate::bridge::match_export_names(&manifest, &mut api);

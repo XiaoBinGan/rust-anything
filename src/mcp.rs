@@ -452,6 +452,7 @@ fn tool_schemas() -> Value {
                 "module": { "type": "string", "description": "JS only: import the original from this JS module instead of the TS source." },
                 "resolve_from": { "type": "string", "description": "Resolve npm packages from this folder's node_modules." },
                 "float_tolerance": { "type": "number", "description": "Numeric code: floats match when they differ by at most this times the larger magnitude (absolute below 1), e.g. 1e-9. Saved with the crate for diff and gate; 0 removes it." },
+                "ignore_key_order": { "type": "boolean", "description": "Compare objects regardless of key order, now and in every later diff, gate, enable and report; false saves the opposite." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
                 "test_command": { "type": "array", "items": { "type": "string" }, "description": "TS/JS or Python: also record every call the original's own test suite makes to the unit's functions, e.g. [\"npx\", \"jest\"] or [\"pytest\"]. Runs in the original's folder." },
                 "profile": { "type": "string", "enum": ["host", "android"], "description": "Record on this machine (default) or on a connected Android device (JVM crates)." },
@@ -744,6 +745,11 @@ fn call(name: &str, args: &Value) -> Result<Value> {
             if let Some(t) = args["float_tolerance"].as_f64() {
                 let mut manifest = bridge::Manifest::load(&crate_dir)?;
                 manifest.float_tolerance = (crate::tolerance::check(t)? > 0.0).then_some(t);
+                manifest.save(&crate_dir)?;
+            }
+            if let Some(on) = args["ignore_key_order"].as_bool() {
+                let mut manifest = bridge::Manifest::load(&crate_dir)?;
+                manifest.ignore_key_order = on;
                 manifest.save(&crate_dir)?;
             }
             let helper = match args["pin_clock"].as_bool() {
