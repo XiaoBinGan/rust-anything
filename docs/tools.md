@@ -6,7 +6,7 @@ Generated from the MCP server's tool list by `tests/tools.rs`; do not edit by ha
 
 Tool `analyze` · CLI `rust-anything analyze`
 
-Map a repository (TypeScript/JavaScript, Python, C, Go, Ruby, Java or Kotlin): units, port order (waves), risks with file:line, bridge per unit, dependency-to-crate fit, and `start_here`: the best first ports.
+Map a repository (TypeScript/JavaScript, Python, C, Go, Ruby, Java, Kotlin, PHP, C# or PowerShell): units, port order (waves), risks with file:line, bridge per unit, dependency-to-crate fit, and `start_here`: the best first ports.
 
 Read-only.
 
@@ -191,7 +191,7 @@ Runs the original's code or commands.
 
 Tool `fuzz` · CLI `rust-anything fuzz`
 
-Live differential test: generate fresh inputs from a new seed (the record generator, without the cases already recorded), run them through the original and the built port, and report mismatches the recording missed. Returns the seed to replay, counts and the first mismatches; `keep` appends mismatching (or all) fresh cases to cases.jsonl so the next diff and gate check them. Works wherever record and diff do on this machine (TS/JS, Python, C, Go, Ruby, Java, Kotlin).
+Live differential test: generate fresh inputs from a new seed (the record generator, without the cases already recorded), run them through the original and the built port, and report mismatches the recording missed. Returns the seed to replay, counts and the first mismatches; `keep` appends mismatching (or all) fresh cases to cases.jsonl so the next diff and gate check them. Works wherever record and diff do on this machine (TS/JS, Python, C, Go, Ruby, Java, Kotlin, PHP, C#, PowerShell).
 
 Runs the original's code or commands.
 
