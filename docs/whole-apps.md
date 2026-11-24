@@ -92,23 +92,25 @@ rust-anything app replay . --build "target/release/mytool"
   normalizers, saved with the cases.
 ### What `app record` saves, and what a re-record does with it
 
-`app record` writes `rust/app-cases/rust-anything.json`: the settings every later run reads, so
-`app replay`, the front door and `lift` start the app the same way. It is plain JSON — edit it by
-hand when a value is easier to change there, and the next `app record` picks it up.
+`app record` writes `rust/app-cases/rust-anything.json`: the settings later runs read, so `app replay`
+and `lift` start the app the same way. `app front-door` reads them once, when it scaffolds `rust/app`,
+and then embeds `run` in that binary — edit the JSON afterwards and the front door keeps what it was
+built with until you re-run it. It is plain JSON: edit it by hand when a value is easier to change
+there, and the next `app record` picks it up.
 
 | Field | Set by | On a re-record |
 | --- | --- | --- |
 | `run` | the command after `--` | replaced by the new command; this is what `app replay` runs |
 | `name` | `--name`, else the binary's name | replaced when `--name` is given, kept otherwise |
 | `timeout_secs` | `--timeout` | replaced when given, kept otherwise |
-| `normalize`, `normalizers` | `--normalize timestamps`, `--normalize name=regex` | added to what is saved; there is no flag to remove one, delete the entry by hand |
+| `normalize`, `normalizers` | `--normalize timestamps`, `--normalize name=regex` | added to what is saved, and `name=regex` **replaces** the pattern saved under that name; there is no flag to remove one, delete the entry by hand |
 | `http.port`, `http.args`, `http.fresh`, `http.pace_ms` | `--port`, `--arg`, `--fresh`, `--pace` | merged: a flag replaces that field, an omitted flag keeps the saved value, `--pace 0` clears the pace |
-| `effects` | `--effect http`, `--effect smtp`, `--effect-env VAR=…` | merged the same way |
+| `effects` | `--effects http,smtp`, `--effect-env VAR=http-url` | merged the same way: a kind or variable already saved stays unless it is given again |
 | `float_tolerance` | `--float-tolerance 1e-9` | replaced; `--float-tolerance 0` removes it |
 | `float_files` | `--float-file PATH=f64le` | replaced when given, kept otherwise |
-| `unordered` | nothing: filled from the noise of the run | rewritten from this run's comparison of the original's two runs |
+| `unordered` | nothing: filled from the noise of the run | rewritten from this run's comparison of the original's two runs; replay then compares those cases' lines in any order, as the original's own runs did |
 | `fresh` | `--fresh PATH` for a CLI | replaced when given, kept otherwise |
-| `recorded` | nothing: filled as cases are written | rewritten, so cases you added by hand are not deleted |
+| `recorded` | nothing: filled as cases are written | rewritten, so a case you added by hand is kept — unless it has the name of one the recording writes, which overwrites it |
 
 Two fields exist only for that bookkeeping: `schema` (the file's version) and `recorded` (the cases
 the last recording wrote). Neither is a setting.
