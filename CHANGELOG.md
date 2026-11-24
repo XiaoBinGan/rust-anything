@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `map` gives each unit without a port `analyze`'s status and lists the blocked and kept ones
+  with the reason, so they no longer read as work left to port (#350).
 - On Windows, `profile` and `go` find the project's own functions in a Node workload: Node's
   `file:///C:/...` frame URLs kept the slash before the drive letter, so no frame matched the
   project root and `go` stopped with `no hot function to port`.

@@ -59,7 +59,7 @@ pub struct Unported {
     /// `analyze`'s verdict: ready, caution, blocked or keep.
     pub status: Status,
     /// Why `analyze` calls it blocked or keep, when it says.
-    pub notes: Vec<String>,
+    pub reasons: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -181,7 +181,7 @@ pub fn map(root: &Path, extra: &[PathBuf]) -> Result<PortMap> {
                     readiness: u.readiness,
                     exports: u.exports,
                     status: u.status,
-                    notes: u.notes.clone(),
+                    reasons: u.reasons.clone(),
                 })
                 .collect();
             (units, covered.len(), None)
@@ -411,7 +411,7 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
         if !stays.is_empty() {
             writeln!(
                 out,
-                "{} of these {} no port on purpose — {} blocked and {} kept in the original — so {} {} left to port:\n",
+                "{} of these {} no port on purpose ({} blocked, {} kept in the original), so {} {} left to port:\n",
                 stays.len(),
                 if stays.len() == 1 {
                     "unit has"
@@ -434,12 +434,12 @@ fn render(out: &mut String, map: &PortMap) -> std::fmt::Result {
                 },
             )?;
             for u in stays {
-                let why = if u.notes.is_empty() {
+                let why = if u.reasons.is_empty() {
                     String::new()
                 } else {
-                    let notes: Vec<&str> =
-                        u.notes.iter().map(|n| n.trim_end_matches('.')).collect();
-                    format!(" — {}", notes.join("; "))
+                    let reasons: Vec<&str> =
+                        u.reasons.iter().map(|n| n.trim_end_matches('.')).collect();
+                    format!(", {}", reasons.join("; "))
                 };
                 writeln!(out, "- `{}`: {}{why}", u.unit, status_name(u.status))?;
             }
@@ -493,7 +493,7 @@ mod tests {
                 readiness: 94,
                 exports: 3,
                 status: crate::analyze::Status::Ready,
-                notes: Vec::new(),
+                reasons: Vec::new(),
             },
             Unported {
                 unit: "src/view/".into(),
@@ -501,7 +501,7 @@ mod tests {
                 readiness: 100,
                 exports: 0,
                 status: crate::analyze::Status::Keep,
-                notes: vec!["UI code: keep in the original language.".into()],
+                reasons: vec!["UI code: keep in the original language.".into()],
             },
             Unported {
                 unit: "src/svelte.ts".into(),
@@ -509,7 +509,7 @@ mod tests {
                 readiness: 92,
                 exports: 0,
                 status: crate::analyze::Status::Blocked,
-                notes: vec!["`svelte` has no Rust equivalent.".into()],
+                reasons: vec!["`svelte` has no Rust equivalent.".into()],
             },
         ];
         let text = markdown(&map);
@@ -522,15 +522,15 @@ mod tests {
         assert!(text.contains("| `src/svelte.ts` | blocked |"), "{text}");
         // The two that stay are named with their reason, and only the ready one counts as work.
         assert!(
-            text.contains("2 of these units have no port on purpose — 1 blocked and 1 kept in the original — so 1 unit is left to port:"),
+            text.contains("2 of these units have no port on purpose (1 blocked, 1 kept in the original), so 1 unit is left to port:"),
             "{text}"
         );
         assert!(
-            text.contains("- `src/svelte.ts`: blocked — `svelte` has no Rust equivalent"),
+            text.contains("- `src/svelte.ts`: blocked, `svelte` has no Rust equivalent\n"),
             "{text}"
         );
         assert!(
-            text.contains("- `src/view/`: keep — UI code: keep in the original language"),
+            text.contains("- `src/view/`: keep, UI code: keep in the original language\n"),
             "{text}"
         );
     }

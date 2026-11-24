@@ -174,6 +174,9 @@ pub struct UnitReport {
     pub exports: usize,
     pub bridgeable: usize,
     pub notes: Vec<String>,
+    /// The notes that explain `status` when it is blocked or keep, for `map`.
+    #[serde(skip)]
+    pub reasons: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -735,6 +738,7 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
     } else {
         Status::Ready
     };
+    let reasons = notes.clone();
     if unit.parse_errors > 0 {
         notes.push(format!(
             "{} parse errors: results for this unit are partial.",
@@ -877,6 +881,7 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
         exports: 0,
         bridgeable: 0,
         notes,
+        reasons,
     }
 }
 
@@ -1228,6 +1233,30 @@ mod tests {
         let (wave, members) = waves(&edges);
         assert_eq!(wave, [2, 1, 0, 1, 1]);
         assert_eq!(members[3].len(), 2);
+    }
+
+    #[test]
+    fn only_the_verdict_notes_are_reasons() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/mini");
+        let report = analyze_lang(&root, Lang::Ts).unwrap();
+        let svelte = report
+            .units
+            .iter()
+            .find(|u| u.id == "packages/a/src/svelte.ts")
+            .unwrap();
+        assert_eq!(svelte.status, Status::Blocked);
+        assert!(
+            svelte.notes.len() > svelte.reasons.len(),
+            "{:?}",
+            svelte.notes
+        );
+        assert_eq!(svelte.reasons, ["`svelte` has no Rust equivalent."]);
+        let ready = report
+            .units
+            .iter()
+            .find(|u| u.status == Status::Ready)
+            .unwrap();
+        assert!(ready.reasons.is_empty(), "{:?}", ready.reasons);
     }
 
     #[test]
