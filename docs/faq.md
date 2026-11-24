@@ -17,11 +17,24 @@ sends an email twice, or writes different rows, fails the case. See
 [Side effects](whole-apps.md#side-effects-email-webhooks-and-databases).
 
 **What happens when the Rust code fails?** It comes back as a normal error in the caller's
-language, never a crash. A port returns `Result`: `Err("TypeError: message")` becomes that
-exception in Python, Ruby and Java, a thrown error in JavaScript and an `error` value in Go, and a
-Python port can raise the original's own class (`Err("mypkg.errors.ParseError: message")`). If
-the Rust code panics anyway, the bridge catches it at the boundary and returns an error ("Rust
-panic: ..."). `gate` fails a port that uses `unwrap`, `expect` or `panic!` where the original
+language, never a crash. A port returns `Result`, and `Err("TypeName: message")` raises that type
+where the language allows it:
+
+| Language | `TypeName` is | Looked up | Otherwise |
+| --- | --- | --- | --- |
+| Python | a dotted class path | the module is imported (`mypkg.errors.ParseError`) | `RuntimeError` |
+| Ruby | a top-level class name | that constant only, so `Errors::ParseError` needs the full path | `RuntimeError` |
+| JavaScript | a class name | `globalThis` | `Error` |
+| Go | not a type: the string is the `error` value | — | — |
+| Java, Kotlin | a bare or package-qualified class | `java.lang`, `java.util`, `java.io`, then the package | `RuntimeException` |
+| C# | a full .NET type name | every loaded assembly (`Acme.Errors.ParseError`) | `InvalidOperationException` |
+| PHP | a class name with `\` separators | `class_exists`, and it must be a `Throwable` | `RuntimeException` |
+| PowerShell | a .NET type name | `-as [type]`, and it must be an `Exception` | `RuntimeException` |
+
+The names matter beyond the message: `diff` compares the error type, so `Err("ParseError: bad")`
+against an original that raises `Acme.Errors.ParseError` fails the case even though the text
+matches. If the Rust code panics anyway, the bridge catches it at the boundary and returns an error
+("Rust panic: ..."). `gate` fails a port that uses `unwrap`, `expect` or `panic!` where the original
 throws, and needs a recorded failing case for every error path, so errors are checked against the
 original like any other output.
 
