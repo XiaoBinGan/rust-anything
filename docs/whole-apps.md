@@ -97,8 +97,10 @@ and `lift` start the app the same way. `app front-door` reads them once, when it
 and then embeds `run` in `rust/app/src/original.rs`; it never overwrites an existing `rust/app`, so
 editing the JSON afterwards changes replay but not the front door — change the command in
 `src/original.rs` and rebuild to keep the units `app front-door` wired. Scaffolding again is the
-destructive option: `rust/app/rust-anything.json` and `rust/app/src/units/` hold the wiring and the
-glue for each unit, so back them up and restore them afterwards, or the units come back unmapped. For
+destructive option: `app wire` writes into three places — `rust/app/rust-anything.json` (the wiring
+state), `rust/app/src/units/` (the glue per unit) and a `path` dependency in `rust/app/Cargo.toml` —
+so back up the whole `rust/app` folder, and restore it or re-wire the units afterwards, or the glue
+comes back without the crates it needs. For
 everything else the file is plain JSON: edit it by hand when a value is easier to change there, and the
 next `app record` picks it up.
 
