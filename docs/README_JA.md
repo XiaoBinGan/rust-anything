@@ -41,7 +41,7 @@
   <sub>ms、Fuse.js、json-server の 59 個の実ファイルで Prettier と Rust 移植版を比較（Apple M4）。出力はバイト単位で同一です。<a href="real-world.md#prettier">計測方法</a>。</sub>
 </p>
 
-<p align="center"><sub>PHP と C#：現在は記録・再生と front door に対応、ユニット単位の移植は次の予定です。</sub></p>
+<p align="center"><sub>PHP と C#：FFI と P/Invoke 越しのユニット移植に対応しています。</sub></p>
 
 <table>
   <tr>
@@ -201,9 +201,9 @@ C、PHP、C#、PowerShell を除くすべての言語でバッチクラス（`--
 
 言語はリポジトリから自動検出されます（`go.mod`、`pom.xml`、`.csproj` または `.sln`、`pyproject.toml`、`Gemfile`、`composer.json`、`package.json`、該当しない場合は最も多いソースファイルから判断）。`--lang` で上書きもできます。型情報はソースから取得します: TS の型、Python の型ヒント、C/Go/Java/C# のシグネチャ、Ruby の YARD タグ、PHP の型および phpdoc。型注釈がなく数値として使われている引数は数値型と推論されます。
 
-PHP については、`analyze` で PHP アプリの移行計画を立てられ（Composer パッケージと PSR-4 オートローディング、緩い比較や整数オーバーフローによる float 化などのリスク、Composer パッケージからクレートへのマッピング）、PHP の CLI やサーバーを記録・リプレイして Rust 製フロントドアの背後に配置できます。PHP の FFI を通じたユニット単位の Rust 移植は次のステップです（[issue #2](https://github.com/erkamyaman/rust-anything/issues/2)）。
+PHP については、`analyze` で PHP アプリの移行計画を立てられ（Composer パッケージと PSR-4 オートローディング、緩い比較や整数オーバーフローによる float 化などのリスク、Composer パッケージからクレートへのマッピング）、PHP の CLI やサーバーを記録・リプレイして Rust 製フロントドアの背後に配置できます。スカラー・文字列・リスト・連想配列を引数に取るトップレベル関数は、PHP の FFI 拡張（`ext-ffi`）越しにブリッジされます。CLI では既定で有効ですが、サーバーなど他の SAPI では `ffi.enable=1` が必要です。`diff` が通ったら、生成された `php/<クレート名>.php`（`-` は `_` になるので `foo-rs` なら `php/foo_rs.php`）を、アプリが元のファイルを読み込んでいた場所で読み込んでください。ネイティブライブラリはラッパー自身のフォルダからの相対パスで読み込まれるため、両方のファイルはそのままの位置に置きます。ラッパーはブリッジされたトップレベル関数だけを宣言するので、元のファイルを置き換えるものであり、並べて読み込むものではありません。クラス、`public static` メソッド、`callable`／`Closure` を引数に取る関数、`define('FEATURE_ENABLED', true)` のようなトップレベルの文はラッパーに含まれないため、それらは読み込まれ続けるファイルに残してください。PHP から Rust へのデータは JSON（約 1 µs）で渡ります。
 
-C# も同じように動作します: `analyze` は `.csproj` プロジェクトとその NuGet パッケージ（クレートにマッピング）を読み取り、`using` ディレクティブをフォルダに解決して、C# 特有の挙動の違い（`decimal`、`dynamic`、LINQ の遅延クエリ、`Task`、`lock`、リフレクション）を指摘します。C# の CLI や ASP.NET サーバーは記録・リプレイ・Rust フロントドア化が可能で、P/Invoke を用いたユニット単位の移植が次のステップです。
+C# も同じように動作します: `analyze` は `.csproj` プロジェクトとその NuGet パッケージ（クレートにマッピング）を読み取り、`using` ディレクティブをフォルダに解決して、C# 特有の挙動の違い（`decimal`、`dynamic`、LINQ の遅延クエリ、`Task`、`lock`、リフレクション）を指摘します。C# の CLI や ASP.NET サーバーは記録・リプレイ・Rust フロントドア化が可能です。`public static` メソッドは P/Invoke 越しにブリッジされ、`cs/` に生成されるラッパー（クレート名のファイル 1 つ: `foo-rs` なら `cs/FooRs.cs`）をプロジェクトにコンパイルし、ビルドしたネイティブライブラリをアプリの隣に置いてください。
 
 ## 詳しく知る
 
