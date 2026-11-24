@@ -101,8 +101,8 @@ destructive option: `app wire` writes into three places — `rust/app/rust-anyth
 state), `rust/app/src/units/` (the glue per unit) and a `path` dependency in `rust/app/Cargo.toml` —
 so back up the whole `rust/app` folder and **restore** it: re-wiring is not the same, because
 `app wire` writes a fresh stub for each unit and does not recover the port code you had put in the
-old glue. For everything else the file is plain JSON: edit it by hand
-when a value is easier to change there, and the next `app record` picks it up.
+old glue. For everything else the file is plain JSON: edit it by hand when a value is easier to
+change there, and the next `app record` picks it up.
 
 | Field | Set by | On a re-record |
 | --- | --- | --- |
