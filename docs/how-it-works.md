@@ -177,12 +177,11 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
   | Tests | 30 when a test file imports it directly, 15 when only its package has tests |
   | Size | `lines / 4` below 80, 20 from 80 up to (not including) 600, 10 at 600 and above |
 
-- **Start here** takes `ready` units with at least 20 lines and at least one bridgeable export, ordered
-  by priority **descending**, then readiness **descending**, wave **ascending**, density **descending**
-  and id **ascending**, and keeps the first **ten**. When fewer than three qualify it recomputes the same
-  list over `ready` *and* `caution` units; when that list is still empty — no unit of 20 lines has a
-  bridgeable export — it drops the size floor and takes any size. So one
-  unit crossing 20 lines can shorten the list, and a repo of small files gets the shortlist it deserves.
+- **Start here** takes `ready` units with at least 20 lines and at least one bridgeable export,
+  ordered by priority, then readiness (both highest first), wave (earliest first), density (highest
+  first) and id, and keeps the first ten. When fewer than three qualify it picks again from `ready`
+  and `caution` units. When that is still empty (no unit of 20 lines has a bridgeable export) it
+  drops the size floor. So one unit crossing 20 lines can change the list.
 
 Every risk below appears in plans as `title xN` with the lines that raised it; this table says how
 bad it usually is and gives one example. The severities are the ones `analyze` scores with.
