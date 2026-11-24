@@ -170,8 +170,10 @@ fn a_build_that_exits_before_listening_says_so() {
     let text = format!("{err:#}");
     let _ = std::fs::remove_dir_all(&repo);
     assert!(text.contains("before listening"), "{text}");
-    // The exit status is in the message, so a reader knows what the app did.
+    // The exit status is in the message, so a reader knows what the app did: the fixture exits 3.
     assert!(text.contains("exited"), "{text}");
+    #[cfg(unix)]
+    assert!(text.contains("exit status: 3"), "{text}");
 }
 
 #[test]
