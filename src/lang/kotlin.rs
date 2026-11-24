@@ -357,11 +357,11 @@ pub fn kotlin_to_ts(t: &str) -> Result<String, String> {
         "Boolean" => "boolean".into(),
         "Unit" | "Nothing" => "void".into(),
         "List" | "MutableList" | "Collection" | "Iterable" | "Array" | "IntArray" | "LongArray"
-        | "ShortArray" | "ByteArray" | "FloatArray" | "DoubleArray" | "BooleanArray" => {
+        | "DoubleArray" | "BooleanArray" => {
             let inner = if head.ends_with("Array") && !matches!(head, "Array") {
                 match head {
-                    "IntArray" | "LongArray" | "ShortArray" | "ByteArray" => "int".into(),
-                    "FloatArray" | "DoubleArray" => "number".into(),
+                    "IntArray" | "LongArray" => "int".into(),
+                    "DoubleArray" => "number".into(),
                     "BooleanArray" => "boolean".into(),
                     _ => arg(0)?,
                 }
@@ -379,6 +379,14 @@ pub fn kotlin_to_ts(t: &str) -> Result<String, String> {
                 return Err(format!("`{t}`: JSON object keys are strings"));
             }
             format!("Record<string, {}>", arg(1)?)
+        }
+        // The TS side could map these (`int[]`/`number[]`), but the Java wire only converts element
+        // arrays of int, long, double and boolean: `java_ty` returns None for byte, short and float, so
+        // the generated glue would have no call wrapper for the unit.
+        "ByteArray" | "ShortArray" | "FloatArray" => {
+            return Err(format!(
+                "uses `{head}`, which the Java wire cannot carry yet"
+            ));
         }
         "Char" => return Err("uses `Char`, a UTF-16 code unit".into()),
         "Any" | "Any?" => return Err("takes or returns `Any`: values of any type".into()),
@@ -812,25 +820,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_primitive_array_has_a_dialect_type() {
-        // `IntArray` and friends are the usual parameter type for buffers in Kotlin.
+    fn a_primitive_array_is_named_with_the_reason_the_wire_gives() {
+        // int, long, double and boolean element arrays are what the Java wire converts.
         for (kotlin, ts) in [
             ("IntArray", "int[]"),
             ("LongArray", "int[]"),
-            ("ShortArray", "int[]"),
-            ("ByteArray", "int[]"),
-            ("FloatArray", "number[]"),
             ("DoubleArray", "number[]"),
             ("BooleanArray", "boolean[]"),
         ] {
             assert_eq!(kotlin_to_ts(kotlin), Ok(ts.to_string()), "{kotlin}");
         }
-        // `CharArray` is UTF-16 code units, like `Char`: still refused, with that reason.
+        // The other three are refused, and the reason names the wire rather than a "class".
+        for kotlin in ["ByteArray", "ShortArray", "FloatArray"] {
+            let reason = kotlin_to_ts(kotlin).unwrap_err();
+            assert!(reason.contains("Java wire"), "{kotlin}: {reason}");
+            assert!(!reason.contains("uses the class"), "{kotlin}: {reason}");
+        }
+        // `CharArray` is UTF-16 code units, like `Char`, and keeps that reason.
         assert!(kotlin_to_ts("CharArray").is_err());
-        // The Java side already knew all of them; `ByteArray` stays `byte[]` there.
-        assert_eq!(kotlin_to_java("ByteArray"), Some("byte[]".to_string()));
-        assert_eq!(kotlin_to_java("ShortArray"), Some("short[]".to_string()));
-        assert_eq!(kotlin_to_java("FloatArray"), Some("float[]".to_string()));
     }
 
     #[test]
