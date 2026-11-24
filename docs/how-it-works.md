@@ -169,7 +169,7 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
   | Tests | **+10** when a test file imports it directly; **+4** when only its package has tests, counting a test in *another* package that imports this one by name |
 
 - **Density**: loops and string-offset operations per 100 lines, rounded to one decimal before it is used.
-- **Priority** is half readiness, half value, rounded to a whole number and clamped to 0–100, where value adds up to 100. It uses the readiness fraction before it is rounded for the report, so a unit with 99.6 readiness scores higher than the 100 it prints:
+- **Priority** is half readiness, half value, rounded to a whole number and clamped to 0–100, where value adds up to 100. It uses the readiness fraction before that is rounded for the report, so two units that both print 100 can still score differently:
 
   | Term | Weight |
   | --- | --- |
@@ -178,8 +178,8 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
   | Size | `lines / 4` below 80, 20 from 80 up to (not including) 600, 10 at 600 and above |
 
 - **Start here** takes `ready` units with at least 20 lines and at least one bridgeable export, ordered
-  by priority, readiness and density **descending**, then wave and id **ascending**, and keeps the first
-  **ten**. When fewer than three qualify it recomputes the same list over `ready` *and* `caution` units;
+  by priority **descending**, then readiness **descending**, wave **ascending**, density **descending**
+  and id **ascending**, and keeps the first **ten**. When fewer than three qualify it recomputes the same list over `ready` *and* `caution` units;
   when that list is still empty
   — no unit of 20 lines has a bridgeable export — it drops the size floor and takes any size. So one
   unit crossing 20 lines can shorten the list, and a repo of small files gets the shortlist it deserves.
