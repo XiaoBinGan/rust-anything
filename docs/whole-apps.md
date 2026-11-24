@@ -99,8 +99,9 @@ editing the JSON afterwards changes replay but not the front door — change the
 `src/original.rs` and rebuild to keep the units `app front-door` wired. Scaffolding again is the
 destructive option: `app wire` writes into three places — `rust/app/rust-anything.json` (the wiring
 state), `rust/app/src/units/` (the glue per unit) and a `path` dependency in `rust/app/Cargo.toml` —
-so back up the whole `rust/app` folder, and restore it or re-wire the units afterwards, or the glue
-comes back without the crates it needs. For everything else the file is plain JSON: edit it by hand
+so back up the whole `rust/app` folder and **restore** it: re-wiring is not the same, because
+`app wire` writes a fresh stub for each unit and does not recover the port code you had put in the
+old glue. For everything else the file is plain JSON: edit it by hand
 when a value is easier to change there, and the next `app record` picks it up.
 
 | Field | Set by | On a re-record |
