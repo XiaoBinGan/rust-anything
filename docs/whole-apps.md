@@ -74,8 +74,8 @@ the port order as pieces (units that import each other move together), and numbe
 with a recommended answer: keep units, blocked units, dependencies with no or a partial crate.
 
 Then prove the whole program from the outside. `record` and `diff` prove one unit; `app record`
-and `app replay` prove the app, for any program you can start — a CLI or a server, in any language,
-since the app is a black box:
+and `app replay` prove the app, for any program you can start — a CLI, an HTTP server, in any
+language, since the app is a black box:
 
 ```sh
 rust-anything app record . -- python3 cli.py          # the command that runs the original
