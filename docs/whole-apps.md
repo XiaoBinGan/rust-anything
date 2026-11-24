@@ -74,8 +74,8 @@ the port order as pieces (units that import each other move together), and numbe
 with a recommended answer: keep units, blocked units, dependencies with no or a partial crate.
 
 Then prove the whole program from the outside. `record` and `diff` prove one unit; `app record`
-and `app replay` prove the app, for CLIs and servers in any of the six languages (the app is a
-black box):
+and `app replay` prove the app, for any program you can start — a CLI, an HTTP server, in any
+language, since the app is a black box:
 
 ```sh
 rust-anything app record . -- python3 cli.py          # the command that runs the original
@@ -90,6 +90,29 @@ rust-anything app replay . --build "target/release/mytool"
   map order, missing files). Each case runs twice; what differs between the two runs becomes a
   `[..]` wildcard. `--normalize timestamps|uuids|key-order` or `--normalize name=regex` adds
   normalizers, saved with the cases.
+### What `app record` saves, and what a re-record does with it
+
+`app record` writes `rust/app-cases/rust-anything.json`: the settings every later run reads, so
+`app replay`, the front door and `lift` start the app the same way. It is plain JSON — edit it by
+hand when a value is easier to change there, and the next `app record` picks it up.
+
+| Field | Set by | On a re-record |
+| --- | --- | --- |
+| `run` | the command after `--` | replaced by the new command; this is what `app replay` runs |
+| `name` | `--name`, else the binary's name | replaced when `--name` is given, kept otherwise |
+| `timeout_secs` | `--timeout` | replaced when given, kept otherwise |
+| `normalize`, `normalizers` | `--normalize timestamps`, `--normalize name=regex` | added to what is saved; there is no flag to remove one, delete the entry by hand |
+| `http.port`, `http.args`, `http.fresh`, `http.pace_ms` | `--port`, `--arg`, `--fresh`, `--pace` | merged: a flag replaces that field, an omitted flag keeps the saved value, `--pace 0` clears the pace |
+| `effects` | `--effect http`, `--effect smtp`, `--effect-env VAR=…` | merged the same way |
+| `float_tolerance` | `--float-tolerance 1e-9` | replaced; `--float-tolerance 0` removes it |
+| `float_files` | `--float-file PATH=f64le` | replaced when given, kept otherwise |
+| `unordered` | nothing: filled from the noise of the run | rewritten from this run's comparison of the original's two runs |
+| `fresh` | `--fresh PATH` for a CLI | replaced when given, kept otherwise |
+| `recorded` | nothing: filled as cases are written | rewritten, so cases you added by hand are not deleted |
+
+Two fields exist only for that bookkeeping: `schema` (the file's version) and `recorded` (the cases
+the last recording wrote). Neither is a setting.
+
 - Cases are [trycmd](https://docs.rs/trycmd) files in `rust/app-cases/`: `<case>.toml` (argv, env,
   exit code), `.stdin`, `.stdout`, `.stderr`, `.in/` (files in) and `.out/` (files written). Read
   and edit them by hand; a Rust test can run them with `trycmd` once the port has a binary.
