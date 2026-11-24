@@ -53,6 +53,8 @@ pub struct Options<'a> {
     pub out: Option<&'a Path>,
     pub min_ms: u64,
     pub node_args: &'a [String],
+    /// Resolve npm packages the original imports from this folder's `node_modules`, as `bench` does.
+    pub resolve_from: Option<&'a Path>,
 }
 
 pub fn report(opts: &Options) -> Result<Card> {
@@ -74,7 +76,7 @@ pub fn report(opts: &Options) -> Result<Card> {
     let bench = harness::bench(&harness::BenchOptions {
         crate_dir: &crate_dir,
         min_ms: opts.min_ms,
-        resolve_from: None,
+        resolve_from: opts.resolve_from,
         node_args: opts.node_args,
     })?;
     let verdict = harness::verdict(&bench, manifest.language);

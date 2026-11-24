@@ -348,6 +348,9 @@ enum Cmd {
         /// Extra arguments for node, e.g. `--node-arg=--import=tsx`.
         #[arg(long = "node-arg", allow_hyphen_values = true)]
         node_args: Vec<String>,
+        /// Resolve npm packages the original imports from this folder's `node_modules`.
+        #[arg(long, value_parser = absolute)]
+        resolve_from: Option<PathBuf>,
     },
     /// Remove the build cache every port and bridge shares (CARGO_TARGET_DIR when set, else
     /// rust-anything/target in your cache folder). Ports rebuild on their next build.
@@ -1268,12 +1271,14 @@ fn run() -> Result<ExitCode> {
             min_ms,
             json,
             node_args,
+            resolve_from,
         } => {
             let card = rust_anything::card::report(&rust_anything::card::Options {
                 crate_dir: &crate_dir,
                 out: out.as_deref(),
                 min_ms,
                 node_args: &node_args,
+                resolve_from: resolve_from.as_deref(),
             })?;
             if json {
                 say!("{}", serde_json::to_string_pretty(&card)?);

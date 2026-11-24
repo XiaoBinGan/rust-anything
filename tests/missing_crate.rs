@@ -25,6 +25,24 @@ fn disable_on_a_missing_folder_says_to_bridge_first() {
 }
 
 #[test]
+fn report_takes_resolve_from_like_bench_and_fuzz() {
+    // A repo whose node_modules lives elsewhere: `bench` and `fuzz` take `--resolve-from`, and
+    // `report` runs bench internally, so it has to take it too.
+    let dir = missing("report-resolve");
+    let err = card::report(&card::Options {
+        crate_dir: &dir,
+        out: None,
+        min_ms: 1,
+        node_args: &[],
+        resolve_from: Some(&dir),
+    })
+    .unwrap_err();
+    // The folder is missing, so the report stops before any npm lookup: the flag is accepted and
+    // carried, which is what this asserts.
+    assert_hint(err, &dir);
+}
+
+#[test]
 fn report_on_a_missing_folder_says_to_bridge_first() {
     let dir = missing("report");
     let err = card::report(&card::Options {
@@ -32,6 +50,7 @@ fn report_on_a_missing_folder_says_to_bridge_first() {
         out: None,
         min_ms: 1,
         node_args: &[],
+        resolve_from: None,
     })
     .unwrap_err();
     assert_hint(err, &dir);

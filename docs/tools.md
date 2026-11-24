@@ -171,6 +171,7 @@ Runs the original's code or commands.
 | `out` | string |  | Output folder; defaults to `<crate>/report`. |
 | `min_ms` | integer |  | Minimum measured time per function and side, in milliseconds (default 200). |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
+| `resolve_from` | string |  | Resolve npm packages the original imports from this folder's node_modules. |
 
 ## Benchmark port
 

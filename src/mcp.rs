@@ -525,6 +525,7 @@ fn tool_schemas() -> Value {
                 "out": { "type": "string", "description": "Output folder; defaults to `<crate>/report`." },
                 "min_ms": { "type": "integer", "description": "Minimum measured time per function and side, in milliseconds (default 200)." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
+                "resolve_from": { "type": "string", "description": "Resolve npm packages the original imports from this folder's node_modules." },
             }, "required": ["crate"] },
         },
         {
@@ -977,6 +978,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 out: out.as_deref(),
                 min_ms: args["min_ms"].as_u64().unwrap_or(200),
                 node_args: &strings("node_args"),
+                resolve_from: opt_path("resolve_from").as_deref(),
             })?)?
         }
         "gate" => serde_json::to_value(gate::gate(
