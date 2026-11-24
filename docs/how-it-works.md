@@ -179,9 +179,9 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
 
 - **Start here** takes `ready` units with at least 20 lines and at least one bridgeable export, ordered
   by priority **descending**, then readiness **descending**, wave **ascending**, density **descending**
-  and id **ascending**, and keeps the first **ten**. When fewer than three qualify it recomputes the same list over `ready` *and* `caution` units;
-  when that list is still empty
-  — no unit of 20 lines has a bridgeable export — it drops the size floor and takes any size. So one
+  and id **ascending**, and keeps the first **ten**. When fewer than three qualify it recomputes the same
+  list over `ready` *and* `caution` units; when that list is still empty — no unit of 20 lines has a
+  bridgeable export — it drops the size floor and takes any size. So one
   unit crossing 20 lines can shorten the list, and a repo of small files gets the shortlist it deserves.
 
 Every risk below appears in plans as `title xN` with the lines that raised it; this table says how
