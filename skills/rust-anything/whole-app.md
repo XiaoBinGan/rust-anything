@@ -102,9 +102,9 @@ Capture what the app does from the outside, so every later build is held to it:
 - **Library**: the public API, through `rust-anything record` on each unit: there is no process
   to replay, so skip `app record`; the units' recorded cases are the proof.
 
-The flags above are saved in `rust/app-cases/rust-anything.json`, which `app replay`, the front
-door and `lift` read; `docs/whole-apps.md` lists every field, the flag that sets it and what a
-re-record does with it.
+The flags above are saved in `rust/app-cases/rust-anything.json`, which `app replay` and `lift`
+read; [docs/whole-apps.md](../../docs/whole-apps.md#what-app-record-saves-and-what-a-re-record-does-with-it)
+lists every field, the flag that sets it and what a re-record does with it.
 
 Inputs: the app's tests, examples and real workloads, its error paths (bad input, missing files,
 failed calls), and the semantic traps: non-ASCII and emoji strings, negative division and
