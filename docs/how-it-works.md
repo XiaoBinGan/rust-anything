@@ -166,33 +166,33 @@ bad it usually is and gives one example. The severities are the ones `analyze` s
 | Risk | Severity | Where it bites |
 | --- | --- | --- |
 | String offsets and slicing | high | TS/JS: `slice`, `indexOf`, `matchAll`, the `d` flag — UTF-16 vs UTF-8 |
-| Regex features the `regex` crate lacks | high | TS/JS, Python, Java, Kotlin, C#, PHP, Ruby: lookaround, backreferences, `y`, `\A` |
+| Regex features the `regex` crate lacks | high | TS/JS, Python, Java, Kotlin, C#, PHP, Ruby: lookaround, backreferences, the `y` flag |
 | Regexes built at runtime | high | TS/JS, Python, Ruby, PHP: `new RegExp(pattern)`, `re.compile(s)` |
 | Dynamic code (eval, new Function, computed import) | high | TS/JS `eval`, `new Function`, computed `import()`; Python `exec`, `reload` |
 | Dynamic typing | medium | TS/JS `any`, `'key' in value`; Python `**kwargs` passed through |
-| Insertion-ordered maps and object keys | medium | TS/JS `Map`, `Set`, `Object.keys`; PHP arrays; Python `dict` |
+| Insertion-ordered maps and object keys | medium | TS/JS `Map`, `Set`, `Object.keys`; PHP arrays; Ruby hashes; PowerShell ordered dictionaries |
 | Async and promises | medium | TS/JS promise and generator boundaries; C# `Task` |
 | Generators | medium | TS/JS `function*`; Python `yield`; C# `IEnumerable` with `yield` |
 | Class inheritance | medium | Java, Kotlin, C#, Ruby, Python, PHP: `extends`, mixins, `super` |
 | Reflection and prototypes | medium | TS/JS `Proxy`, `Reflect`, `Symbol`; C# `GetType()`, Java `getClass()` |
 | Callback-shaped APIs | medium | Java, C#, TS/JS: function-typed parameters make a chatty bridge |
-| Exceptions | low | all but Go and C: `throw`, `raise`, `panic` on divide by zero |
+| Exceptions | low | every language but C: `throw`, `raise`, Go `panic`/`recover`/`defer`, `panic` on divide by zero |
 | Number semantics | low | TS/JS `number`, C# `decimal`, Python `int` beyond 2^53 |
-| JSON round-trips | low | TS/JS, Python, PHP: key order, `undefined`, `NaN` |
+| JSON round-trips | low | TS/JS, Ruby, Go, PHP, PowerShell: key order, `undefined`, `NaN` |
 | Integer width and overflow | medium | Go `uint64`, Java `long`, C# `ulong`, C `unsigned long`: wrap vs panic |
 | Division and modulo | medium | Python `//` on negatives, Go `/` truncation, C `%` sign |
 | Hash iteration order | high | Go `map` range, Java `HashMap`, C# `Dictionary`, Python `set` |
 | Pointers and manual memory | high | C: pointer arithmetic, `malloc`, out-parameters |
 | Concurrency | medium | Go goroutines and channels, Java threads, C# `async` locks |
 | Null references | medium | Java, C#, Kotlin `!!`, C: `null`, nullable columns |
-| Runtime changes to code | high | Ruby `define_method`, Python `setattr`, PHP `eval`-free magic |
+| Runtime changes to code | high | Ruby `define_method` and friends, Python `Class.method = …`, PHP `class_alias`/`runkit_*`/`uopz_*` |
 | Already compiled (numba, Cython, JAX) | medium | Python: decorated code that is not plain Python any more |
 | numpy array parameters | high | Python: `np.ndarray` arguments and returns |
 | Platform-specific C (asm, volatile, bitfields, packing) | high | C: `asm`, `volatile`, `:3` bitfields, `#pragma pack` |
-| Clock and random numbers | low | all: `Date.now`, `time.time`, `time.Now`, `rand` — pin them with `record --pin-clock` |
+| Clock and random numbers | low | TS/JS `Date.now`, Python `time.time`, Go `time.Now`: `record --pin-clock` pins the first two (TS/JS with the napi bridge); elsewhere compare by hand |
 | Implicit output and the pipeline | medium | PowerShell: values written to the pipeline; Bash: stdout |
 | Case-insensitive comparison | medium | PowerShell `-eq`, SQL `LIKE`, C# `StringComparison`: culture rules |
-| Implicit type conversion | medium | PHP `==`, JS `==`, PowerShell `[int]"abc"` |
+| Implicit type conversion | medium | PowerShell: `[int]"abc"` and other casts; PHP `==` and JS `==` land under dynamic typing |
 
 These are the same 28 titles `analyze` can emit, with the severities it scores them at;
 `src/risks.rs` is the list.
