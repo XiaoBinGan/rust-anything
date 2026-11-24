@@ -162,25 +162,26 @@ installed, and TS that needs transforming (enums, parameter properties) is retri
 
   | Term | Weight |
   | --- | --- |
-  | Each risk | its severity weight (high 6, medium 3, low 1) × `1 + ln(count)` |
+  | Each risk | its severity weight (high 6, medium 3, low 1) × `ln(1 + count)`, so one high risk costs 4.2 |
   | Size | `lines / 40` |
   | Fan-in | `1.5` per unit that imports it, at most 15 |
   | Dependencies | 12 per crate with no Rust fit, 4 per crate not in the table |
   | Tests | **+10** when a test file imports it directly, **+4** when only its package has tests |
 
 - **Density**: loops and string-offset operations per 100 lines.
-- **Priority** is half readiness, half value, where value adds up to 100:
+- **Priority** is half readiness, half value, rounded to a whole number and clamped to 0–100, where value adds up to 100:
 
   | Term | Weight |
   | --- | --- |
   | Compute | `density × 4`, at most 50 |
   | Tests | 30 when a test file imports it directly, 15 when only its package has tests |
-  | Size | `lines / 4` below 80, 20 from 80 to 600, 10 above 600 |
+  | Size | `lines / 4` below 80, 20 from 80 up to (not including) 600, 10 at 600 and above |
 
 - **Start here** takes `ready` units with at least 20 lines and at least one bridgeable export, ordered
-  by priority, then readiness, wave, density and id; it tops the list up with `caution` units when fewer
-  than three qualify, and falls back to units of any size when every unit is small. So one unit crossing
-  20 lines can shorten the list, and a repo of small files gets the shortlist it deserves.
+  by priority, then readiness, wave, density and id, and keeps the first **ten**. When fewer than three
+  qualify it recomputes the same list over `ready` *and* `caution` units; when that list is still empty
+  — no unit of 20 lines has a bridgeable export — it drops the size floor and takes any size. So one
+  unit crossing 20 lines can shorten the list, and a repo of small files gets the shortlist it deserves.
 
 Every risk below appears in plans as `title xN` with the lines that raised it; this table says how
 bad it usually is and gives one example. The severities are the ones `analyze` scores with.
