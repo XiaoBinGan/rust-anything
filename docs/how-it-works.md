@@ -165,34 +165,34 @@ bad it usually is and gives one example. The severities are the ones `analyze` s
 
 | Risk | Severity | Where it bites |
 | --- | --- | --- |
-| String offsets and slicing | high | TS/JS: `slice`, `indexOf`, `matchAll`, the `d` flag — UTF-16 vs UTF-8 |
-| Regex features the `regex` crate lacks | high | TS/JS, Python, Java, Kotlin, C#, PHP, Ruby, Go `regexp`, PowerShell: lookaround, backreferences, the `y` flag |
-| Regexes built at runtime | high | TS/JS, Python, Ruby, PHP: `new RegExp(pattern)`, `re.compile(s)` |
-| Dynamic code (eval, new Function, computed import) | high | TS/JS `eval`, `new Function`, computed `import()`; Python `exec`, `reload` |
-| Dynamic typing | medium | TS/JS `any`, `'key' in value`; Python `**kwargs` passed through |
-| Insertion-ordered maps and object keys | medium | TS/JS `Map`, `Set`, `Object.keys`; PHP arrays; Ruby hashes; PowerShell ordered dictionaries |
-| Async and promises | medium | TS/JS promise and generator boundaries; C# `Task` |
-| Generators | medium | TS/JS `function*`; Python `yield`; C# `IEnumerable` with `yield` |
-| Class inheritance | medium | Java, Kotlin, C#, Ruby, Python, PHP: `extends`, mixins, `super` |
-| Reflection and prototypes | medium | TS/JS `Proxy`, `Reflect`, `Symbol`; C# `GetType()`, Java `getClass()` |
-| Callback-shaped APIs | medium | Java, C#, TS/JS: function-typed parameters make a chatty bridge |
-| Exceptions | low | all ten: `throw`, `raise`, Go `panic`/`recover`/`defer`, C `setjmp`/`longjmp`/`abort`/`exit`/`signal` |
-| Number semantics | low | TS/JS `number`, C# `decimal`, Python `int` beyond 2^53 |
-| JSON round-trips | low | TS/JS, Ruby, Go, PHP, PowerShell: key order, `undefined`, `NaN` |
-| Integer width and overflow | medium | Go `uint64`, Java `long`, C# `ulong`, C `unsigned long`: wrap vs panic |
-| Division and modulo | medium | Python `//` on negatives, Go `/` truncation, C `%` sign |
-| Hash iteration order | high | Go `map` range, Java `HashMap`, C# `Dictionary`, Python `set` |
-| Pointers and manual memory | high | C: pointer arithmetic, `malloc`, out-parameters |
-| Concurrency | medium | Go goroutines and channels, Java threads, C# `async` locks |
-| Null references | medium | Java, C#, Kotlin `!!`, C: `null`, nullable columns |
-| Runtime changes to code | high | Ruby `define_method` and friends, Python `Class.method = …`, PHP `class_alias`/`runkit_*`/`uopz_*` |
+| String offsets and slicing | high | TS/JS `slice`, `indexOf`, `matchAll`; string indexing and slicing in Python, Ruby, PHP (`substr`, `strpos`), Java, Kotlin, C#, Go; C `strlen`, `strcpy`, `sprintf`: offsets counted in UTF-16 units, characters or bytes, not Rust's UTF-8 |
+| Regex features the `regex` crate lacks | high | TS/JS, Python, Ruby, PHP, Java, Kotlin, C#, Go `regexp`, PowerShell `-match`/`-replace`: lookaround, backreferences, the `y` flag |
+| Regexes built at runtime | high | TS/JS, Python, Ruby, PHP, Java, C#, PowerShell: `new RegExp(pattern)`, `re.compile(s)`, a pattern that is not a literal |
+| Dynamic code (eval, new Function, computed import) | high | TS/JS `eval`, `new Function`, computed `import()`; Python `exec`, `compile`, `__import__`; Ruby `eval`, `instance_exec`; PHP `eval`, `create_function`; PowerShell `Invoke-Expression`, `Add-Type` |
+| Dynamic typing | medium | TS/JS `any`, `'key' in value`; Python `getattr`, `isinstance`; Ruby `method`; PHP `==`; Java `instanceof` and casts; Kotlin `is`/`as`; C# `dynamic`, `is`/`as`; Go `interface{}` and type switches; PowerShell `$script:`/`$global:` |
+| Insertion-ordered maps and object keys | medium | TS/JS `Map`, `Set`, `Object.keys`; PHP arrays; Ruby hashes; PowerShell `[ordered]` dictionaries |
+| Async and promises | medium | TS/JS `Promise` and `async`/`await`; Python `async`/`await`; C# `async`/`await` |
+| Generators | medium | TS/JS `function*`; Python, Ruby and PHP `yield`; C# `yield` and LINQ queries |
+| Class inheritance | medium | TS/JS, Python, Ruby, PHP, Java, Kotlin, C#, PowerShell classes: `extends`, base classes, mixins and traits |
+| Reflection and prototypes | medium | TS/JS `Proxy`, `Reflect`, `Symbol`; Python `globals`/`vars`; Ruby `send`, `is_a?`; PHP variable variables; Java `java.lang.reflect`, `getClass()`; Kotlin `::class`; C# `System.Reflection`; Go `reflect`; C function-like macros |
+| Callback-shaped APIs | medium | TS/JS, Ruby, PHP, Java, Kotlin, C#, Go, PowerShell script blocks: function-typed parameters make a chatty bridge |
+| Exceptions | low | all ten: `throw`, `raise`, `try`, Go `panic`/`recover`/`defer`, C `setjmp`/`longjmp`/`abort`/`exit`/`signal`, PowerShell `trap`/`Write-Error` |
+| Number semantics | low | TS/JS `number`, bitwise operators, `parseInt`; Python bitwise operators; PHP `/`; C# `decimal` |
+| JSON round-trips | low | TS/JS `JSON`, Ruby, PHP, Go `encoding/json`, PowerShell `ConvertTo-Json`: key order, `undefined`, `NaN` |
+| Integer width and overflow | medium | Python, Ruby and PHP `**` and `<<`; Java, Kotlin, C# shifts, `*` and hash codes; Go and C shifts and conversions: wrap vs panic |
+| Division and modulo | medium | Python, Ruby, PHP, Java, Kotlin, C#, Go, C: `/` and `%` on negatives, Python `//` |
+| Hash iteration order | high | Python `set`; Java and Kotlin `HashMap`/`HashSet`; C# `Dictionary`/`HashSet`; Go `map` range; PowerShell `@{}` hashtables |
+| Pointers and manual memory | high | C pointers, `malloc`, `memcpy`; Go `unsafe` and pointer types; C# `unsafe` |
+| Concurrency | medium | Go goroutines and `sync`, Java and Kotlin threads and `synchronized`, C# `lock` and `System.Threading`, Python, Ruby, PHP and C threads, PowerShell `Start-ThreadJob` |
+| Null references | medium | Java, C#, PHP `null`; Kotlin nullable types; Go and Ruby `nil`; C `NULL`; PowerShell `$null` |
+| Runtime changes to code | high | Ruby `define_method` and friends, Python `Class.method = ...`, PHP `class_alias`/`runkit_*`/`uopz_*` |
 | Already compiled (numba, Cython, JAX) | medium | Python: decorated code that is not plain Python any more |
 | numpy array parameters | high | Python: `np.ndarray` arguments and returns |
 | Platform-specific C (asm, volatile, bitfields, packing) | high | C: `asm`, `volatile`, `:3` bitfields, `#pragma pack` |
-| Clock and random numbers | low | TS/JS `Date.now`/`Math.random`, Python `time.time`/`os.urandom`, PowerShell `Get-Random`: `record --pin-clock` covers TS/JS with the napi bridge and Python; elsewhere compare by hand |
-| Implicit output and the pipeline | medium | PowerShell: values written to the pipeline; Bash: stdout |
-| Case-insensitive comparison | medium | PowerShell `-eq`, SQL `LIKE`, C# `StringComparison`: culture rules |
-| Implicit type conversion | medium | PowerShell: `[int]"abc"` and other casts; PHP `==` and JS `==` land under dynamic typing |
+| Clock and random numbers | low | TS/JS `Date.now`/`Math.random`, Python `time.time`/`random`/`os.urandom`, PowerShell `Get-Date`/`Get-Random`/`New-Guid`: `record --pin-clock` covers TS/JS with the napi bridge and Python; elsewhere compare by hand |
+| Implicit output and the pipeline | medium | PowerShell: `Write-Output`, `echo` and values left uncaptured go to the pipeline |
+| Case-insensitive comparison | medium | PowerShell `-eq`, `-like`, `-match`, `-contains` and `switch` ignore case |
+| Implicit type conversion | medium | PowerShell: casts such as `[int]"abc"`, and `/` on integers giving a double |
 
 These are the same 28 titles `analyze` can emit, with the severities it scores them at;
 `src/risks.rs` is the list.
