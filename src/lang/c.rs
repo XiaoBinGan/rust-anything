@@ -701,7 +701,6 @@ fn struct_type(c_type: &str) -> Option<String> {
     Some(format!("struct:{bare}:{}", fields.join(",")))
 }
 
-/// A declared type with typedefs and enums replaced by their scalar, `const` kept.
 /// Type qualifiers that do not change the type: `volatile unsigned char *` is a `char *` buffer.
 const QUALIFIERS: [&str; 3] = ["const", "volatile", "restrict"];
 
@@ -712,6 +711,7 @@ fn without_qualifiers(base: &str) -> String {
         .join(" ")
 }
 
+/// A declared type with typedefs and enums replaced by their scalar, `const` kept.
 fn resolve_type(c_type: &str) -> String {
     let stars = c_type.matches('*').count();
     let base = c_type.trim_end_matches(['*', ' ']).trim();
@@ -1155,6 +1155,7 @@ mod tests {
         assert_eq!(scalar("uintptr_t").map(|t| t.1), Some("usize"));
         assert_eq!(scalar("uintptr_t").map(|t| t.0), Some("int"));
     }
+
     #[test]
     fn reads_drop_in_candidates() {
         let source = "#include \"text.h\"\n#include <string.h>\n\
