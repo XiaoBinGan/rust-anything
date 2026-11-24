@@ -22,18 +22,18 @@ where the language allows it:
 
 | Language | `TypeName` is | Looked up | Otherwise |
 | --- | --- | --- | --- |
-| Python | a dotted class path | the module is imported (`mypkg.errors.ParseError`) | `RuntimeError` |
+| Python | a dotted class path | the module is imported (`mypkg.errors.ParseError`) | `ValueError` |
 | Ruby | a top-level class name | that constant only, so `Errors::ParseError` needs the full path | `RuntimeError` |
-| JavaScript | a class name | `globalThis` | `Error` |
+| JavaScript | a built-in error name | `globalThis` (`TypeError`, `RangeError`, …) | `Error` |
 | Go | not a type: the string is the `error` value | — | — |
-| Java, Kotlin | a bare or package-qualified class | `java.lang`, `java.util`, `java.io`, then the package | `RuntimeException` |
+| Java, Kotlin | a bare or package-qualified class | the JDK packages, then its own | `RuntimeException` |
 | C# | a full .NET type name | every loaded assembly (`Acme.Errors.ParseError`) | `InvalidOperationException` |
 | PHP | a class name with `\` separators | `class_exists`, and it must be a `Throwable` | `RuntimeException` |
 | PowerShell | a .NET type name | `-as [type]`, and it must be an `Exception` | `RuntimeException` |
 
-The names matter beyond the message: `diff` compares the error type, so `Err("ParseError: bad")`
-against an original that raises `Acme.Errors.ParseError` fails the case even though the text
-matches. If the Rust code panics anyway, the bridge catches it at the boundary and returns an error
+The names matter beyond the message: several drivers compare the error type as well as the text,
+so `Err("ParseError: bad")` against an original that raises `Acme.Errors.ParseError` fails those
+cases even though the text matches. If the Rust code panics anyway, the bridge catches it at the boundary and returns an error
 ("Rust panic: ..."). `gate` fails a port that uses `unwrap`, `expect` or `panic!` where the original
 throws, and needs a recorded failing case for every error path, so errors are checked against the
 original like any other output.
