@@ -423,6 +423,14 @@ fn java_to_ts_inner(t: &str, in_param: bool) -> Result<String, String> {
         "Stream" | "Iterator" | "IntStream" => {
             return Err(format!("uses `{head}`, a lazy sequence"));
         }
+        // A collected set is not a class of the project: say what it is, as Kotlin already does, and
+        // name the ordered ones separately, whose order the bridge does not build yet.
+        "Set" | "HashSet" => return Err("uses `Set`, an unordered collection".into()),
+        "SortedSet" | "NavigableSet" | "TreeSet" | "LinkedHashSet" => {
+            return Err(format!(
+                "uses `{head}`, a sorted set the bridge does not build yet"
+            ));
+        }
         other => return Err(format!("uses the class `{other}`")),
     })
 }
@@ -754,6 +762,33 @@ public class Totals {
                 .as_deref()
                 .unwrap_or("")
                 .contains("values of any type")
+        );
+    }
+
+    #[test]
+    fn a_java_set_is_named_for_what_it_is() {
+        // `Set` and `HashSet` are not project classes: the plan used to say "uses the class `Set`".
+        for t in ["Set", "HashSet", "java.util.Set"] {
+            let reason = java_to_ts(t).unwrap_err();
+            assert!(reason.contains("unordered collection"), "{t}: {reason}");
+            assert!(!reason.contains("uses the class"), "{t}: {reason}");
+        }
+        // The ordered ones say which they are, and that the bridge does not build them yet.
+        for t in ["SortedSet", "NavigableSet", "TreeSet", "LinkedHashSet"] {
+            let reason = java_to_ts(t).unwrap_err();
+            assert!(reason.contains("sorted set"), "{t}: {reason}");
+            assert!(!reason.contains("uses the class"), "{t}: {reason}");
+        }
+        // A real project class keeps the old wording.
+        assert_eq!(
+            java_to_ts("com.acme.Wallet").unwrap_err(),
+            "uses the class `Wallet`"
+        );
+        // A list of sets says the same thing, through the element.
+        assert!(
+            java_to_ts_param("List<Set<String>>")
+                .unwrap_err()
+                .contains("unordered collection")
         );
     }
 
