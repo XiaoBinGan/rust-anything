@@ -15,7 +15,7 @@ pub const EXT: &str = "effects";
 const IO_TIMEOUT: Duration = Duration::from_secs(5);
 const SETTLE: Duration = Duration::from_secs(2);
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EffectsConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub http: bool,
@@ -120,6 +120,19 @@ impl EffectsConfig {
             saved.db_dump = given.db_dump;
         }
         (!saved.is_empty() || saved.db_reset.is_some()).then_some(saved)
+    }
+}
+
+/// Two configs are equal when they save the same effects: `named_kinds` records how this run was
+/// called, not what is kept, and it is not serialized.
+impl PartialEq for EffectsConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.http == other.http
+            && self.smtp == other.smtp
+            && self.smtp_parts == other.smtp_parts
+            && self.env == other.env
+            && self.db_reset == other.db_reset
+            && self.db_dump == other.db_dump
     }
 }
 
