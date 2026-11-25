@@ -591,7 +591,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "app_record",
-            "description": "Record the whole CLI app's behavior: run the original on its own documented examples, an inputs file and semantic traps (non-ASCII and emoji, negative division, overflow, float extremes, map order), twice each. What differs between runs is reported by kind in `noise`: values (now [..] wildcards), order (lines compared in any order) and lines (a ... that matches anything): show every one to the user. Cases are trycmd files in <repo>/rust/app-cases/ (argv, stdin, env, files in; stdout, stderr, exit code, files out).",
+            "description": "Record a whole CLI or server's behavior (with optional HTTP, SMTP and database effects): run the original on its own documented examples, an inputs file and semantic traps (non-ASCII and emoji, negative division, overflow, float extremes, map order), twice each. What differs between runs is reported by kind in `noise`: values (now [..] wildcards), order (lines compared in any order) and lines (a ... that matches anything): show every one to the user. Cases are trycmd files in <repo>/rust/app-cases/ for CLIs (argv, stdin, env, files in; stdout, stderr, exit code, files out) or HTTP cases in <repo>/rust/app-cases/http/, with recorded effects alongside.",
             "inputSchema": { "type": "object", "properties": {
                 "repo": { "type": "string", "description": "Repository root." },
                 "run": { "type": "array", "items": { "type": "string" }, "description": "Command that runs the original, paths relative to repo: [\"python3\", \"cli.py\"]. Optional after the first record." },
@@ -626,7 +626,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "app_front_door",
-            "description": "Scaffold <repo>/rust/app, the Rust binary that owns the CLI's entry point: a clap parser for the recorded commands and flags, every command running the original with the same argv, stdin and env (each fallback counted). For a server: an axum app that starts the original on a port of its own and proxies every route no unit answers. Builds it and replays the cases: 100% passed at 100% fallback. Needs app_record first; never overwrites rust/app.",
+            "description": "Scaffold <repo>/rust/app, the Rust entry point for a CLI, server or library (wiring recorded effects too): for a CLI, a clap parser for the recorded commands and flags, every command running the original with the same argv, stdin and env (each fallback counted); for a server, an axum app that starts the original on a port of its own and proxies every route no unit answers; for a library, a Rust crate re-exporting each wired unit's port. Builds it and replays the cases: 100% passed at 100% fallback. Needs app_record first; never overwrites rust/app.",
             "inputSchema": { "type": "object", "properties": {
                 "repo": { "type": "string", "description": "Repository root." },
                 "check": { "type": "boolean", "description": "Build and replay (default true)." },

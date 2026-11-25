@@ -89,6 +89,93 @@ fn replay(repo: &Path, build: Option<&str>) -> app::ReplayOutcome {
     .unwrap()
 }
 
+/// A one-file server that never listens, or exits before listening, depending on its argument.
+const EXITS_OR_WAITS: &str = r#"import os, sys, time
+if sys.argv[1:] == ["exit"]:
+    sys.exit(3)
+time.sleep(600)
+"#;
+
+#[test]
+fn a_port_that_is_taken_is_named_before_the_build_runs() {
+    // Recording on a fixed port must say the port is busy, not spend the readiness timeout on it and
+    // then blame the app for not listening.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo = std::env::temp_dir().join(format!("rust-anything-http-busy-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), EXITS_OR_WAITS).unwrap();
+    let taken = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = taken.local_addr().unwrap().port();
+    let err = app::record(&RecordOptions {
+        repo: &repo,
+        run: &[python.to_string(), "server.py".to_string()],
+        inputs: None,
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: true,
+        server_args: &[],
+        fresh: &[],
+        pace_ms: None,
+        port: Some(port),
+        float_tolerance: None,
+        float_files: &[],
+        effects: None,
+    })
+    .unwrap_err();
+    let text = format!("{err:#}");
+    drop(taken);
+    let _ = std::fs::remove_dir_all(&repo);
+    assert!(
+        text.contains(&format!("port {port} is already in use")),
+        "{text}"
+    );
+}
+
+#[test]
+fn a_build_that_exits_before_listening_says_so() {
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo = std::env::temp_dir().join(format!("rust-anything-http-exit-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), EXITS_OR_WAITS).unwrap();
+    let err = app::record(&RecordOptions {
+        repo: &repo,
+        run: &[
+            python.to_string(),
+            "server.py".to_string(),
+            "exit".to_string(),
+        ],
+        inputs: None,
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: true,
+        server_args: &[],
+        fresh: &[],
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        effects: None,
+    })
+    .unwrap_err();
+    let text = format!("{err:#}");
+    let _ = std::fs::remove_dir_all(&repo);
+    assert!(text.contains("before listening"), "{text}");
+    // The exit status is in the message, so a reader knows what the app did: the fixture exits 3.
+    assert!(text.contains("exited"), "{text}");
+    #[cfg(unix)]
+    assert!(text.contains("exit status: 3"), "{text}");
+}
+
 #[test]
 fn http_record_keeps_distinct_requests_with_the_same_name() {
     if !common::have("node") {

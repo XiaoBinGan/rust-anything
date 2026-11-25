@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Java bridges ordered sets (`SortedSet`, `NavigableSet`, `TreeSet`, `LinkedHashSet`) as arrays
+  across the reflection converter and binary wire, and refuses unordered `Set` and `HashSet` with
+  "an unordered collection" instead of treating them as project classes (#366, #449 by @Lewandox).
+- `docs/types.md` lists, for each language, what each source type becomes in `port.rs` and the
+  reason a type keeps a function in its language; a test checks every row against the code
+  (#373, #456 by @puretechteam).
+
 ## 4.1.0 (2026-11-24)
 
 - `enable --only <fn>` (repeatable) switches on just the named functions of a unit, and `--partial`
