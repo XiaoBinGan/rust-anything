@@ -447,7 +447,9 @@ impl Server {
         let mut child = cmd
             .spawn()
             .with_context(|| format!("starting `{}`", command.join(" ")))?;
-        let deadline = Instant::now() + launch.ready;
+        // A huge `--ready-timeout` has no representable deadline; treat it as "no deadline" rather
+        // than panicking after the child is already running.
+        let deadline = Instant::now().checked_add(launch.ready);
         let addr = loop {
             let failure = if let Some(status) = child.try_wait()? {
                 Some(format!("exited ({status}) before listening"))
@@ -457,7 +459,7 @@ impl Server {
                 } else {
                     break addr;
                 }
-            } else if Instant::now() > deadline {
+            } else if deadline.is_some_and(|d| Instant::now() > d) {
                 Some(format!("did not listen within {}s", launch.ready.as_secs()))
             } else {
                 None
