@@ -87,11 +87,30 @@ impl EffectsConfig {
         Ok((!config.is_empty() || config.db_reset.is_some()).then_some(config))
     }
 
+    /// Merges field by field, as `http::merge_config` does for `--port` and `--arg`: a flag replaces
+    /// only what it names, so re-recording with one effect flag keeps the others it saved before.
     pub fn merge(saved: Option<Self>, given: Option<Self>) -> Option<Self> {
-        match (saved, given) {
-            (_, Some(g)) => Some(g),
-            (s, None) => s,
+        let (mut saved, given) = match (saved, given) {
+            (Some(saved), Some(given)) => (saved, given),
+            (saved, given) => return saved.or(given),
+        };
+        // `--effects` names the kinds, so it replaces them; an empty list keeps what was saved.
+        if given.http || given.smtp {
+            saved.http = given.http;
+            saved.smtp = given.smtp;
+            saved.smtp_parts = given.smtp_parts;
         }
+        // `--effect-env` adds or replaces one variable at a time.
+        for (var, kind) in given.env {
+            saved.env.insert(var, kind);
+        }
+        if given.db_reset.is_some() {
+            saved.db_reset = given.db_reset;
+        }
+        if given.db_dump.is_some() {
+            saved.db_dump = given.db_dump;
+        }
+        (!saved.is_empty() || saved.db_reset.is_some()).then_some(saved)
     }
 }
 
@@ -997,5 +1016,60 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(c.smtp && !c.http && c.serial());
+    }
+}
+
+#[cfg(test)]
+mod merge_tests {
+    use super::*;
+
+    #[test]
+    fn a_second_record_with_one_flag_keeps_the_saved_effects() {
+        // `--effects http --effect-env HOOK=http-url`, then only `--db-dump "echo x"`: the second run
+        // must keep the sink and the variable, or the webhook stops being recorded (issue #331).
+        let saved =
+            EffectsConfig::from_args(&["http".into()], &["HOOK=http-url".into()], None, None);
+        let given = EffectsConfig::from_args(&[], &[], None, Some("echo x"));
+        let merged = EffectsConfig::merge(saved.unwrap(), given.unwrap()).unwrap();
+        assert!(merged.http, "the HTTP sink survived: {merged:?}");
+        assert_eq!(merged.env.get("HOOK").map(String::as_str), Some("http-url"));
+        assert_eq!(merged.db_dump.as_deref(), Some("echo x"));
+    }
+
+    #[test]
+    fn a_given_kind_list_replaces_the_saved_kinds() {
+        let saved = EffectsConfig::from_args(&["http".into(), "smtp".into()], &[], None, None);
+        let given = EffectsConfig::from_args(&["smtp".into()], &[], None, None);
+        let merged = EffectsConfig::merge(saved.unwrap(), given.unwrap()).unwrap();
+        assert!(
+            !merged.http,
+            "a named kind list replaces the kinds: {merged:?}"
+        );
+        assert!(merged.smtp);
+    }
+
+    #[test]
+    fn an_effect_env_replaces_one_variable_and_keeps_the_others() {
+        let saved = EffectsConfig::from_args(
+            &["http".into()],
+            &["HOOK=http-url".into(), "MAIL=smtp-host".into()],
+            None,
+            None,
+        );
+        let given = EffectsConfig::from_args(&[], &["HOOK=http-url".into()], None, None);
+        let merged = EffectsConfig::merge(saved.unwrap(), given.unwrap()).unwrap();
+        assert_eq!(merged.env.len(), 2, "{merged:?}");
+    }
+
+    #[test]
+    fn nothing_given_keeps_everything_saved() {
+        let saved =
+            EffectsConfig::from_args(&["http".into()], &[], Some("rm x"), Some("echo y")).unwrap();
+        let kept = saved.clone().unwrap();
+        let merged = EffectsConfig::merge(saved, None).unwrap();
+        assert_eq!(merged.http, kept.http);
+        assert_eq!(merged.db_reset.as_deref(), Some("rm x"));
+        assert_eq!(merged.db_dump.as_deref(), Some("echo y"));
+        assert_eq!(EffectsConfig::merge(None, None), None);
     }
 }
