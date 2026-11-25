@@ -187,7 +187,9 @@ fn size_check(crate_dir: &Path, manifest: &Manifest) -> Option<Check> {
         name: "size",
         passed,
         detail: format!(
-            "{rust} lines of Rust for {source} lines of {} ({growth:.1}x){}",
+            "{} of Rust for {} of {} ({growth:.1}x){}",
+            crate::report::count(rust, "line"),
+            crate::report::count(source, "line"),
             manifest.language.name(),
             if passed {
                 String::new()
