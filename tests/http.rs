@@ -74,7 +74,6 @@ fn record(repo: &Path, run: &str, traps: bool) -> app::RecordOutcome {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap()
@@ -127,7 +126,6 @@ fn a_port_that_is_taken_is_named_before_the_build_runs() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap_err();
@@ -213,7 +211,6 @@ fn a_build_that_exits_before_listening_says_so() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap_err();
@@ -259,7 +256,6 @@ fn http_record_keeps_distinct_requests_with_the_same_name() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap();
@@ -323,7 +319,6 @@ fn http_fresh_files_and_arguments_reach_every_start() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap();
@@ -389,7 +384,6 @@ fn http_rerecord_uses_the_existing_fixed_port() {
             float_tolerance: None,
             float_files: &[],
             effects: None,
-
             ready_secs: None,
         })
     };
@@ -824,7 +818,6 @@ fn http_fixed_port_rejects_existing_listener_and_early_exit() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap_err();
@@ -853,7 +846,6 @@ fn http_fixed_port_rejects_existing_listener_and_early_exit() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap();
@@ -946,7 +938,6 @@ fn a_server_listening_only_on_ipv6_loopback_is_recorded_and_replayed() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap();
@@ -1036,7 +1027,6 @@ fn a_server_started_through_a_wrapper_is_stopped_with_it() {
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     });
     let still_listening = std::net::TcpStream::connect_timeout(
@@ -1267,7 +1257,6 @@ http.server.HTTPServer(("127.0.0.1", port), H).serve_forever()
         float_tolerance: None,
         float_files: &[],
         effects: None,
-
         ready_secs: None,
     })
     .unwrap();

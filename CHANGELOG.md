@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `app record --ready-timeout SECS` (and MCP `app_record`'s `ready_timeout`) sets how long a server
+  start waits for its port instead of a fixed 60 seconds. It is saved with the cases and used by
+  replay and the front door; 0 restores the default (#332, #478 by @XiaoBinGan).
 - `tests/skill.rs` fails when the skill names a command the CLI does not have, and `scripts/skill-eval/`
   compares skill versions on a fixed port task, scored by `gate` (turns and cost from the agent's JSON).
 - Ruby ports turn `Err("Mod::Error: message")` into that namespaced exception, and Java, Ruby and

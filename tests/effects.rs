@@ -45,7 +45,6 @@ fn record(repo: &Path, python: &str, effects: Option<EffectsConfig>) -> app::Rec
         float_tolerance: None,
         float_files: &[],
         effects,
-
         ready_secs: None,
     })
     .unwrap()
@@ -194,7 +193,6 @@ fn a_server_that_mails_twice_fails_only_on_that_request() {
         float_tolerance: None,
         float_files: &[],
         effects: EffectsConfig::from_args(&["smtp".into()], &[], None, None).unwrap(),
-
         ready_secs: None,
     })
     .unwrap();
@@ -282,7 +280,6 @@ fn rows_written_differently_fail_replay_through_the_db_dump() {
         float_tolerance: None,
         float_files: &[],
         effects,
-
         ready_secs: None,
     })
     .unwrap();
@@ -391,7 +388,6 @@ fn same_mail_with_different_mime_framing_matches_unless_smtp_raw() {
         float_tolerance: None,
         float_files: &[],
         effects,
-
         ready_secs: None,
     })
     .unwrap();
@@ -417,7 +413,6 @@ fn same_mail_with_different_mime_framing_matches_unless_smtp_raw() {
         float_tolerance: None,
         float_files: &[],
         effects: raw_effects,
-
         ready_secs: None,
     })
     .unwrap();
@@ -488,7 +483,6 @@ fn db_reset_and_dump_run_where_the_case_runs() {
         float_tolerance: None,
         float_files: &[],
         effects,
-
         ready_secs: None,
     })
     .unwrap();
@@ -577,7 +571,6 @@ else:
         float_tolerance: None,
         float_files: &[],
         effects,
-
         ready_secs: None,
     })
     .unwrap();

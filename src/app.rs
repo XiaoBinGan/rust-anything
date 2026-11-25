@@ -1562,7 +1562,7 @@ pub struct RecordOptions<'a> {
     pub float_files: &'a [String],
     pub effects: Option<crate::effects::EffectsConfig>,
     /// Servers: seconds to wait for the port before giving up; kept from the last recording when
-    /// `None` (the default is a minute).
+    /// `None`; 0 restores the default, a minute.
     pub ready_secs: Option<u64>,
 }
 

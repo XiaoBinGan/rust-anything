@@ -89,7 +89,7 @@ pub(crate) fn merge_config(saved: Option<HttpConfig>, opts: &RecordOptions) -> O
         config.pace_ms = (pace > 0).then_some(pace);
     }
     if let Some(secs) = opts.ready_secs {
-        config.ready_secs = Some(secs);
+        config.ready_secs = (secs > 0).then_some(secs);
     }
     Some(config)
 }
@@ -1981,6 +1981,40 @@ fn decode_base64_strict(input: &str) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_ready_timeout_is_saved_kept_and_reset() {
+        let opts = |ready_secs| RecordOptions {
+            repo: Path::new("."),
+            run: &[],
+            inputs: None,
+            normalize: &[],
+            name: None,
+            traps: false,
+            timeout_secs: None,
+            http: false,
+            server_args: &[],
+            fresh: &[],
+            pace_ms: None,
+            port: None,
+            float_tolerance: None,
+            float_files: &[],
+            effects: None,
+            ready_secs,
+        };
+        let old: HttpConfig = serde_json::from_str(r#"{"port":8080}"#).unwrap();
+        assert_eq!(ready_timeout(&old), READY);
+        assert!(merge_config(None, &opts(None)).is_none());
+        let set = merge_config(Some(old), &opts(Some(5))).unwrap();
+        assert_eq!(ready_timeout(&set), Duration::from_secs(5));
+        let kept = merge_config(Some(set), &opts(None)).unwrap();
+        assert_eq!(kept.ready_secs, Some(5));
+        let reset = merge_config(Some(kept), &opts(Some(0))).unwrap();
+        assert_eq!(reset.ready_secs, None);
+        assert!(!serde_json::to_string(&reset).unwrap().contains("ready"));
+        let implied = merge_config(None, &opts(Some(90))).unwrap();
+        assert_eq!(implied.ready_secs, Some(90));
+    }
 
     #[test]
     fn the_tree_of_a_server_is_found_and_zombies_are_not_alive() {
