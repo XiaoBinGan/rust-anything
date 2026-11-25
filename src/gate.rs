@@ -147,6 +147,30 @@ pub(crate) fn with_local_imports(root: &Path, files: Vec<PathBuf>) -> Vec<PathBu
     seen.into_iter().collect()
 }
 
+/// The `size` line: `4 lines of Rust for 1 line of TypeScript/JavaScript (4.0x)`. Split out so a
+/// test can assert the wording without building a crate.
+fn size_detail(rust: usize, source: usize, language: crate::lang::Lang, passed: bool) -> String {
+    let growth = if source == 0 {
+        0.0
+    } else {
+        rust as f64 / source as f64
+    };
+    format!(
+        "{} of Rust for {} of {} ({growth:.1}x){}",
+        crate::report::count(rust, "line"),
+        crate::report::count(source, "line"),
+        language.name(),
+        if passed {
+            String::new()
+        } else {
+            format!(
+                "; over {MAX_GROWTH}x usually means code a crate already provides, or a case \
+                 handled one by one: use the crates `analyze` lists and fold repeated code"
+            )
+        }
+    )
+}
+
 fn size_check(crate_dir: &Path, manifest: &Manifest) -> Option<Check> {
     let mut files = files_under(
         &manifest.root.join(&manifest.unit),
@@ -180,26 +204,12 @@ fn size_check(crate_dir: &Path, manifest: &Manifest) -> Option<Check> {
         .filter_map(|p| std::fs::read_to_string(p).ok())
         .map(|t| crate::lang::syntax::code_lines(&t, &["//"]))
         .sum();
-    let growth = rust as f64 / source as f64;
     let passed = rust as f64 <= MAX_GROWTH * source as f64 + ALLOWANCE;
     Some(Check {
         fix: None,
         name: "size",
         passed,
-        detail: format!(
-            "{} of Rust for {} of {} ({growth:.1}x){}",
-            crate::report::count(rust, "line"),
-            crate::report::count(source, "line"),
-            manifest.language.name(),
-            if passed {
-                String::new()
-            } else {
-                format!(
-                    "; over {MAX_GROWTH}x usually means code a crate already provides, or a case \
-                     handled one by one: use the crates `analyze` lists and fold repeated code"
-                )
-            }
-        ),
+        detail: size_detail(rust, source, manifest.language, passed),
     })
 }
 
@@ -659,5 +669,30 @@ mod tests {
         assert!(!check.passed);
         assert!(check.detail.contains("cannot read"));
         assert!(check.detail.contains("port.rs"));
+    }
+}
+
+#[cfg(test)]
+mod size_tests {
+    use super::size_detail;
+    use crate::lang::Lang;
+
+    #[test]
+    fn one_source_line_reads_as_one_line() {
+        // Issue #503: a one-line unit said "1 lines". The message is built here, so the test sees
+        // the wiring and not only the plural helper.
+        let detail = size_detail(4, 1, Lang::Ts, true);
+        assert_eq!(
+            detail,
+            "4 lines of Rust for 1 line of TypeScript/JavaScript (4.0x)"
+        );
+        assert!(size_detail(4, 2, Lang::Ts, true).contains("for 2 lines of"));
+        assert_eq!(
+            size_detail(1, 1, Lang::Python, true).split(" (").next(),
+            Some("1 line of Rust for 1 line of Python")
+        );
+        // The advice is only there when the check fails.
+        assert!(size_detail(900, 1, Lang::Ts, false).contains("over"));
+        assert!(!size_detail(4, 1, Lang::Ts, true).contains("over"));
     }
 }
