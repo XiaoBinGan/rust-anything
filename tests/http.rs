@@ -97,6 +97,88 @@ if sys.argv[1:] == ["exit"]:
 time.sleep(600)
 "#;
 
+/// A server that writes its own pid, so a test can ask whether it is gone afterwards.
+const PID_SERVER: &str = r#"import os, sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.pid"), "w").write(str(os.getpid()))
+
+
+class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
+"#;
+
+#[cfg(unix)]
+fn alive(pid: &str) -> bool {
+    // `kill -0` asks the kernel whether the pid exists without touching the process.
+    std::process::Command::new("kill")
+        .args(["-0", pid])
+        .output()
+        .is_ok_and(|o| o.status.success())
+}
+
+#[cfg(unix)]
+#[test]
+fn a_server_started_through_a_shell_is_gone_after_record() {
+    // `sh -c "python3 server.py"` makes the server a grandchild. Recording must stop the whole tree,
+    // or a leftover process keeps answering replays and any build passes.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo = std::env::temp_dir().join(format!("rust-anything-http-fork-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), PID_SERVER).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"name\":\"ok\",\"path\":\"/\"}\n",
+    )
+    .unwrap();
+    let out = app::record(&RecordOptions {
+        repo: &repo,
+        run: &[
+            "sh".to_string(),
+            "-c".to_string(),
+            format!("{python} server.py"),
+        ],
+        inputs: Some(&repo.join("inputs.jsonl")),
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: Some(true),
+        server_args: None,
+        fresh: None,
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        effects: None,
+        ready_secs: None,
+    })
+    .unwrap();
+    let pid = std::fs::read_to_string(repo.join("server.pid")).unwrap_or_default();
+    let _ = std::fs::remove_dir_all(&repo);
+    assert_eq!(out.cases, 1, "{out:?}");
+    assert!(!pid.is_empty(), "the fixture should have written its pid");
+    assert!(
+        !alive(pid.trim()),
+        "the server (pid {pid}) is still running after record"
+    );
+}
+
 #[test]
 fn a_port_that_is_taken_is_named_before_the_build_runs() {
     // Recording on a fixed port must say the port is busy, not spend the readiness timeout on it and
