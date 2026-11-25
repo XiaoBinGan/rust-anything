@@ -124,10 +124,11 @@ HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 fn alive(pid: &str) -> bool {
     // `kill -0` says the pid exists, which a zombie also does until its parent reaps it. Ask `ps`
     // for the state and count only a process that can still run.
+    // A missing `ps` must fail the test instead of reading as "the server is gone".
     let out = std::process::Command::new("ps")
         .args(["-o", "stat=", "-p", pid])
-        .output();
-    let Ok(out) = out else { return false };
+        .output()
+        .expect("running `ps` to ask whether the server is still there");
     let stat = String::from_utf8_lossy(&out.stdout);
     let stat = stat.trim();
     // No line at all: the pid is gone.
