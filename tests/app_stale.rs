@@ -41,6 +41,8 @@ fn record_within(
         float_tolerance: None,
         float_files: &[],
         effects: None,
+
+        ready_secs: None,
     })
     .unwrap()
 }

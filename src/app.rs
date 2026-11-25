@@ -1561,6 +1561,9 @@ pub struct RecordOptions<'a> {
     /// when empty.
     pub float_files: &'a [String],
     pub effects: Option<crate::effects::EffectsConfig>,
+    /// Servers: seconds to wait for the port before giving up; kept from the last recording when
+    /// `None` (the default is a minute).
+    pub ready_secs: Option<u64>,
 }
 
 fn is_zero(n: &usize) -> bool {
@@ -2956,6 +2959,7 @@ mod tests {
             float_tolerance: None,
             float_files: &[],
             effects: None,
+            ready_secs: None,
         })
         .unwrap();
         assert_eq!(recorded.cases, 1);
@@ -3243,6 +3247,7 @@ mod tests {
             float_tolerance: None,
             float_files: &[],
             effects: None,
+            ready_secs: None,
         })
         .unwrap();
         let read = |name: &str| std::fs::read_to_string(recorded.dir.join(name)).unwrap();

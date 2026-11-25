@@ -53,12 +53,24 @@ pub struct HttpConfig {
     /// Milliseconds to wait after each response before the next request.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pace_ms: Option<u64>,
+    /// Seconds to wait for the server to listen before giving up (`app record --ready-timeout`).
+    /// Unset keeps the default, `READY`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ready_secs: Option<u64>,
+}
+
+/// How long a start waits for the port: the saved `--ready-timeout`, or `READY`.
+fn ready_timeout(http: &HttpConfig) -> Duration {
+    http.ready_secs.map_or(READY, Duration::from_secs)
 }
 
 /// The `http` config of a recording: the saved one, changed by what this record was given.
 pub(crate) fn merge_config(saved: Option<HttpConfig>, opts: &RecordOptions) -> Option<HttpConfig> {
-    let asked =
-        opts.http || opts.port.is_some() || !opts.server_args.is_empty() || opts.pace_ms.is_some();
+    let asked = opts.http
+        || opts.port.is_some()
+        || !opts.server_args.is_empty()
+        || opts.pace_ms.is_some()
+        || opts.ready_secs.is_some();
     let mut config = match (saved, asked) {
         (Some(c), _) => c,
         (None, true) => HttpConfig::default(),
@@ -75,6 +87,9 @@ pub(crate) fn merge_config(saved: Option<HttpConfig>, opts: &RecordOptions) -> O
     }
     if let Some(pace) = opts.pace_ms {
         config.pace_ms = (pace > 0).then_some(pace);
+    }
+    if let Some(secs) = opts.ready_secs {
+        config.ready_secs = Some(secs);
     }
     Some(config)
 }
@@ -432,7 +447,7 @@ impl Server {
         let mut child = cmd
             .spawn()
             .with_context(|| format!("starting `{}`", command.join(" ")))?;
-        let deadline = Instant::now() + READY;
+        let deadline = Instant::now() + launch.ready;
         let addr = loop {
             let failure = if let Some(status) = child.try_wait()? {
                 Some(format!("exited ({status}) before listening"))
@@ -443,7 +458,7 @@ impl Server {
                     break addr;
                 }
             } else if Instant::now() > deadline {
-                Some(format!("did not listen within {}s", READY.as_secs()))
+                Some(format!("did not listen within {}s", launch.ready.as_secs()))
             } else {
                 None
             };
@@ -694,6 +709,8 @@ struct Launch<'a> {
     files: Option<&'a Path>,
     pace: Option<Duration>,
     effects: Option<&'a crate::effects::EffectsConfig>,
+    /// How long to wait for the port before giving up.
+    ready: Duration,
 }
 
 /// Starts the server once and sends every request in order.
@@ -1499,6 +1516,7 @@ pub(crate) fn record(
         files: files.as_deref(),
         pace: http.pace_ms.map(Duration::from_millis),
         effects: config.effects.as_ref(),
+        ready: ready_timeout(&http),
     };
     let one = run_all(
         &config.run,
@@ -1782,6 +1800,7 @@ pub(crate) fn replay(
         files: files.as_deref(),
         pace: http.pace_ms.map(Duration::from_millis),
         effects: config.effects.as_ref(),
+        ready: ready_timeout(&http),
     };
     let answers = run_all(command, &launch, repo, port, &reqs, timeout)?;
     let mut outcome = ReplayOutcome {
