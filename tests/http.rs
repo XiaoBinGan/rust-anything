@@ -137,6 +137,71 @@ fn alive(pid: &str) -> bool {
 
 #[cfg(unix)]
 #[test]
+fn the_second_recording_gets_a_fresh_server_process() {
+    // Two recordings of the same crate must not share the first one's server: a reused process keeps
+    // the state of the run before it, so the second recording would compare against a half-used app.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo =
+        std::env::temp_dir().join(format!("rust-anything-http-fresh-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), PID_SERVER).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"name\":\"ok\",\"path\":\"/\"}\n",
+    )
+    .unwrap();
+    let pid_file = repo.join("server.pid");
+    let record = || {
+        let _ = std::fs::remove_file(&pid_file);
+        app::record(&RecordOptions {
+            repo: &repo,
+            run: &[python.to_string(), "server.py".to_string()],
+            inputs: Some(&repo.join("inputs.jsonl")),
+            normalize: &[],
+            name: None,
+            traps: false,
+            timeout_secs: None,
+            http: Some(true),
+            server_args: None,
+            fresh: None,
+            pace_ms: None,
+            port: None,
+            float_tolerance: None,
+            float_files: &[],
+            effects: None,
+            ready_secs: None,
+        })
+        .unwrap();
+        std::fs::read_to_string(&pid_file)
+            .unwrap_or_default()
+            .trim()
+            .to_string()
+    };
+    let first = record();
+    let second = record();
+    let first_alive = alive(&first);
+    if first_alive {
+        let _ = std::process::Command::new("kill")
+            .args(["-9", &first])
+            .status();
+    }
+    let _ = std::fs::remove_dir_all(&repo);
+    assert!(
+        !first.is_empty() && !second.is_empty(),
+        "both runs wrote a pid"
+    );
+    assert_ne!(first, second, "the second recording reused pid {first}");
+    assert!(
+        !first_alive,
+        "the first server (pid {first}) outlived its recording"
+    );
+}
+
+#[cfg(unix)]
+#[test]
 fn a_server_started_through_a_shell_is_gone_after_record() {
     // `sh -c "python3 server.py"` makes the server a grandchild. Recording must stop the whole tree,
     // or a leftover process keeps answering replays and any build passes.
