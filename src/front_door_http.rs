@@ -281,7 +281,7 @@ impl Original {{
             .stdin(Stdio::null())
             .spawn()
             .expect(\"starting the original\");
-        let deadline = Instant::now() + Duration::from_secs({ready_secs});
+        let deadline = Instant::now().checked_add(Duration::from_secs({ready_secs}));
         while tokio::net::TcpStream::connect((\"127.0.0.1\", port))
             .await
             .is_err()
@@ -290,7 +290,7 @@ impl Original {{
                 panic!(\"the original exited ({{status}}) before listening on port {{port}}\");
             }}
             assert!(
-                Instant::now() < deadline,
+                deadline.is_none_or(|d| Instant::now() < d),
                 \"the original did not listen on port {{port}}\"
             );
             tokio::time::sleep(Duration::from_millis(50)).await;
