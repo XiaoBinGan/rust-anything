@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `tests/skill.rs` fails when the skill names a command the CLI does not have, and `scripts/skill-eval/`
+  compares skill versions on a fixed port task, scored by `gate` (turns and cost from the agent's JSON).
 - Ruby ports turn `Err("Mod::Error: message")` into that namespaced exception, and Java, Ruby and
   PHP replays load the project's own classes, so a port that returns a project-defined exception
   matches the recorded `error_type`. The Ruby wrapper reopens each receiver with `class << Mod`,
