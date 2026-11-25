@@ -138,6 +138,76 @@ fn alive(pid: &str) -> bool {
 
 #[cfg(unix)]
 #[test]
+fn a_server_started_for_replay_is_gone_after_it() {
+    // `app replay` starts the app too. A server left behind keeps the next replay's port company and
+    // answers requests meant for a fresh run, so the same check as for record applies here.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo =
+        std::env::temp_dir().join(format!("rust-anything-http-replay-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), PID_SERVER).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"name\":\"ok\",\"path\":\"/\"}\n",
+    )
+    .unwrap();
+    let pid_file = repo.join("server.pid");
+    app::record(&RecordOptions {
+        repo: &repo,
+        run: &[python.to_string(), "server.py".to_string()],
+        inputs: Some(&repo.join("inputs.jsonl")),
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: Some(true),
+        server_args: None,
+        fresh: None,
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        effects: None,
+        ready_secs: None,
+    })
+    .unwrap();
+    let recorded = std::fs::read_to_string(&pid_file)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    let _ = std::fs::remove_file(&pid_file);
+    let out = replay(&repo, None);
+    let started = std::fs::read_to_string(&pid_file)
+        .unwrap_or_default()
+        .trim()
+        .to_string();
+    let running = !started.is_empty() && alive(&started);
+    if running {
+        let _ = std::process::Command::new("kill")
+            .args(["-9", &started])
+            .status();
+    }
+    let _ = std::fs::remove_dir_all(&repo);
+    assert_eq!(out.passed, 1, "{:?}", out.failures);
+    assert!(
+        !started.is_empty(),
+        "the replay should have started the app"
+    );
+    assert_ne!(
+        started, recorded,
+        "the replay reused the recording's server"
+    );
+    assert!(
+        !running,
+        "the server (pid {started}) is still running after replay"
+    );
+}
+
+#[cfg(unix)]
+#[test]
 fn the_second_recording_gets_a_fresh_server_process() {
     // Two recordings of the same crate must not share the first one's server: a reused process keeps
     // the state of the run before it, so the second recording would compare against a half-used app.
