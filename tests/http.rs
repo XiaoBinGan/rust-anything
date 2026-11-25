@@ -122,11 +122,16 @@ HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 
 #[cfg(unix)]
 fn alive(pid: &str) -> bool {
-    // `kill -0` asks the kernel whether the pid exists without touching the process.
-    std::process::Command::new("kill")
-        .args(["-0", pid])
-        .output()
-        .is_ok_and(|o| o.status.success())
+    // `kill -0` says the pid exists, which a zombie also does until its parent reaps it. Ask `ps`
+    // for the state and count only a process that can still run.
+    let out = std::process::Command::new("ps")
+        .args(["-o", "stat=", "-p", pid])
+        .output();
+    let Ok(out) = out else { return false };
+    let stat = String::from_utf8_lossy(&out.stdout);
+    let stat = stat.trim();
+    // No line at all: the pid is gone.
+    !stat.is_empty() && !stat.starts_with('Z')
 }
 
 #[cfg(unix)]
@@ -151,7 +156,9 @@ fn a_server_started_through_a_shell_is_gone_after_record() {
         run: &[
             "sh".to_string(),
             "-c".to_string(),
-            format!("{python} server.py"),
+            // The trailing `:` keeps `sh` a process: with a single command some shells exec it,
+            // which would make the server the direct child and the test vacuous.
+            format!("{python} server.py; :"),
         ],
         inputs: Some(&repo.join("inputs.jsonl")),
         normalize: &[],
