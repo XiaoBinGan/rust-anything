@@ -31,6 +31,10 @@ pub struct EffectsConfig {
     pub db_reset: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub db_dump: Option<String>,
+    /// Whether `--effects` named the kinds. `--effect-env` turns a sink on too, but that is inferred
+    /// from a variable, not a request to replace the saved kinds.
+    #[serde(skip)]
+    pub named_kinds: bool,
 }
 
 const ENV_KINDS: [&str; 4] = ["http-url", "smtp-host", "smtp-port", "smtp-url"];
@@ -53,6 +57,7 @@ impl EffectsConfig {
         let mut config = EffectsConfig::default();
         let mut raw = false;
         for kind in kinds.iter().flat_map(|k| k.split(',')).map(str::trim) {
+            config.named_kinds |= !kind.is_empty();
             match kind {
                 "http" => config.http = true,
                 "smtp" => config.smtp = true,
@@ -94,11 +99,15 @@ impl EffectsConfig {
             (Some(saved), Some(given)) => (saved, given),
             (saved, given) => return saved.or(given),
         };
-        // `--effects` names the kinds, so it replaces them; an empty list keeps what was saved.
-        if given.http || given.smtp {
+        // `--effects` names the kinds, so it replaces them. `--effect-env` also turns a sink on, but
+        // that is inferred: it must not switch the other sink off or change the saved mail mode.
+        if given.named_kinds {
             saved.http = given.http;
             saved.smtp = given.smtp;
             saved.smtp_parts = given.smtp_parts;
+        } else {
+            saved.http |= given.http;
+            saved.smtp |= given.smtp;
         }
         // `--effect-env` adds or replaces one variable at a time.
         for (var, kind) in given.env {
@@ -1049,6 +1058,39 @@ mod merge_tests {
     }
 
     #[test]
+    fn an_environment_only_update_keeps_both_sinks_and_the_mail_mode() {
+        // Saved: http and smtp, recorded as raw MIME. A run that only sets `HOOK` infers `http`, but
+        // that is not a request to drop SMTP or to switch to decoded parts.
+        let mut saved =
+            EffectsConfig::from_args(&["http".into(), "smtp-raw".into()], &[], None, None)
+                .unwrap()
+                .unwrap();
+        saved.env.insert("MAIL".into(), "smtp-host".into());
+        let given = EffectsConfig::from_args(&[], &["HOOK=http-url".into()], None, None)
+            .unwrap()
+            .unwrap();
+        let merged = EffectsConfig::merge(Some(saved), Some(given)).unwrap();
+        assert!(merged.http && merged.smtp, "both sinks stay: {merged:?}");
+        assert!(
+            !merged.smtp_parts,
+            "the saved raw mail mode stays: {merged:?}"
+        );
+        assert_eq!(merged.env.len(), 2, "{merged:?}");
+        assert_eq!(merged.env.get("HOOK").map(String::as_str), Some("http-url"));
+    }
+
+    #[test]
+    fn an_environment_update_turns_on_the_sink_it_needs() {
+        let saved = EffectsConfig::from_args(&["http".into()], &[], None, None).unwrap();
+        let given = EffectsConfig::from_args(&[], &["MAIL=smtp-host".into()], None, None).unwrap();
+        let merged = EffectsConfig::merge(saved, given).unwrap();
+        assert!(
+            merged.http && merged.smtp,
+            "the new mapping's sink is added: {merged:?}"
+        );
+    }
+
+    #[test]
     fn an_effect_env_replaces_one_variable_and_keeps_the_others() {
         let saved = EffectsConfig::from_args(
             &["http".into()],
@@ -1059,6 +1101,10 @@ mod merge_tests {
         let given = EffectsConfig::from_args(&[], &["HOOK=http-url".into()], None, None);
         let merged = EffectsConfig::merge(saved.unwrap(), given.unwrap()).unwrap();
         assert_eq!(merged.env.len(), 2, "{merged:?}");
+        assert!(
+            merged.http && merged.smtp,
+            "an env update keeps both sinks: {merged:?}"
+        );
     }
 
     #[test]
