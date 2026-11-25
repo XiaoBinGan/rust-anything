@@ -106,6 +106,9 @@ impl EffectsConfig {
             saved.smtp = given.smtp;
             saved.smtp_parts = given.smtp_parts;
         } else {
+            if given.smtp && !saved.smtp {
+                saved.smtp_parts = given.smtp_parts;
+            }
             saved.http |= given.http;
             saved.smtp |= given.smtp;
         }
@@ -1101,6 +1104,7 @@ mod merge_tests {
             merged.http && merged.smtp,
             "the new mapping's sink is added: {merged:?}"
         );
+        assert!(merged.smtp_parts, "{merged:?}");
     }
 
     #[test]

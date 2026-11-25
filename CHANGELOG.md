@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `app record` keeps the saved effects a run does not name: `--effects` replaces the kinds,
+  `--effect-env` adds or replaces one variable, and `--db-reset`/`--db-dump` replace only
+  themselves, so re-recording with one flag no longer drops the HTTP sink and its variables
+  (#331, #468 by @XiaoBinGan).
 - Java bridges ordered sets (`SortedSet`, `NavigableSet`, `TreeSet`, `LinkedHashSet`) as arrays
   across the reflection converter and binary wire, and refuses unordered `Set` and `HashSet` with
   "an unordered collection" instead of treating them as project classes (#366, #449 by @Lewandox).
