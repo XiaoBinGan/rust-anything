@@ -202,7 +202,7 @@ async fn main() {{
 
 /// `in_root`: the original runs in the repository, as recorded; otherwise in the front door's
 /// own working directory (the recording copies fresh files there).
-pub(crate) fn original_rs(run: &[String], in_root: bool) -> String {
+pub(crate) fn original_rs(run: &[String], in_root: bool, ready_secs: u64) -> String {
     let words: Vec<String> = run.iter().map(|w| format!("{w:?}")).collect();
     let cwd = if in_root {
         ".current_dir(ROOT)
@@ -281,7 +281,7 @@ impl Original {{
             .stdin(Stdio::null())
             .spawn()
             .expect(\"starting the original\");
-        let deadline = Instant::now() + Duration::from_secs(60);
+        let deadline = Instant::now() + Duration::from_secs({ready_secs});
         while tokio::net::TcpStream::connect((\"127.0.0.1\", port))
             .await
             .is_err()
