@@ -9,6 +9,7 @@ import { docPages } from './pages.mjs'
 const require = createRequire(import.meta.url)
 const LOGO_FILE = join(REPO_ROOT, 'docs', 'assets', 'icon.svg')
 const OG_LOGO = join(REPO_ROOT, 'website', 'public', 'icon-192.png')
+const OG_CRAB = join(REPO_ROOT, 'docs', 'assets', 'logo.png')
 function isClientDir(ctx, options) {
   if (!options.dir) return false
   const env = ctx.environment?.name
@@ -90,41 +91,64 @@ function h(type, style, ...kids) {
   return { type, props: { ...props, children: children.length === 1 ? children[0] : children } }
 }
 
-export async function renderOg({ title, eyebrow }) {
+export async function renderOg({ title, eyebrow, home = false }) {
   wasmReady ??= initWasm(readFileSync(require.resolve('@resvg/resvg-wasm/index_bg.wasm')))
   await wasmReady
-  const logo = `data:image/png;base64,${readFileSync(OG_LOGO).toString('base64')}`
-  const tree = h(
+  const png = (file) => `data:image/png;base64,${readFileSync(file).toString('base64')}`
+  const page = {
+    width: 1200,
+    height: 630,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    backgroundColor: '#fafafa',
+    color: '#111111',
+    fontFamily: 'Plex',
+    position: 'relative',
+  }
+  const bar = h('div', { position: 'absolute', left: 0, right: 0, bottom: 0, height: 12, backgroundColor: '#b34a1a' })
+  const brand = h(
     'div',
-    {
-      width: 1040,
-      height: 474,
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      backgroundColor: '#f2f3ef',
-      color: '#171b1e',
-      padding: '72px 80px',
-      fontFamily: 'Plex',
-      borderLeft: '16px solid #a33a0f',
-    },
-    h(
-      'div',
-      { alignItems: 'center', gap: '24px' },
-      h('img', { src: logo, width: 88, height: 88 }),
-      h('div', { fontSize: 36, fontWeight: 600, fontFamily: 'PlexCond' }, 'Rust Anything'),
-    ),
-    h(
-      'div',
-      { flexDirection: 'column', gap: '20px' },
-      eyebrow ? h('div', { fontSize: 30, fontWeight: 500, color: '#a33a0f' }, eyebrow) : null,
-      h('div', { fontFamily: 'PlexCond', fontSize: title.length > 40 ? 70 : 88, fontWeight: 600, lineHeight: 1.05, letterSpacing: '-0.01em' }, title),
-    ),
-    h(
-      'div',
-      { fontSize: 28, fontWeight: 500, color: '#596168' },
-      'Rewrite your app in Rust, checked against the original at every step.',
-    ),
+    { alignItems: 'center', gap: '20px' },
+    h('img', { src: png(OG_LOGO), width: 72, height: 72 }),
+    h('div', { fontSize: 34, fontWeight: 600, fontFamily: 'PlexCond' }, h('span', { color: '#b34a1a' }, 'Rust'), '\u00a0Anything'),
   )
+  const url = h(
+    'div',
+    { alignSelf: 'flex-start', fontSize: 26, fontWeight: 500, backgroundColor: '#ffffff', border: '2px solid #111111', borderRadius: '12px', padding: '8px 16px' },
+    'rustanything.ai',
+  )
+  const tree = home
+    ? h(
+        'div',
+        { ...page, width: 1120, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', padding: '0 0 0 80px' },
+        h(
+          'div',
+          { flexDirection: 'column', gap: '34px', width: 740 },
+          brand,
+          h(
+            'div',
+            { flexDirection: 'column', fontFamily: 'PlexCond', fontSize: 66, fontWeight: 600, lineHeight: 1.05, letterSpacing: '-0.01em' },
+            h('div', {}, 'Rewrite your app in Rust.'),
+            h('div', { color: '#b34a1a' }, 'Prove it behaves the same.'),
+          ),
+          url,
+        ),
+        h('img', { src: png(OG_CRAB), width: 360, height: 360 }),
+        bar,
+      )
+    : h(
+        'div',
+        { ...page, width: 1040, height: 506, padding: '60px 80px 64px' },
+        brand,
+        h(
+          'div',
+          { flexDirection: 'column', gap: '18px' },
+          eyebrow ? h('div', { fontSize: 30, fontWeight: 500, color: '#555555' }, eyebrow) : null,
+          h('div', { width: 1040, fontFamily: 'PlexCond', fontSize: title.length > 30 ? 70 : 88, fontWeight: 600, lineHeight: 1.05, letterSpacing: '-0.01em' }, title),
+        ),
+        url,
+        bar,
+      )
   const svg = await satori(tree, { width: 1200, height: 630, fonts: fonts() })
   return new Resvg(svg).render().asPng()
 }
@@ -135,7 +159,7 @@ export function ogImagePlugin(groupOf) {
     apply: 'build',
     async writeBundle(options) {
       if (!isClientDir(this, options)) return
-      const pages = [{ route: '/', title: 'Rewrite your whole app in Rust', eyebrow: '' }]
+      const pages = [{ route: '/', title: 'Rewrite your whole app in Rust', eyebrow: '', home: true }]
       for (const p of docPages()) {
         if (p.route.startsWith('/docs/')) pages.push({ route: p.route, title: p.title, eyebrow: groupOf(p.route) })
       }
