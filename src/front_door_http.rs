@@ -202,40 +202,8 @@ async fn main() {{
 
 /// `in_root`: the original runs in the repository, as recorded; otherwise in the front door's
 /// own working directory (the recording copies fresh files there).
-pub(crate) fn original_rs(
-    run: &[String],
-    in_root: bool,
-    ready_secs: u64,
-    ready_request: Option<&str>,
-) -> String {
+pub(crate) fn original_rs(run: &[String], in_root: bool, ready_secs: u64) -> String {
     let words: Vec<String> = run.iter().map(|w| format!("{w:?}")).collect();
-    let ready = ready_request.map_or(String::new(), |request| {
-        let (method, path) = request.split_once(' ').unwrap_or(("GET", request));
-        format!(
-            "        let method =
-            reqwest::Method::from_bytes({method:?}.as_bytes()).expect(\"a request method\");
-        loop {{
-            let answer = client
-                .request(method.clone(), format!(\"http://127.0.0.1:{{port}}{{}}\", {path:?}))
-                .timeout(Duration::from_secs(5))
-                .send()
-                .await;
-            if answer.is_ok_and(|a| a.status().is_success()) {{
-                break;
-            }}
-            if let Ok(Some(status)) = child.try_wait() {{
-                panic!(\"the original exited ({{status}}) before `{{}}` answered\", {request:?});
-            }}
-            assert!(
-                deadline.is_none_or(|d| Instant::now() < d),
-                \"the original did not answer `{{}}` with 2xx\",
-                {request:?}
-            );
-            tokio::time::sleep(Duration::from_millis(50)).await;
-        }}
-"
-        )
-    });
     let cwd = if in_root {
         ".current_dir(ROOT)
             "
@@ -314,17 +282,33 @@ impl Original {{
             .spawn()
             .expect(\"starting the original\");
         let deadline = Instant::now().checked_add(Duration::from_secs({ready_secs}));
-        while tokio::net::TcpStream::connect((\"127.0.0.1\", port))
-            .await
-            .is_err()
-        {{
+        loop {{
+            // Each attempt gets only the budget that is left, so a connect that never answers
+            // still honours `--ready-timeout`.
+            let left = deadline.map_or(Duration::from_secs(5), |d| {{
+                d.saturating_duration_since(Instant::now())
+                    .min(Duration::from_secs(5))
+            }});
+            let ready = left > Duration::ZERO
+                && tokio::time::timeout(
+                    left,
+                    tokio::net::TcpStream::connect((\"127.0.0.1\", port)),
+                )
+                .await
+                .is_ok_and(|r| r.is_ok());
+            if ready {{
+                break;
+            }}
             if let Ok(Some(status)) = child.try_wait() {{
                 panic!(\"the original exited ({{status}}) before listening on port {{port}}\");
             }}
-            assert!(
-                deadline.is_none_or(|d| Instant::now() < d),
-                \"the original did not listen on port {{port}}\"
-            );
+            if !deadline.is_none_or(|d| Instant::now() < d) {{
+                // Dropping a `Child` neither kills nor reaps it, and `Original` is not built yet,
+                // so the server has to be stopped here.
+                let _ = child.kill();
+                let _ = child.wait();
+                panic!(\"the original did not listen on port {{port}}\");
+            }}
             tokio::time::sleep(Duration::from_millis(50)).await;
         }}
         let client = reqwest::Client::builder()
@@ -332,7 +316,7 @@ impl Original {{
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .expect(\"an HTTP client\");
-{ready}        Original {{
+        Original {{
             base: format!(\"http://127.0.0.1:{{port}}\"),
             client,
             child: Arc::new(Mutex::new(Some(child))),
@@ -624,17 +608,6 @@ mod tests {
         }
         let versions = main_rs_versions();
         assert!(!versions[1].contains("nodelay") && !versions[1].contains("ListenerExt"));
-    }
-
-    #[test]
-    fn the_original_waits_for_the_saved_ready_request() {
-        let run = ["python3".to_string(), "server.py".to_string()];
-        let code = original_rs(&run, true, 60, Some("GET /health"));
-        assert!(code.contains("from_bytes(\"GET\".as_bytes())"), "{code}");
-        assert!(code.contains("{port}{}\", \"/health\")"), "{code}");
-        assert!(code.contains("a.status().is_success()"), "{code}");
-        let plain = original_rs(&run, true, 60, None);
-        assert!(!plain.contains("reqwest::Method"), "{plain}");
     }
 
     #[test]
