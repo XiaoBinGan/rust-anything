@@ -9,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use rust_anything::app::{self, RecordOptions, ReplayOptions};
-use rust_anything::drift::{self, DriftOptions};
 use rust_anything::front_door::{self, FrontDoorOptions, WireOptions};
 use rust_anything::lift::{self, LiftOptions};
 
@@ -76,6 +75,7 @@ fn record(repo: &Path, run: &str, traps: bool) -> app::RecordOutcome {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap()
 }
@@ -173,6 +173,7 @@ fn a_server_started_for_replay_is_gone_after_it() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     let recorded = std::fs::read_to_string(&pid_file)
@@ -245,6 +246,7 @@ fn the_second_recording_gets_a_fresh_server_process() {
             float_files: &[],
             effects: None,
             ready_secs: None,
+            ready_request: None,
         })
         .unwrap();
         std::fs::read_to_string(&pid_file)
@@ -312,6 +314,7 @@ fn a_server_started_through_a_shell_is_gone_after_record() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     let pid = std::fs::read_to_string(repo.join("server.pid")).unwrap_or_default();
@@ -321,6 +324,104 @@ fn a_server_started_through_a_shell_is_gone_after_record() {
     assert!(
         !alive(pid.trim()),
         "the server (pid {pid}) is still running after record"
+    );
+}
+
+/// A server that opens its port, answers 503 on `/health` for its first requests, then 200.
+const LATE_HEALTH: &str = r#"import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+STATE = {"health": 0}
+
+
+class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # The port is open, the routes are not: what a framework does while it migrates or warms up.
+        ready = STATE["health"] >= 3
+        if self.path == "/health":
+            STATE["health"] += 1
+        if not ready:
+            body = b'{"ready":false}'
+            self.send_response(503)
+        elif self.path == "/health":
+            body = b'{"ready":true}'
+            self.send_response(200)
+        else:
+            body = b'{"ok":true}'
+            self.send_response(200)
+        if self.path != "/health":
+            # What the app said to the recorded request itself, for the test to assert on.
+            open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "served.txt"), "a").write(
+                "%d\n" % (503 if not ready else 200)
+            )
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
+"#;
+
+#[test]
+fn a_ready_request_waits_until_the_routes_answer() {
+    // The port accepting a connection is not the same as the app being ready: a framework answers
+    // 503 until its routes are up, and a recording made then keeps half-initialised responses.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo = std::env::temp_dir().join(format!("rust-anything-http-late-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), LATE_HEALTH).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"name\":\"ok\",\"path\":\"/\"}\n",
+    )
+    .unwrap();
+    let out = app::record(&RecordOptions {
+        repo: &repo,
+        run: &[python.to_string(), "server.py".to_string()],
+        inputs: Some(&repo.join("inputs.jsonl")),
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: Some(true),
+        server_args: None,
+        fresh: None,
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        ready_secs: None,
+        ready_request: Some("GET /health"),
+        effects: None,
+    })
+    .unwrap();
+    let saved =
+        std::fs::read_to_string(repo.join("rust/app-cases/rust-anything.json")).unwrap_or_default();
+    let served = std::fs::read_to_string(repo.join("served.txt")).unwrap_or_default();
+    let _ = std::fs::remove_dir_all(&repo);
+    assert_eq!(out.cases, 1, "{out:?}");
+    assert!(
+        saved.contains("GET /health"),
+        "the request is saved: {saved}"
+    );
+    // What the app answered the recorded requests themselves: without the wait it answers 503, and
+    // `all()` on an empty list would be true, so the emptiness is asserted first.
+    let statuses: Vec<&str> = served
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect();
+    assert!(!statuses.is_empty(), "the fixture recorded nothing");
+    assert!(
+        statuses.iter().all(|s| *s == "200"),
+        "the case reached a not-ready app: {statuses:?}"
     );
 }
 
@@ -354,6 +455,7 @@ fn a_port_that_is_taken_is_named_before_the_build_runs() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap_err();
     let text = format!("{err:#}");
@@ -395,6 +497,7 @@ fn a_ready_timeout_shortens_the_wait_for_a_server_that_never_listens() {
         float_files: &[],
         effects: None,
         ready_secs: Some(1),
+        ready_request: None,
     })
     .unwrap_err();
     let waited = started.elapsed();
@@ -439,6 +542,7 @@ fn a_build_that_exits_before_listening_says_so() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap_err();
     let text = format!("{err:#}");
@@ -484,6 +588,7 @@ fn http_record_keeps_distinct_requests_with_the_same_name() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     let repeated = replay(&repo, None);
@@ -547,6 +652,7 @@ fn http_fresh_files_and_arguments_reach_every_start() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     let body = std::fs::read_to_string(out.dir.join("a2.body")).unwrap();
@@ -612,6 +718,7 @@ fn http_rerecord_uses_the_existing_fixed_port() {
             float_files: &[],
             effects: None,
             ready_secs: None,
+            ready_request: None,
         })
     };
     let first = record(Some(port));
@@ -785,33 +892,7 @@ fn check_language(lang: &Lang) {
     for f in &bug.failures {
         assert!(f.args[1].starts_with("/div/"), "{f:?}");
         assert!(f.problems.iter().all(|p| p.field == "body"), "{f:?}");
-        let at = f.problems[0].at.as_ref().unwrap();
-        assert_eq!((at.channel.as_str(), at.kind.as_str()), ("body", "text"));
-        assert_eq!((at.line, at.column), (Some(1), Some(12)), "{at:?}");
-        assert!(
-            at.context.as_ref().unwrap().actual.contains("divi⟨d⟩e"),
-            "{at:?}"
-        );
     }
-    assert_eq!(bug.groups.len(), 1, "{:?}", bug.groups);
-    assert_eq!(bug.groups[0].cases, bug.failures.len());
-    assert_eq!(bug.groups[0].label(), "body (text)");
-    let report = std::fs::read_to_string(&bug.report).unwrap();
-    assert!(report.contains("## Distinct differences"), "{report}");
-    assert!(
-        report.contains("at body, line 1, column 12, char 11: "),
-        "{report}"
-    );
-    let redacted = app::redacted(bug).unwrap();
-    let report = std::fs::read_to_string(&redacted.report).unwrap();
-    assert!(
-        !report.contains("zero") && !report.contains("/div/"),
-        "{report}"
-    );
-    assert!(
-        report.contains("body (text), line 1, column 12"),
-        "{report}"
-    );
     std::fs::remove_dir_all(&repo).unwrap();
 
     if !common::have("cargo") {
@@ -1072,6 +1153,7 @@ fn http_fixed_port_rejects_existing_listener_and_early_exit() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap_err();
     assert!(
@@ -1100,6 +1182,7 @@ fn http_fixed_port_rejects_existing_listener_and_early_exit() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     assert!(recorded.cases > 0);
@@ -1192,6 +1275,7 @@ fn a_server_listening_only_on_ipv6_loopback_is_recorded_and_replayed() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     assert_eq!(out.cases, 1);
@@ -1281,6 +1365,7 @@ fn a_server_started_through_a_wrapper_is_stopped_with_it() {
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     });
     let still_listening = std::net::TcpStream::connect_timeout(
         &std::net::SocketAddr::from(([127, 0, 0, 1], port)),
@@ -1511,6 +1596,7 @@ http.server.HTTPServer(("127.0.0.1", port), H).serve_forever()
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     assert_eq!(rec.cases, 3, "{rec:?}");
@@ -1599,6 +1685,7 @@ http.server.HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever(
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     })
     .unwrap();
     assert_eq!(rec1.cases, 1);
@@ -1697,6 +1784,7 @@ http.server.HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever(
         float_files: &[],
         effects: None,
         ready_secs: None,
+        ready_request: None,
     });
     assert!(failed_clear.is_err());
     assert!(app::cases_dir(&repo).join("files/data/msg.txt").is_file());
@@ -1767,173 +1855,5 @@ http.server.HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever(
     let rep5 = replay(&repo, None);
     assert_eq!((rep5.passed, rep5.total), (2, 2), "{:?}", rep5.failures);
 
-    std::fs::remove_dir_all(&repo).unwrap();
-}
-
-#[test]
-fn drift_on_a_server_finds_a_port_regression_and_a_new_curl_example() {
-    if !common::have("node") {
-        return;
-    }
-    let repo = fixture("ts", "drift");
-    record(&repo, "node server.js", false);
-    let text = std::fs::read_to_string(repo.join("server.js")).unwrap();
-    std::fs::write(
-        repo.join("server_bug.js"),
-        text.replace("division by zero", "divide by zero"),
-    )
-    .unwrap();
-    let readme = std::fs::read_to_string(repo.join("README.md")).unwrap();
-    std::fs::write(
-        repo.join("README.md"),
-        readme.replace(
-            "$ curl http://localhost:8080/missing\n",
-            "$ curl http://localhost:8080/missing\n$ curl http://localhost:8080/div/9/3\n",
-        ),
-    )
-    .unwrap();
-    let outcome = drift::drift(&DriftOptions {
-        repo: &repo,
-        build: Some("node server_bug.js"),
-        timeout_secs: None,
-    })
-    .unwrap();
-    std::fs::remove_dir_all(&repo).unwrap();
-    assert!(outcome.drifted);
-    assert!(outcome.changed.is_empty(), "{outcome:?}");
-    assert_eq!(
-        outcome
-            .failing
-            .iter()
-            .map(|f| (f.case.as_str(), f.verdict.as_str()))
-            .collect::<Vec<_>>(),
-        [("example-004-get-div", "port regression")],
-        "{outcome:?}"
-    );
-    assert_eq!(outcome.new, ["GET /div/9/3"]);
-}
-
-/// Sends one raw request to `port`, retrying while the proxy is not accepting yet, and returns
-/// the whole answer.
-fn ask(port: u16, raw: &str) -> String {
-    use std::io::{Read, Write};
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(120);
-    loop {
-        if let Ok(mut stream) = std::net::TcpStream::connect(("127.0.0.1", port)) {
-            stream.write_all(raw.as_bytes()).unwrap();
-            let mut out = String::new();
-            stream.read_to_string(&mut out).unwrap();
-            return out;
-        }
-        assert!(
-            std::time::Instant::now() < deadline,
-            "the proxy never listened"
-        );
-        std::thread::sleep(std::time::Duration::from_millis(50));
-    }
-}
-
-#[test]
-fn shadow_answers_with_the_original_and_logs_the_build_mismatch_as_a_shape() {
-    if !common::have_with("node", &["--version"], "was not found") {
-        return;
-    }
-    let repo = fixture("ts", "shadow");
-    let source = std::fs::read_to_string(repo.join("server.js")).unwrap();
-    std::fs::write(
-        repo.join("server_bug.js"),
-        source.replace("division by zero", "divide by zero"),
-    )
-    .unwrap();
-    record(&repo, "node server.js", false);
-
-    let port = rust_anything::http::free_port().unwrap();
-    let shadow = {
-        let repo = repo.clone();
-        std::thread::spawn(move || {
-            rust_anything::app_shadow::shadow(&rust_anything::app_shadow::ShadowOptions {
-                repo: &repo,
-                build: "node server_bug.js",
-                listen: Some(port),
-                upstream: None,
-                requests: Some(3),
-                timeout_secs: None,
-                keep: true,
-                progress: None,
-            })
-            .unwrap()
-        })
-    };
-    let hello = ask(
-        port,
-        "GET /hello HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
-    );
-    assert!(hello.contains("{\"message\":\"hello\"}"), "{hello}");
-    let upper = ask(
-        port,
-        "POST /upper HTTP/1.1\r\nHost: localhost\r\nContent-Length: 11\r\nConnection: close\r\n\r\nhello world",
-    );
-    assert!(upper.contains("HELLO WORLD"), "{upper}");
-    let div = ask(
-        port,
-        "GET /div/5/0 HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n",
-    );
-    assert!(div.starts_with("HTTP/1.1 400"), "{div}");
-    assert!(div.contains("error: division by zero"), "{div}");
-
-    let outcome = shadow.join().unwrap();
-    assert_eq!((outcome.requests, outcome.matched), (3, 2), "{outcome:?}");
-    assert_eq!(outcome.mismatches.len(), 1, "{outcome:?}");
-    let fields: Vec<&str> = outcome.mismatches[0]
-        .problems
-        .iter()
-        .map(|p| p.field.as_str())
-        .collect();
-    assert_eq!(fields, ["body"]);
-    let at = outcome.mismatches[0].problems[0].at.as_ref().unwrap();
-    assert_eq!((at.channel.as_str(), at.kind.as_str()), ("body", "text"));
-    assert!(at.context.is_none(), "{at:?}");
-    assert_eq!(outcome.groups.len(), 1, "{outcome:?}");
-    let outcome_text = format!("{outcome:?}");
-    assert!(!outcome_text.contains("zero"), "{outcome_text}");
-    assert!(!outcome_text.contains("/div"), "{outcome_text}");
-
-    let log = std::fs::read_to_string(&outcome.log).unwrap();
-    assert_eq!(log.lines().count(), 1, "{log}");
-    assert!(log.contains("\"body\""), "{log}");
-    assert!(log.contains("\"kind\":\"text\""), "{log}");
-    assert!(log.starts_with("{\"case\":\"GET "), "{log}");
-    assert!(!log.contains("zero") && !log.contains("/div"), "{log}");
-
-    let kept = outcome.inputs.clone().unwrap();
-    let inputs = std::fs::read_to_string(&kept).unwrap();
-    assert_eq!(inputs.lines().count(), 1, "{inputs}");
-    assert!(inputs.contains("\"path\":\"/div/5/0\""), "{inputs}");
-    let rerecorded = app::record(&RecordOptions {
-        repo: &repo,
-        run: &[],
-        inputs: Some(&kept),
-        normalize: &[],
-        name: None,
-        traps: false,
-        timeout_secs: None,
-        http: None,
-        server_args: None,
-        fresh: None,
-        pace_ms: None,
-        port: None,
-        float_tolerance: None,
-        float_files: &[],
-        effects: None,
-        ready_secs: None,
-    })
-    .unwrap();
-    assert_eq!(rerecorded.inputs, 1, "{rerecorded:?}");
-    let bug = replay(&repo, Some("node server_bug.js"));
-    assert!(
-        bug.failures.iter().any(|f| f.case.starts_with("input-")),
-        "{:?}",
-        bug.failures
-    );
     std::fs::remove_dir_all(&repo).unwrap();
 }

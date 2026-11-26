@@ -18,9 +18,7 @@ macro_rules! say_raw {
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use rust_anything::{
-    analyze, app, app_shadow, bridge, drift, front_door, gate, harness, lift, mcp, report, shadow,
-};
+use rust_anything::{analyze, app, bridge, front_door, gate, harness, lift, mcp, report, shadow};
 
 #[derive(Parser)]
 #[command(
@@ -216,10 +214,6 @@ enum Cmd {
         /// Floats match within this tolerance for this run (the one saved by `record` otherwise).
         #[arg(long, allow_negative_numbers = true)]
         float_tolerance: Option<f64>,
-        /// Print mismatches as shapes only: where they differ, types, lengths and hashes, never
-        /// values or arguments; safe to paste into an issue or hand to another agent.
-        #[arg(long)]
-        redact: bool,
         /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
@@ -258,7 +252,7 @@ enum Cmd {
         #[arg(long)]
         seed: Option<u64>,
         /// Keep running new rounds until this many seconds have passed (one round otherwise).
-        #[arg(long, value_name = "SECS", allow_negative_numbers = true)]
+        #[arg(long, value_name = "SECS")]
         time: Option<f64>,
         /// Append the mismatching cases (`--keep`) or every fresh case (`--keep=all`) to
         /// `cases.jsonl`, so the next diff and gate check them.
@@ -313,9 +307,9 @@ enum Cmd {
         /// Generated cases per function, on top of the calls the workload makes.
         #[arg(long, default_value_t = 200)]
         count: usize,
-        /// Agent turns: the port, then one more per failing diff or gate (default: 3).
-        #[arg(long)]
-        rounds: Option<usize>,
+        /// Agent turns: the port, then one more per failing diff or gate.
+        #[arg(long, default_value_t = 3)]
+        rounds: usize,
         /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
@@ -447,7 +441,7 @@ enum Cmd {
     /// Record the whole app's behavior and replay any build against it (CLIs and servers).
     App {
         #[command(subcommand)]
-        command: AppCmd,
+        command: Box<AppCmd>,
     },
     /// Serve every step as MCP tools over stdio.
     Mcp,
@@ -498,19 +492,6 @@ enum Cmd {
         #[arg(long)]
         json: bool,
     },
-    /// Show the port rules every agent prompt includes (rust/RULES.md), or add one: behavior the
-    /// port must keep exactly, learned from a correction.
-    Rules {
-        /// Repository root, or a crate folder made by `bridge`.
-        #[arg(default_value = ".")]
-        root: PathBuf,
-        /// Append a rule (repeatable); an exact duplicate is skipped.
-        #[arg(long = "add", value_name = "TEXT")]
-        add: Vec<String>,
-        /// Print the machine-readable report as JSON.
-        #[arg(long)]
-        json: bool,
-    },
 }
 
 #[derive(Subcommand)]
@@ -544,7 +525,14 @@ enum AppCmd {
         #[arg(long, conflicts_with = "no_http")]
         http: bool,
         /// Drop a saved server recording and record as a CLI again.
-        #[arg(long, conflicts_with_all = ["http", "port", "server_args", "pace", "ready_timeout"])]
+        #[arg(long, conflicts_with_all = [
+            "http",
+            "port",
+            "server_args",
+            "pace",
+            "ready_timeout",
+            "ready",
+        ])]
         no_http: bool,
         /// A port the server always listens on (implies --http); 0 removes a saved port.
         #[arg(long)]
@@ -582,6 +570,11 @@ enum AppCmd {
         /// the default.
         #[arg(long, value_name = "SECS")]
         ready_timeout: Option<u64>,
+        /// A request that says the server is ready once it answers, e.g. `GET /health`, for a
+        /// framework that opens its port before its routes work. Implies --http; saved with the
+        /// cases.
+        #[arg(long, value_name = "METHOD PATH")]
+        ready: Option<String>,
         /// Numbers in the output match when they differ by at most this times the larger
         /// magnitude (absolute below 1), e.g. 1e-9 for numeric code. Saved with the cases; 0
         /// removes it.
@@ -651,43 +644,6 @@ enum AppCmd {
         /// The fast, repeatable loop for fixing one mismatch.
         #[arg(long)]
         case: Option<String>,
-        /// Write the report and print mismatches as shapes only (no outputs, arguments or
-        /// request paths).
-        #[arg(long)]
-        redact: bool,
-        /// Print the machine-readable report as JSON.
-        #[arg(long)]
-        json: bool,
-    },
-    /// Servers: put a proxy in front of the original and a build. Each request is answered by
-    /// the original; the build gets the same request and its answer is compared. The build's
-    /// outbound HTTP and mail go to local sinks and its files to a fresh copy, so no side effect
-    /// happens twice. Mismatches are logged to rust/app-cases/shadow/mismatches.jsonl as shapes
-    /// only (no values).
-    Shadow {
-        /// Repository root.
-        #[arg(default_value = ".")]
-        repo: PathBuf,
-        /// Command line of the build to compare (the front door, the final binary).
-        #[arg(long)]
-        build: String,
-        /// Port the proxy listens on (a free one, printed, when omitted).
-        #[arg(long, value_name = "PORT")]
-        listen: Option<u16>,
-        /// An original that is already running; otherwise the saved command starts it.
-        #[arg(long, value_name = "HOST:PORT")]
-        upstream: Option<String>,
-        /// Stop after this many requests (for tests and CI); runs until Ctrl-C otherwise.
-        #[arg(long, value_name = "N")]
-        requests: Option<usize>,
-        /// Seconds to wait for each answer (default: the one saved by `app record`, 30 seconds
-        /// unless it was changed).
-        #[arg(long)]
-        timeout: Option<u64>,
-        /// Append each mismatching request to rust/app-cases/shadow/inputs.jsonl in
-        /// `app record --inputs` format, so `app record --inputs` turns it into a case.
-        #[arg(long)]
-        keep: bool,
         /// Print the machine-readable report as JSON.
         #[arg(long)]
         json: bool,
@@ -747,41 +703,6 @@ enum AppCmd {
         #[arg(long)]
         json: bool,
     },
-    /// Check that the recording still describes the original and the port still matches:
-    /// replays the original against rust/app-cases (cases it no longer matches changed upstream),
-    /// lists examples in its docs that no case records, and replays the build. Writes
-    /// rust/app-cases/drift-report.md; exits 1 on any change. For CI after a lift.
-    Drift {
-        /// Repository root.
-        #[arg(default_value = ".")]
-        repo: PathBuf,
-        /// Build to check; defaults to rust/app, built with cargo, when it exists.
-        #[arg(long)]
-        build: Option<String>,
-        /// Seconds before a run is killed (default: the one saved by `app record`, 30 seconds
-        /// unless it was changed).
-        #[arg(long)]
-        timeout: Option<u64>,
-        /// Print the machine-readable report as JSON.
-        #[arg(long)]
-        json: bool,
-    },
-}
-
-/// `3 distinct differences in 41 cases:` and a line per difference, most cases first.
-fn say_groups(groups: &[rust_anything::mismatch::Group]) {
-    if groups.is_empty() {
-        return;
-    }
-    let cases: usize = groups.iter().map(|g| g.cases).sum();
-    say!(
-        "{} in {}:",
-        counted(groups.len(), "distinct difference"),
-        counted(cases, "case")
-    );
-    for g in groups {
-        say!("  {:>4}  {}  {}", g.cases, g.id, g.label());
-    }
 }
 
 fn say_replay(replay: &app::ReplayOutcome) {
@@ -794,16 +715,8 @@ fn say_replay(replay: &app::ReplayOutcome) {
             f.total
         );
     }
-    say_groups(&replay.groups);
     for f in replay.failures.iter().take(20) {
-        let fields: Vec<String> = f
-            .problems
-            .iter()
-            .map(|p| {
-                p.at.as_ref()
-                    .map_or_else(|| p.field.clone(), |at| at.label())
-            })
-            .collect();
+        let fields: Vec<&str> = f.problems.iter().map(|p| p.field.as_str()).collect();
         say!("- {}: {}", f.case, fields.join(", "));
     }
     if replay.failures.len() > 20 {
@@ -847,7 +760,8 @@ fn run() -> Result<ExitCode> {
             {
                 anyhow::bail!("no folder {}", root.display());
             }
-            let mut report = analyze::analyze_opts(&root, lang)
+            let lang = lang.unwrap_or_else(|| rust_anything::lang::Lang::detect(&root));
+            let mut report = analyze::analyze_lang(&root, lang)
                 .with_context(|| format!("analyzing {}", root.display()))?;
             if whole_app {
                 report.whole_app = Some(rust_anything::whole_app::whole_app(&root, &report));
@@ -897,9 +811,9 @@ fn run() -> Result<ExitCode> {
                 allocator,
             })?;
             say!(
-                "Created {} ({}) for {}",
+                "Created {} ({:?}) for {}",
                 outcome.crate_dir.display(),
-                outcome.kind.label(),
+                outcome.kind,
                 outcome.exports.join(", ")
             );
             for file in &outcome.files {
@@ -927,10 +841,6 @@ fn run() -> Result<ExitCode> {
             no_pin_clock,
         } => {
             anyhow::ensure!(
-                profile != Profile::Host || device.is_none(),
-                "`--device` needs `--profile android`"
-            );
-            anyhow::ensure!(
                 from_tests || test_command.is_empty(),
                 "a command after `--` is the test suite for `--from-tests`; add the flag"
             );
@@ -939,9 +849,6 @@ fn run() -> Result<ExitCode> {
                 "`--count 0` records nothing: pass --count 1 or more, or give cases with --inputs or \
                  --from-tests"
             );
-            let float_tolerance = float_tolerance
-                .map(rust_anything::tolerance::check)
-                .transpose()?;
             let inputs = if from_tests {
                 let c = rust_anything::from_tests::capture(&crate_dir, &test_command)?;
                 say!(
@@ -969,7 +876,7 @@ fn run() -> Result<ExitCode> {
             };
             if let Some(t) = float_tolerance {
                 let mut manifest = bridge::Manifest::load(&crate_dir)?;
-                manifest.float_tolerance = (t > 0.0).then_some(t);
+                manifest.float_tolerance = (rust_anything::tolerance::check(t)? > 0.0).then_some(t);
                 manifest.save(&crate_dir)?;
             }
             if ignore_key_order || no_ignore_key_order {
@@ -995,7 +902,12 @@ fn run() -> Result<ExitCode> {
                 node_args: &node_args,
             };
             let outcome = match profile {
-                Profile::Host => harness::record(&opts)?,
+                Profile::Host => {
+                    if device.is_some() {
+                        anyhow::bail!("`--device` needs `--profile android`");
+                    }
+                    harness::record(&opts)?
+                }
                 Profile::Android => harness::record_android(&opts, device.as_deref())?,
             };
             say!(
@@ -1096,7 +1008,6 @@ fn run() -> Result<ExitCode> {
             module,
             ignore_key_order,
             float_tolerance,
-            redact,
             json,
             node_args,
         } => {
@@ -1122,7 +1033,7 @@ fn run() -> Result<ExitCode> {
                 node_args: &node_args,
                 float_tolerance,
             };
-            let mut d = match profile {
+            let d = match profile {
                 Profile::Host => {
                     if device.is_some() || jni_libs.is_some() {
                         anyhow::bail!("`--device` and `--jni-libs` need `--profile android`");
@@ -1133,9 +1044,6 @@ fn run() -> Result<ExitCode> {
                     harness::diff_android(&opts, device.as_deref(), jni_libs.as_deref())?
                 }
             };
-            if redact {
-                rust_anything::mismatch::redact_diff(&mut d);
-            }
             let stale = rust_anything::bridge::Manifest::load(&crate_dir)
                 .ok()
                 .and_then(|m| rust_anything::recording::stale(&crate_dir, &m));
@@ -1172,41 +1080,27 @@ fn run() -> Result<ExitCode> {
                         "Known diff no longer happens, remove it from {}: {}({})",
                         rust_anything::recording::KNOWN_DIFFS,
                         e["fn"].as_str().unwrap_or_default(),
-                        e.get("args").unwrap_or(&e["case"])
+                        e["args"]
                     );
                 }
                 if !d.missing.is_empty() {
                     say!("Missing exports: {}", d.missing.join(", "));
                 }
-                say_groups(&d.groups);
                 for m in &d.mismatches {
-                    if m.get("case").is_some() {
-                        say!(
-                            "- {} (case {})",
-                            m["fn"].as_str().unwrap_or_default(),
-                            m["case"].as_str().unwrap_or_default()
-                        );
-                    } else {
-                        say!(
-                            "- {}({}): expected {}, got {}",
-                            m["fn"].as_str().unwrap_or_default(),
-                            m["args"]
-                                .as_array()
-                                .map(|a| a
-                                    .iter()
-                                    .map(ToString::to_string)
-                                    .collect::<Vec<_>>()
-                                    .join(", "))
-                                .unwrap_or_default(),
-                            m["expected"],
-                            m["actual"]
-                        );
-                    }
-                    if let Ok(at) =
-                        serde_json::from_value::<rust_anything::mismatch::At>(m["at"].clone())
-                    {
-                        say!("  {}", at.describe());
-                    }
+                    say!(
+                        "- {}({}): expected {}, got {}",
+                        m["fn"].as_str().unwrap_or_default(),
+                        m["args"]
+                            .as_array()
+                            .map(|a| a
+                                .iter()
+                                .map(ToString::to_string)
+                                .collect::<Vec<_>>()
+                                .join(", "))
+                            .unwrap_or_default(),
+                        m["expected"],
+                        m["actual"]
+                    );
                 }
             }
             if d.failed > 0 || stale.is_some() {
@@ -1227,10 +1121,7 @@ fn run() -> Result<ExitCode> {
             // and a value `Duration` cannot hold is an error rather than a panic.
             let time = time
                 .map(|t| {
-                    anyhow::ensure!(
-                        t.is_finite() && t >= 0.0,
-                        "`--time` must be 0 or more seconds (0 runs one round), not {t}"
-                    );
+                    anyhow::ensure!(t.is_finite() && t >= 0.0, "`--time` takes seconds");
                     if t == 0.0 {
                         return Ok(std::time::Duration::ZERO);
                     }
@@ -1305,7 +1196,7 @@ fn run() -> Result<ExitCode> {
                 say!("{}", serde_json::to_string_pretty(&rows)?);
             } else {
                 say!(
-                    "{:<24} {:>6} {:>12} {:>12} {:>12}",
+                    "{:<24} {:>6} {:>12} {:>12} {:>9}",
                     "function",
                     "cases",
                     "orig ns/call",
@@ -1319,12 +1210,12 @@ fn run() -> Result<ExitCode> {
                         ""
                     };
                     say!(
-                        "{:<24} {:>6} {:>12.0} {:>12.0} {:>12}{mark}",
+                        "{:<24} {:>6} {:>12.0} {:>12.0} {:>8.2}x{mark}",
                         r.name,
                         r.cases,
                         r.original_ns,
                         r.rust_ns,
-                        harness::speed_phrase(r.speedup)
+                        r.speedup
                     );
                 }
                 let lang = bridge::Manifest::load(&crate_dir)
@@ -1332,8 +1223,8 @@ fn run() -> Result<ExitCode> {
                     .unwrap_or_default();
                 let v = harness::verdict(&rows, lang);
                 say!(
-                    "\nTimed as callers call it, crossing included. Overall {} (geometric mean); {} of {} functions at least 1.1x faster.",
-                    harness::speed_phrase(v.speedup),
+                    "\nTimed as callers call it, crossing included. Overall {:.2}x (geometric mean); {} of {} functions at least 1.1x faster.",
+                    v.speedup,
                     v.faster.len(),
                     rows.len() - v.left_out.len()
                 );
@@ -1375,7 +1266,7 @@ fn run() -> Result<ExitCode> {
                 root: &root,
                 command: &command,
                 lang,
-                agent: agent.as_deref().filter(|a| !a.trim().is_empty()),
+                agent: agent.as_deref(),
                 function: function.as_deref(),
                 count,
                 rounds,
@@ -1511,23 +1402,15 @@ fn run() -> Result<ExitCode> {
             let c = rust_anything::cache::clean(dry_run, force)?;
             if json {
                 say!("{}", serde_json::to_string_pretty(&c)?);
-            } else if !c.exists {
-                say!("nothing to remove: {} does not exist", c.dir.display());
             } else if c.removed {
                 say!(
                     "Removed {} ({})",
                     c.dir.display(),
                     rust_anything::cache::human(c.bytes)
                 );
-            } else if c.from_env && !force {
+            } else if c.from_env && !dry_run {
                 say!(
                     "{} ({}) is CARGO_TARGET_DIR, which other cargo projects may share; pass --force to remove it",
-                    c.dir.display(),
-                    rust_anything::cache::human(c.bytes)
-                );
-            } else if dry_run {
-                say!(
-                    "would remove {} ({})",
                     c.dir.display(),
                     rust_anything::cache::human(c.bytes)
                 );
@@ -1647,7 +1530,7 @@ fn run() -> Result<ExitCode> {
                 return Ok(ExitCode::FAILURE);
             }
         }
-        Cmd::App { command } => return run_app(command),
+        Cmd::App { command } => return run_app(*command),
         Cmd::Mcp => mcp::serve()?,
         Cmd::Setup {
             agents,
@@ -1709,38 +1592,6 @@ fn run() -> Result<ExitCode> {
                 return Ok(ExitCode::FAILURE);
             }
         }
-        Cmd::Rules { root, add, json } => {
-            let outcome = rust_anything::rules::add(&root, &add)?;
-            if json {
-                say!("{}", serde_json::to_string_pretty(&outcome)?);
-            } else {
-                for rule in &outcome.added {
-                    say!("Added: {rule}");
-                }
-                for rule in &outcome.skipped {
-                    say!("Already a rule: {rule}");
-                }
-                if add.is_empty() {
-                    if outcome.rules.is_empty() {
-                        say!(
-                            "No port rules yet in {}. Add one with `rust-anything rules --add \"...\"`.",
-                            outcome.file.display()
-                        );
-                    } else {
-                        say!("{}:", outcome.file.display());
-                        for rule in &outcome.rules {
-                            say!("- {rule}");
-                        }
-                    }
-                } else {
-                    say!(
-                        "{} has {}.",
-                        outcome.file.display(),
-                        counted(outcome.rules.len(), "rule")
-                    );
-                }
-            }
-        }
     }
     Ok(ExitCode::SUCCESS)
 }
@@ -1763,6 +1614,7 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
             no_fresh,
             pace,
             ready_timeout,
+            ready,
             float_tolerance,
             float_files,
             effects,
@@ -1816,6 +1668,7 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
                 float_files: &float_files,
                 effects,
                 ready_secs: ready_timeout,
+                ready_request: ready.as_deref(),
             })?;
             if json {
                 say!("{}", serde_json::to_string_pretty(&outcome)?);
@@ -1893,90 +1746,21 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
             timeout,
             port,
             case,
-            redact,
             json,
         } => {
-            let opts = app::ReplayOptions {
+            let outcome = app::replay(&app::ReplayOptions {
                 repo: &repo,
                 build: build.as_deref(),
                 timeout_secs: timeout,
                 port,
                 case: case.as_deref(),
-            };
-            let outcome = if redact {
-                app::replay_redacted(&opts)?
-            } else {
-                app::replay(&opts)?
-            };
+            })?;
             if json {
                 say!("{}", serde_json::to_string_pretty(&outcome)?);
             } else {
                 say_replay(&outcome);
             }
             if !outcome.failures.is_empty() {
-                return Ok(ExitCode::FAILURE);
-            }
-        }
-        AppCmd::Shadow {
-            repo,
-            build,
-            listen,
-            upstream,
-            requests,
-            timeout,
-            keep,
-            json,
-        } => {
-            let progress = |event: app_shadow::Event| match event {
-                app_shadow::Event::Listening(addr) if !json => {
-                    say!(
-                        "Shadowing on http://{addr}: answers come from the original, `{build}` is compared"
-                    );
-                }
-                app_shadow::Event::Mismatch(f) if !json => {
-                    let places: Vec<String> = f
-                        .problems
-                        .iter()
-                        .map(|p| {
-                            p.at.as_ref()
-                                .map_or_else(|| p.field.clone(), |at| at.label())
-                        })
-                        .collect();
-                    say!("- {}: {}", f.case, places.join(", "));
-                }
-                _ => {}
-            };
-            let outcome = app_shadow::shadow(&app_shadow::ShadowOptions {
-                repo: &repo,
-                build: &build,
-                listen,
-                upstream: upstream.as_deref(),
-                requests,
-                timeout_secs: timeout,
-                keep,
-                progress: Some(&progress),
-            })?;
-            if json {
-                say!("{}", serde_json::to_string_pretty(&outcome)?);
-            } else {
-                say!("{}/{} requests matched", outcome.matched, outcome.requests);
-                say_groups(&outcome.groups);
-                if !outcome.mismatches.is_empty() {
-                    say!("Log: {}", outcome.log.display());
-                }
-                if let Some(inputs) = outcome
-                    .inputs
-                    .as_ref()
-                    .filter(|_| !outcome.mismatches.is_empty())
-                {
-                    say!(
-                        "Kept: {} (`rust-anything app record --inputs {}` makes them cases)",
-                        inputs.display(),
-                        inputs.display()
-                    );
-                }
-            }
-            if !outcome.mismatches.is_empty() {
                 return Ok(ExitCode::FAILURE);
             }
         }
@@ -2164,55 +1948,6 @@ fn run_app(command: AppCmd) -> Result<ExitCode> {
                 }
             }
             if !outcome.lifted {
-                return Ok(ExitCode::FAILURE);
-            }
-        }
-        AppCmd::Drift {
-            repo,
-            build,
-            timeout,
-            json,
-        } => {
-            let outcome = drift::drift(&drift::DriftOptions {
-                repo: &repo,
-                build: build.as_deref(),
-                timeout_secs: timeout,
-            })?;
-            if json {
-                say!("{}", serde_json::to_string_pretty(&outcome)?);
-            } else {
-                say!(
-                    "{} cases; build: {}",
-                    outcome.cases,
-                    outcome
-                        .build
-                        .as_ref()
-                        .map(|b| b.join(" "))
-                        .unwrap_or_else(|| "none".to_string())
-                );
-                for (title, list) in [
-                    ("Changed upstream", &outcome.changed),
-                    ("Port failures", &outcome.failing),
-                ] {
-                    if !list.is_empty() {
-                        say!("{title}:");
-                        for d in list {
-                            say!("- {}: {} ({})", d.case, d.fields.join(", "), d.verdict);
-                        }
-                    }
-                }
-                if !outcome.new.is_empty() {
-                    say!("New examples, not recorded:");
-                    for n in &outcome.new {
-                        say!("- {n}");
-                    }
-                }
-                if !outcome.drifted {
-                    say!("No drift.");
-                }
-                say!("Report: {}", outcome.report.display());
-            }
-            if outcome.drifted {
                 return Ok(ExitCode::FAILURE);
             }
         }

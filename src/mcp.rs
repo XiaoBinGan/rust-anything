@@ -168,8 +168,7 @@ pub fn handle(request: &Value) -> Option<Value> {
             "serverInfo": { "name": "rust-anything", "version": env!("CARGO_PKG_VERSION") },
             "instructions": "Incremental TS/JS to Rust migration. Loop per unit: analyze -> bridge -> \
                 record -> (port src/port.rs) -> build -> diff -> shadow -> gate. Never mark a port done \
-                before gate passes. Read rust/RULES.md (`rules`) before porting; when the user corrects \
-                behavior, add it with `rules`.",
+                before gate passes.",
         }),
         "ping" => json!({}),
         "tools/list" => json!({ "tools": tools() }),
@@ -375,7 +374,6 @@ const TOOL_META: &[ToolMeta] = &[
         [false, false, true, true],
     ),
     meta("map", "Map the port", [true, false, true, false]),
-    meta("rules", "Port rules", [false, false, true, false]),
     meta("package", "Lay out packages", [false, false, true, false]),
     meta(
         "app_record",
@@ -394,7 +392,6 @@ const TOOL_META: &[ToolMeta] = &[
         "Lift to pure Rust app",
         [false, true, false, true],
     ),
-    meta("app_drift", "Check app drift", [false, false, true, true]),
 ];
 
 fn tools() -> Value {
@@ -429,7 +426,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "bridge",
-            "description": "Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.rs, stubs to port in src/port.rs, UTF-16 helpers when the unit uses string offsets. Never overwrites an existing folder. Read the repository's port rules (`rules`) before writing the port.",
+            "description": "Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.rs, stubs to port in src/port.rs, UTF-16 helpers when the unit uses string offsets. Never overwrites an existing folder.",
             "inputSchema": { "type": "object", "properties": {
                 "root": { "type": "string", "description": "Repository root." },
                 "unit": { "type": "string", "description": "Unit id from analyze." },
@@ -493,7 +490,6 @@ fn tool_schemas() -> Value {
                 "module": { "type": "string", "description": "Test this JS module instead of the crate's `index.cjs`." },
                 "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." },
                 "float_tolerance": { "type": "number", "description": "Floats match within this tolerance for this run (the one saved by record otherwise)." },
-                "redact": { "type": "boolean", "description": "Mismatches as shapes only: where they differ, types, lengths and hashes, never values or arguments; safe to paste into an issue or hand to another agent." },
             }, "required": ["crate"] },
         },
         {
@@ -507,7 +503,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "go",
-            "description": "The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next. TASK.md includes the repository's port rules (`rules`).",
+            "description": "The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.",
             "inputSchema": { "type": "object", "properties": {
                 "root": { "type": "string", "description": "Repository root." },
                 "command": { "type": "array", "items": { "type": "string" }, "description": "The workload, run in root: [\"python3\", \"app.py\"]." },
@@ -581,14 +577,6 @@ fn tool_schemas() -> Value {
             }, "required": ["repo"] },
         },
         {
-            "name": "rules",
-            "description": "Show the port rules every agent prompt includes (rust/RULES.md, committed with the port), or add one: behavior the port must keep exactly, learned from a correction. Read them before porting; when the user corrects how the port behaves, add the correction as a rule so every later unit and agent keeps it. An exact duplicate is skipped.",
-            "inputSchema": { "type": "object", "properties": {
-                "root": { "type": "string", "description": "Repository root, or a crate folder made by `bridge`." },
-                "add": { "type": "array", "items": { "type": "string" }, "description": "Rules to append." }
-            }, "required": ["root"] },
-        },
-        {
             "name": "package",
             "description": "Lay out installable packages for a gated port; writes files only, never builds other platforms or publishes. PyO3: a maturin project (abi3 wheel importable under the original module's name). CLI front door (`rust/app` of a Node CLI): a main npm package whose command runs `<name>-<platform>`'s front door binary, with the original pinned to its exact version as a dependency for every case the port hands back. napi: a main npm package whose loader picks `<name>-<platform>` from optionalDependencies and falls back to the original JS, one package per platform (this machine's binary copied in when built). wasm: one npm package with the built pkg/. PyO3 and napi also get a GitHub Actions workflow building macOS (arm64, x86_64), Linux (x86_64, aarch64) and Windows.",
             "inputSchema": { "type": "object", "properties": {
@@ -604,7 +592,7 @@ fn tool_schemas() -> Value {
         },
         {
             "name": "gate",
-            "description": "Definition of done: fmt, clippy -D warnings, cargo test, unsafe with SAFETY comments only, no unimplemented functions, build, API present, recorded behavior matches, no recorded values hard-coded in the port, no tests or assertions removed since the last passing gate, and the recorded cases not edited.",
+            "description": "Definition of done: fmt, clippy -D warnings, cargo test, unsafe with SAFETY comments only, no unimplemented functions, build, API present, recorded behavior matches.",
             "inputSchema": { "type": "object", "properties": { "crate": crate_dir, "node_args": { "type": "array", "items": { "type": "string" }, "description": "Extra arguments for node, e.g. [\"--import=tsx\"]." } }, "required": ["crate"] },
         },
         {
@@ -629,6 +617,7 @@ fn tool_schemas() -> Value {
                 "fresh": { "type": "array", "items": { "type": "string" }, "description": "Repository files or folders the app reads or writes (a project tree, a database file), snapshotted and copied into a fresh working directory before every case (CLIs) or start (servers); a CLI's removed files are compared too. Saved. Pass `[]` to clear saved paths." },
                 "pace": { "type": "integer", "description": "Servers: milliseconds to wait after each response, for work the server does after answering (a file watcher). Implies http; saved and used by replay; 0 removes it." },
                 "ready_timeout": { "type": "integer", "description": "Servers: seconds to wait for the port before giving up (default 60). Implies http; saved with the cases and used by replay and the front door; 0 restores the default." },
+                "ready": { "type": "string", "description": "Servers: a request that says the app is ready once it answers, e.g. \"GET /health\", for a framework that opens its port before its routes work. Implies http; saved with the cases." },
                 "float_tolerance": { "type": "number", "description": "Numeric output: numbers match when they differ by at most this times the larger magnitude (absolute below 1), e.g. 1e-9. Saved with the cases; 0 removes it." },
                 "float_file": { "type": "array", "items": { "type": "string" }, "description": "Written files of raw floats, compared value by value within float_tolerance: `PATH=f32le` or `PATH=f64le`. Saved with the cases." },
             }, "required": ["repo"] },
@@ -642,7 +631,6 @@ fn tool_schemas() -> Value {
                 "port": { "type": "integer", "description": "Servers: the port the build always listens on; otherwise it gets a free one through PORT and {port}." },
                 "timeout": { "type": "integer", "description": "Seconds before a run is killed (default: the one saved by `app record`, 30 seconds unless it was changed)." },
                 "case": { "type": "string", "description": "Replay only this case, by the name the report gives it (a library: only this unit): the fast loop for fixing one mismatch." },
-                "redact": { "type": "boolean", "description": "Write the report and return mismatches as shapes only (no outputs, arguments or request paths)." },
             }, "required": ["repo"] },
         },
         {
@@ -671,15 +659,6 @@ fn tool_schemas() -> Value {
             "description": "Make rust/app a pure Rust app. Refuses (and lists every blocker) unless replay passes with fallback rate 0 and every unit passes gate. Then, on a copy first: removes the fallback and kill switches, turns each unit into a plain library (no cdylib, bindings or generated wrappers), adds a trycmd test running rust/app-cases on cargo test, checks fmt/clippy/tests, DECISIONS.md targets and assets, and replays the pure binary. Never touches the original.",
             "inputSchema": { "type": "object", "properties": {
                 "repo": { "type": "string", "description": "Repository root." },
-            }, "required": ["repo"] },
-        },
-        {
-            "name": "app_drift",
-            "description": "Check that the recording still describes the original and the port still matches: replays the original against rust/app-cases (cases it no longer matches changed upstream, listed in `changed`), lists examples in its docs that no case records (`new`), and replays the build (`failing`, each with a verdict: \"original changed, port still old\" or \"port regression\"). Writes rust/app-cases/drift-report.md and leaves replay-report.md as it was. For CLIs and servers; for units, `map` lists every port whose original changed (`changed_upstream`).",
-            "inputSchema": { "type": "object", "properties": {
-                "repo": { "type": "string", "description": "Repository root." },
-                "build": { "type": "string", "description": "Build to check; defaults to rust/app, built with cargo, when it exists." },
-                "timeout": { "type": "integer", "description": "Seconds before a run is killed (default: the one saved by `app record`, 30 seconds unless it was changed)." },
             }, "required": ["repo"] },
         },
     ])
@@ -835,13 +814,11 @@ fn call(name: &str, args: &Value) -> Result<Value> {
         "analyze" => {
             let root = path("root")?;
             let lang = match args.get("lang") {
-                Some(v) if !v.is_null() => {
-                    Some(serde_json::from_value(v.clone()).context("`lang`")?)
-                }
-                _ => None,
+                Some(v) if !v.is_null() => serde_json::from_value(v.clone()).context("`lang`")?,
+                _ => crate::lang::Lang::detect(&root),
             };
             let whole_app = opt_bool(args, "whole_app")?.unwrap_or(false);
-            let mut report = analyze::analyze_opts(&root, lang)?;
+            let mut report = analyze::analyze_lang(&root, lang)?;
             if whole_app {
                 report.whole_app = Some(crate::whole_app::whole_app(&root, &report));
             }
@@ -999,8 +976,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 node_args: &strings("node_args"),
                 float_tolerance: opt_f64(args, "float_tolerance")?,
             };
-            let redact = opt_bool(args, "redact")?.unwrap_or(false);
-            let mut d = match profile_arg(args)? {
+            serde_json::to_value(match profile_arg(args)? {
                 Profile::Host => {
                     if !args["device"].is_null() || !args["jni_libs"].is_null() {
                         anyhow::bail!("`device` and `jni_libs` need profile `android`");
@@ -1012,11 +988,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                     args["device"].as_str(),
                     args["jni_libs"].as_str().map(Path::new),
                 )?,
-            };
-            if redact {
-                crate::mismatch::redact_diff(&mut d);
-            }
-            serde_json::to_value(d)?
+            })?
         }
         "bench" => {
             let crate_dir = path("crate")?;
@@ -1042,9 +1014,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 Some(t) if t.is_finite() && t > 0.0 => {
                     Some(crate::process::seconds(t).context("`time` is too large")?)
                 }
-                Some(t) => {
-                    anyhow::bail!("`time` must be 0 or more seconds (0 runs one round), not {t}")
-                }
+                Some(_) => anyhow::bail!("`time` takes seconds"),
                 None => None,
             };
             serde_json::to_value(crate::fuzz::fuzz(&crate::fuzz::FuzzOptions {
@@ -1066,7 +1036,6 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 strings("crates").into_iter().map(Into::into).collect();
             serde_json::to_value(crate::port_map::map(&path("repo")?, &crates)?)?
         }
-        "rules" => serde_json::to_value(crate::rules::add(&path("root")?, &strings("add"))?)?,
         "package" => {
             let crate_dir = path("crate")?;
             serde_json::to_value(crate::package::package(&crate::package::Options {
@@ -1091,12 +1060,12 @@ fn call(name: &str, args: &Value) -> Result<Value> {
             };
             let root = path("root")?;
             let count = opt_usize(args, "count")?.unwrap_or(200);
-            let rounds = opt_usize(args, "rounds")?;
+            let rounds = opt_usize(args, "rounds")?.unwrap_or(3);
             serde_json::to_value(crate::go::go(&crate::go::Options {
                 root: &root,
                 command: &command,
                 lang,
-                agent: args["agent"].as_str().filter(|a| !a.trim().is_empty()),
+                agent: args["agent"].as_str(),
                 function: args["function"].as_str(),
                 count,
                 rounds,
@@ -1202,25 +1171,20 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 float_tolerance: opt_f64(args, "float_tolerance")?,
                 float_files: &strings("float_file"),
                 ready_secs: opt_u64(args, "ready_timeout")?,
+                ready_request: args["ready"].as_str(),
                 effects,
             })?)?
         }
         "app_replay" => {
             let repo = path("repo")?;
             let timeout_secs = opt_timeout()?;
-            let redact = opt_bool(args, "redact")?.unwrap_or(false);
-            let opts = app::ReplayOptions {
+            serde_json::to_value(app::replay(&app::ReplayOptions {
                 repo: &repo,
                 build: args["build"].as_str(),
                 timeout_secs,
                 port: opt_u16(args, "port")?,
                 case: args["case"].as_str(),
-            };
-            serde_json::to_value(if redact {
-                app::replay_redacted(&opts)?
-            } else {
-                app::replay(&opts)?
-            })?
+            })?)?
         }
         "app_front_door" => {
             let repo = path("repo")?;
@@ -1244,15 +1208,6 @@ fn call(name: &str, args: &Value) -> Result<Value> {
         "app_lift" => serde_json::to_value(lift::lift(&lift::LiftOptions {
             repo: &path("repo")?,
         })?)?,
-        "app_drift" => {
-            let repo = path("repo")?;
-            let timeout_secs = opt_timeout()?;
-            serde_json::to_value(crate::drift::drift(&crate::drift::DriftOptions {
-                repo: &repo,
-                build: args["build"].as_str(),
-                timeout_secs,
-            })?)?
-        }
         #[cfg(test)]
         "test_sleep" => {
             std::thread::sleep(std::time::Duration::from_millis(
@@ -1275,39 +1230,6 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("too large"), "{err}");
-    }
-
-    #[test]
-    fn go_refuses_zero_rounds_and_rounds_without_agent() {
-        let err0 = call(
-            "go",
-            &json!({ "root": ".", "command": ["python3", "app.py"], "rounds": 0 }),
-        )
-        .unwrap_err()
-        .to_string();
-        assert!(err0.contains("`--rounds` must be at least 1"), "{err0}");
-
-        let err_no_agent = call(
-            "go",
-            &json!({ "root": ".", "command": ["python3", "app.py"], "rounds": 2 }),
-        )
-        .unwrap_err()
-        .to_string();
-        assert!(
-            err_no_agent.contains("rounds are agent turns"),
-            "{err_no_agent}"
-        );
-    }
-
-    #[test]
-    fn a_negative_fuzz_time_names_the_range_and_the_value() {
-        let err = call("fuzz", &json!({ "crate": ".", "time": -1 }))
-            .unwrap_err()
-            .to_string();
-        assert_eq!(
-            err,
-            "`time` must be 0 or more seconds (0 runs one round), not -1"
-        );
     }
 
     #[test]
@@ -1464,15 +1386,13 @@ mod tests {
                 "fuzz",
                 "shadow",
                 "map",
-                "rules",
                 "package",
                 "gate",
                 "app_record",
                 "app_replay",
                 "app_front_door",
                 "app_wire",
-                "app_lift",
-                "app_drift"
+                "app_lift"
             ]
         );
         let bad = handle(&json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": { "name": "gate", "arguments": {} } })).unwrap();
