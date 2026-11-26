@@ -433,15 +433,22 @@ fn wait_ready(addr: SocketAddr, request: &str, deadline: Option<Instant>) -> Res
         body_base64: None,
         body_file: None,
     };
-    let mut last;
+    let mut last = String::from("no answer");
     loop {
-        match send(addr, &probe, Duration::from_secs(5)) {
-            Ok(resp) if resp.status < 500 => return Ok(()),
+        // The probe's own timeout comes out of the same budget, so an endless chunked response
+        // cannot outlive `--ready-timeout`: `send` sets that timeout on the socket as well.
+        let budget = deadline.map(|d| d.saturating_duration_since(Instant::now()));
+        let timeout = budget.map_or(Duration::from_secs(5), |b| b.min(Duration::from_secs(5)));
+        if timeout.is_zero() {
+            bail!("`{request}` did not answer 2xx within the wait ({last})");
+        }
+        match send(addr, &probe, timeout) {
+            Ok(resp) if resp.status < 300 => return Ok(()),
             Ok(resp) => last = format!("status {}", resp.status),
             Err(e) => last = format!("{e:#}"),
         }
         if deadline.is_some_and(|d| Instant::now() > d) {
-            bail!("`{request}` did not answer below 500 within the wait ({last})");
+            bail!("`{request}` did not answer 2xx within the wait ({last})");
         }
         std::thread::sleep(Duration::from_millis(50));
     }
