@@ -419,7 +419,7 @@ fn connect(addr: SocketAddr, req: &Req, host: &str, timeout: Duration) -> Result
     Ok(stream)
 }
 
-/// Polls `request` (`"GET /health"`) until it answers below 500, so a server that opens its port
+/// Polls `request` (`"GET /health"`) until it answers 2xx, so a server that opens its port
 /// before its routes work is not recorded against half-initialised responses.
 fn wait_ready(addr: SocketAddr, request: &str, deadline: Option<Instant>) -> Result<()> {
     let (method, path) = request

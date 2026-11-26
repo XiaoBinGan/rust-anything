@@ -305,7 +305,7 @@ Runs the original's code or commands.
 | `fresh` | string[] |  | Repository files or folders the app reads or writes (a project tree, a database file), snapshotted and copied into a fresh working directory before every case (CLIs) or start (servers); a CLI's removed files are compared too. Saved. Pass `[]` to clear saved paths. |
 | `pace` | integer |  | Servers: milliseconds to wait after each response, for work the server does after answering (a file watcher). Implies http; saved and used by replay; 0 removes it. |
 | `ready_timeout` | integer |  | Servers: seconds to wait for the port before giving up (default 60). Implies http; saved with the cases and used by replay and the front door; 0 restores the default. |
-| `ready` | string |  | Servers: a request that says the app is ready once it answers, e.g. "GET /health", for a framework that opens its port before its routes work. Implies http; saved with the cases. |
+| `ready` | string |  | Servers: a request that says the app is ready once it answers 2xx, e.g. "GET /health", for a framework that opens its port before its routes work. Implies http; saved with the cases and used by replay and the front door. |
 | `float_tolerance` | number |  | Numeric output: numbers match when they differ by at most this times the larger magnitude (absolute below 1), e.g. 1e-9. Saved with the cases; 0 removes it. |
 | `float_file` | string[] |  | Written files of raw floats, compared value by value within float_tolerance: `PATH=f32le` or `PATH=f64le`. Saved with the cases. |
 

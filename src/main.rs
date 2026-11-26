@@ -589,9 +589,9 @@ enum AppCmd {
         /// the default.
         #[arg(long, value_name = "SECS")]
         ready_timeout: Option<u64>,
-        /// A request that says the server is ready once it answers, e.g. `GET /health`, for a
+        /// A request that says the server is ready once it answers 2xx, e.g. `GET /health`, for a
         /// framework that opens its port before its routes work. Implies --http; saved with the
-        /// cases.
+        /// cases and used by replay and the front door.
         #[arg(long, value_name = "METHOD PATH")]
         ready: Option<String>,
         /// Numbers in the output match when they differ by at most this times the larger

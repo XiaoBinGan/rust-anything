@@ -190,7 +190,9 @@ rust-anything app lift .
   `--pace 50` waits 50 ms after each response, for work a server does after answering (a file
   watcher reloading what it just wrote). A server gets 60 seconds to accept connections;
   `--ready-timeout 180` gives a slow start (a JVM, .NET) longer, and `--ready-timeout 5` makes a
-  build that never listens fail fast.
+  build that never listens fail fast. A framework that opens its port before its routes work
+  gets `--ready "GET /health"`: after the port opens, that request is sent until it answers 2xx,
+  within the same wait, by record, replay and the front door.
 - Cases are `rust/app-cases/http/<case>.toml` (the request, the status and the headers that matter)
   and `<case>.body` (the response body, with `[..]` where two runs differed). Date, server and
   other per-response headers are left out; delete any header line you do not care about.
@@ -276,11 +278,12 @@ rebuild, since `app front-door` never overwrites an existing `rust/app`.
 | `timeout_secs` | `--timeout` | Replaces if passed; keeps saved (default `30`) otherwise |
 | `normalize` | `--normalize NAME` | Merges (appends new built-in normalizer names) |
 | `normalizers` | `--normalize NAME=REGEX` | Merges (inserts or updates by `NAME`) |
-| `http` | `--http`, `--port`, `--arg`, `--pace`, `--ready-timeout` | Sticky once set; cannot be cleared via CLI flags |
+| `http` | `--http`, `--port`, `--arg`, `--pace`, `--ready-timeout`, `--ready` | Sticky once set; cannot be cleared via CLI flags |
 | `http.port` | `--port` | Replaces if passed; keeps saved otherwise |
 | `http.args` | `--arg` | Replaces if passed; keeps saved (cannot be cleared via CLI) |
 | `http.pace_ms` | `--pace` | Replaces if passed; `--pace 0` clears it |
 | `http.ready_secs` | `--ready-timeout` | Replaces if passed; `--ready-timeout 0` restores the default `60` |
+| `http.ready_request` | `--ready` | Replaces if passed; keeps saved (cannot be cleared via CLI) |
 | `http.fresh` / `fresh` | `--fresh` | Replaces if passed; keeps saved (cannot be cleared via CLI) |
 | `effects` | `--effects`, `--effect-env`, `--effect-response`, `--db-reset`, `--db-dump` | Merges with saved sink and database settings; `--effect-response` replaces the saved rules |
 | `float_tolerance` | `--float-tolerance` | Replaces if passed; `--float-tolerance 0` clears it |
