@@ -198,6 +198,7 @@ pub fn shadow(opts: &ShadowOptions) -> Result<ShadowOutcome> {
                 pace: None,
                 effects: None,
                 ready,
+                ready_request: http_config.ready_request.as_deref(),
             };
             let server = match http_config.port {
                 Some(port) => Server::start(&config.run, &launch, &repo, port),
@@ -218,6 +219,7 @@ pub fn shadow(opts: &ShadowOptions) -> Result<ShadowOutcome> {
         pace: None,
         effects: Some(&sinks),
         ready,
+        ready_request: http_config.ready_request.as_deref(),
     };
     let build = http::start_ephemeral(&command, &launch, &repo, http::free_port)
         .context("starting the build")?;
