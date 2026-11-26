@@ -20,7 +20,7 @@ Read-only.
 
 Tool `bridge` · CLI `rust-anything bridge`
 
-Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.rs, stubs to port in src/port.rs, UTF-16 helpers when the unit uses string offsets. Never overwrites an existing folder.
+Scaffold a Rust crate for one unit: napi-rs or wasm-bindgen bindings in src/lib.rs, stubs to port in src/port.rs, UTF-16 helpers when the unit uses string offsets. Never overwrites an existing folder. Read the repository's port rules (`rules`) before writing the port.
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -104,6 +104,7 @@ Runs the original's code or commands.
 | `module` | string |  | Test this JS module instead of the crate's `index.cjs`. |
 | `node_args` | string[] |  | Extra arguments for node, e.g. ["--import=tsx"]. |
 | `float_tolerance` | number |  | Floats match within this tolerance for this run (the one saved by record otherwise). |
+| `redact` | boolean |  | Mismatches as shapes only: where they differ, types, lengths and hashes, never values or arguments; safe to paste into an issue or hand to another agent. |
 
 ## Profile workload
 
@@ -123,7 +124,7 @@ Runs the original's code or commands.
 
 Tool `go` · CLI `rust-anything go`
 
-The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next.
+The hot-path loop in one call: profile the workload, pick the top portable function (the outermost loop; batched where profile says so), bridge it into rust/<function>-rs, record generated cases plus the calls the workload makes, write TASK.md, hand the port to `agent` (claude, codex, or a command reading the prompt on stdin), then build, diff and gate, and switch the unit on with `enable` only when every case matches, gate passes and `bench` shows it is not slower as its callers call it. Without `agent` it stops at `waiting_for_port`: port src/port.rs as TASK.md says and call go again; finished steps are kept. Returns the stage (waiting_for_port, mismatch, gate_failed, slower, on, passed), the speedup, the pick, the steps and what to do next. TASK.md includes the repository's port rules (`rules`).
 
 Runs the original's code or commands.
 
@@ -235,6 +236,17 @@ Read-only.
 | `repo` | string | yes | Repository root. |
 | `crates` | string[] |  | Folders with crates kept outside the repository. |
 
+## Port rules
+
+Tool `rules` · CLI `rust-anything rules`
+
+Show the port rules every agent prompt includes (rust/RULES.md, committed with the port), or add one: behavior the port must keep exactly, learned from a correction. Read them before porting; when the user corrects how the port behaves, add the correction as a rule so every later unit and agent keeps it. An exact duplicate is skipped.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `root` | string | yes | Repository root, or a crate folder made by `bridge`. |
+| `add` | string[] |  | Rules to append. |
+
 ## Lay out packages
 
 Tool `package` · CLI `rust-anything package`
@@ -256,7 +268,7 @@ Lay out installable packages for a gated port; writes files only, never builds o
 
 Tool `gate` · CLI `rust-anything gate`
 
-Definition of done: fmt, clippy -D warnings, cargo test, unsafe with SAFETY comments only, no unimplemented functions, build, API present, recorded behavior matches.
+Definition of done: fmt, clippy -D warnings, cargo test, unsafe with SAFETY comments only, no unimplemented functions, build, API present, recorded behavior matches, no recorded values hard-coded in the port, no tests or assertions removed since the last passing gate, and the recorded cases not edited.
 
 Runs the original's code or commands.
 
@@ -312,6 +324,7 @@ Runs the original's code or commands.
 | `port` | integer |  | Servers: the port the build always listens on; otherwise it gets a free one through PORT and {port}. |
 | `timeout` | integer |  | Seconds before a run is killed (default: the one saved by `app record`, 30 seconds unless it was changed). |
 | `case` | string |  | Replay only this case, by the name the report gives it (a library: only this unit): the fast loop for fixing one mismatch. |
+| `redact` | boolean |  | Write the report and return mismatches as shapes only (no outputs, arguments or request paths). |
 
 ## Scaffold Rust front door
 
@@ -355,3 +368,17 @@ May overwrite files, runs the original's code or commands.
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `repo` | string | yes | Repository root. |
+
+## Check app drift
+
+Tool `app_drift` · CLI `rust-anything app drift`
+
+Check that the recording still describes the original and the port still matches: replays the original against rust/app-cases (cases it no longer matches changed upstream, listed in `changed`), lists examples in its docs that no case records (`new`), and replays the build (`failing`, each with a verdict: "original changed, port still old" or "port regression"). Writes rust/app-cases/drift-report.md and leaves replay-report.md as it was. For CLIs and servers; for units, `map` lists every port whose original changed (`changed_upstream`).
+
+Runs the original's code or commands.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `repo` | string | yes | Repository root. |
+| `build` | string |  | Build to check; defaults to rust/app, built with cargo, when it exists. |
+| `timeout` | integer |  | Seconds before a run is killed (default: the one saved by `app record`, 30 seconds unless it was changed). |
