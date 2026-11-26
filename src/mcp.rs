@@ -752,6 +752,16 @@ fn opt_string_list(args: &Value, key: &str) -> Result<Option<Vec<String>>> {
     }
 }
 
+/// A string argument, refused when it is there and not a string: `as_str()` alone drops a number or
+/// an object without a word, so the tool runs with the argument silently missing.
+fn opt_string(args: &Value, key: &str) -> Result<Option<String>> {
+    match args.get(key) {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::String(text)) => Ok(Some(text.clone())),
+        Some(v) => anyhow::bail!("`{key}` must be a string, not {v}"),
+    }
+}
+
 fn opt_u64(args: &Value, key: &str) -> Result<Option<u64>> {
     match args.get(key) {
         None | Some(Value::Null) => Ok(None),
@@ -1177,13 +1187,17 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                     .collect::<Result<Vec<_>>>()?,
                 Some(_) => anyhow::bail!("effect_response must be an array of strings"),
             };
+            let db_reset = opt_string(args, "db_reset")?;
+            let db_dump = opt_string(args, "db_dump")?;
+            let name = opt_string(args, "name")?;
+            let ready = opt_string(args, "ready")?;
             let effects = crate::effects::EffectsConfig::from_args_with_responses(
                 &strings("effects"),
                 &strings("effect_env"),
                 &effect_response,
                 &repo,
-                args["db_reset"].as_str(),
-                args["db_dump"].as_str(),
+                db_reset.as_deref(),
+                db_dump.as_deref(),
             )?;
             let server_args = opt_string_list(args, "args")?;
             let fresh = opt_string_list(args, "fresh")?;
@@ -1192,7 +1206,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 run: &strings("run"),
                 inputs: inputs.as_deref(),
                 normalize: &strings("normalize"),
-                name: args["name"].as_str(),
+                name: name.as_deref(),
                 traps: opt_bool(args, "traps")?.unwrap_or(true),
                 timeout_secs,
                 http: opt_bool(args, "http")?,
@@ -1203,7 +1217,7 @@ fn call(name: &str, args: &Value) -> Result<Value> {
                 float_tolerance: opt_f64(args, "float_tolerance")?,
                 float_files: &strings("float_file"),
                 ready_secs: opt_u64(args, "ready_timeout")?,
-                ready_request: args["ready"].as_str(),
+                ready_request: ready.as_deref(),
                 effects,
             })?)?
         }
@@ -1269,6 +1283,25 @@ fn call(name: &str, args: &Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_string_argument_is_none_when_it_is_absent_or_null() {
+        // Issue #671: an absent or `null` argument means "not given", so the tool keeps the saved value
+        // instead of failing; only a value of another type is refused.
+        assert_eq!(opt_string(&json!({}), "ready").unwrap(), None);
+        assert_eq!(
+            opt_string(&json!({ "ready": null }), "ready").unwrap(),
+            None
+        );
+        assert_eq!(
+            opt_string(&json!({ "ready": "GET /health" }), "ready").unwrap(),
+            Some("GET /health".to_string())
+        );
+        let err = opt_string(&json!({ "ready": 42 }), "ready")
+            .unwrap_err()
+            .to_string();
+        assert_eq!(err, "`ready` must be a string, not 42");
+    }
 
     #[test]
     fn a_fuzz_time_too_large_for_a_duration_is_an_error_not_a_panic() {

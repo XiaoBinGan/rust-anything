@@ -401,6 +401,69 @@ fn shadow_returns_the_original_and_reports_mismatches() {
 }
 
 #[test]
+fn mcp_app_record_refuses_a_string_argument_that_is_not_a_string() {
+    // Issue #671: `as_str()` dropped a wrong-typed `ready`, `name`, `db_reset` or `db_dump` without a
+    // word, so the recording went ahead with the setting silently missing.
+    for (key, value) in [
+        ("ready", serde_json::json!(42)),
+        ("name", serde_json::json!(7)),
+        ("db_reset", serde_json::json!(["sqlite3", "app.db"])),
+        ("db_dump", serde_json::json!(true)),
+    ] {
+        let response = rust_anything::mcp::handle(&serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {
+                "name": "app_record",
+                "arguments": { "repo": fixture(), "run": ["python3", "server.py"], key: value },
+            },
+        }))
+        .unwrap();
+        assert_eq!(response["result"]["isError"], true, "{key}: {response}");
+        let text = response["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap_or_default();
+        assert!(
+            text.contains(&format!("`{key}` must be a string")),
+            "{key} is named: {text}"
+        );
+    }
+}
+
+#[test]
+fn mcp_app_record_with_no_http_names_ready_in_its_refusal() {
+    // Issue #666: the check covers `--ready`, but the message left it out, and the CLI never shows
+    // this one (clap refuses the pair first), so the MCP tool is where a caller sees it.
+    let response = rust_anything::mcp::handle(&serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "tools/call",
+        "params": {
+            "name": "app_record",
+            "arguments": {
+                "repo": fixture(),
+                "run": ["python3", "server.py"],
+                "http": false,
+                "ready": "GET /health",
+            },
+        },
+    }))
+    .unwrap();
+    assert_eq!(response["result"]["isError"], true, "{response}");
+    let text = response["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    // `--ready` is a prefix of `--ready-timeout`, so `contains` passes on the old message either
+    // way: the list has to end with the flag.
+    assert!(
+        text.trim_end().ends_with("--ready"),
+        "the refusal names every setting it checks: {text}"
+    );
+}
+
+#[test]
 fn mcp_runs_analyze() {
     let response = rust_anything::mcp::handle(&serde_json::json!({
         "jsonrpc": "2.0",
