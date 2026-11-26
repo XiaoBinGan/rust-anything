@@ -371,6 +371,92 @@ class H(BaseHTTPRequestHandler):
 HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 "#;
 
+/// A server that opens its port and never answers 2xx, writing its pid first.
+const NEVER_READY: &str = r#"import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.pid"), "w").write(str(os.getpid()))
+
+
+class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = b'{"ready":false}'
+        self.send_response(503)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
+"#;
+
+#[cfg(unix)]
+#[test]
+fn a_ready_request_that_never_answers_2xx_fails_and_stops_the_server() {
+    // The failure path has to leave nothing behind: a server kept for a recording that failed would
+    // answer the next one, and nothing would say why.
+    let Some(python) = common::python() else {
+        return;
+    };
+    let repo =
+        std::env::temp_dir().join(format!("rust-anything-http-never-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&repo);
+    std::fs::create_dir_all(&repo).unwrap();
+    std::fs::write(repo.join("server.py"), NEVER_READY).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"name\":\"ok\",\"path\":\"/\"}\n",
+    )
+    .unwrap();
+    let started = std::time::Instant::now();
+    let err = app::record(&RecordOptions {
+        repo: &repo,
+        run: &[python.to_string(), "server.py".to_string()],
+        inputs: Some(&repo.join("inputs.jsonl")),
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: Some(true),
+        server_args: None,
+        fresh: None,
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        ready_secs: Some(1),
+        ready_request: Some("GET /health"),
+        effects: None,
+    })
+    .unwrap_err();
+    let waited = started.elapsed();
+    let text = format!("{err:#}");
+    let pid = std::fs::read_to_string(repo.join("server.pid")).unwrap_or_default();
+    let running = !pid.trim().is_empty() && alive(pid.trim());
+    if running {
+        let _ = std::process::Command::new("kill")
+            .args(["-9", pid.trim()])
+            .status();
+    }
+    let _ = std::fs::remove_dir_all(&repo);
+    assert!(text.contains("did not answer 2xx"), "{text}");
+    assert!(
+        text.contains("GET /health"),
+        "the message names the request: {text}"
+    );
+    assert!(
+        waited < std::time::Duration::from_secs(30),
+        "waited {waited:?}"
+    );
+    assert!(
+        !running,
+        "the server (pid {pid}) is still running after the failure"
+    );
+}
+
 #[test]
 fn a_ready_request_waits_until_the_routes_answer() {
     // The port accepting a connection is not the same as the app being ready: a framework answers
