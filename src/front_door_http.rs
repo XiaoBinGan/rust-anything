@@ -202,7 +202,15 @@ async fn main() {{
 
 /// `in_root`: the original runs in the repository, as recorded; otherwise in the front door's
 /// own working directory (the recording copies fresh files there).
-pub(crate) fn original_rs(run: &[String], in_root: bool, ready_secs: u64) -> String {
+pub(crate) fn original_rs(
+    run: &[String],
+    in_root: bool,
+    ready_secs: u64,
+    ready_request: Option<&str>,
+) -> String {
+    let ready = ready_request.map_or("None".to_string(), |r| {
+        format!("Some({})", format!("{r:?}"))
+    });
     let words: Vec<String> = run.iter().map(|w| format!("{w:?}")).collect();
     let cwd = if in_root {
         ".current_dir(ROOT)
@@ -230,6 +238,7 @@ const ROOT: &str = match option_env!(\"RUST_ANYTHING_REPO\") {{
 }};
 const RUN: &[&str] = &[{words}];
 const FALLBACK_LOG: &str = \"{log}\";
+const READY: Option<&str> = {ready};
 
 fn resolve(word: &str, port: u16) -> OsString {{
     let word = word.replace(\"{{port}}\", &port.to_string());
@@ -289,14 +298,30 @@ impl Original {{
                 d.saturating_duration_since(Instant::now())
                     .min(Duration::from_secs(5))
             }});
-            let ready = left > Duration::ZERO
-                && tokio::time::timeout(
-                    left,
-                    tokio::net::TcpStream::connect((\"127.0.0.1\", port)),
-                )
-                .await
-                .is_ok_and(|r| r.is_ok());
-            if ready {{
+            let up = if let Some(request) = READY {{
+                // A framework opens the port before its routes answer, so the configured request
+                // has to succeed: an open port alone is not ready.
+                let (method, path) = request.split_once(' ').unwrap_or((\"GET\", request));
+                let method = reqwest::Method::from_bytes(method.as_bytes())
+                    .unwrap_or(reqwest::Method::GET);
+                let url = format!(\"http://127.0.0.1:{{port}}{{path}}\");
+                left > Duration::ZERO
+                    && tokio::time::timeout(
+                        left,
+                        reqwest::Client::new().request(method, url).send(),
+                    )
+                    .await
+                    .is_ok_and(|r| r.is_ok_and(|resp| resp.status().is_success()))
+            }} else {{
+                left > Duration::ZERO
+                    && tokio::time::timeout(
+                        left,
+                        tokio::net::TcpStream::connect((\"127.0.0.1\", port)),
+                    )
+                    .await
+                    .is_ok_and(|r| r.is_ok())
+            }};
+            if up {{
                 break;
             }}
             if let Ok(Some(status)) = child.try_wait() {{
