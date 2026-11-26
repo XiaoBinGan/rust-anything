@@ -1,232 +1,56 @@
 <p align="center">
-  <img src="assets/logo.png" width="160" height="160" alt="O caranguejo do rust-anything">
+  <a href="https://rustanything.ai/">
+    <img src="assets/logo.png" width="140" height="140" alt="O caranguejo do rust-anything">
+  </a>
 </p>
 
 <h1 align="center">Rust Anything</h1>
 
-<p align="center"><sub><a href="../README.md">English</a> · <a href="README_TR.md">Türkçe</a> · <a href="README_UK.md">Українська</a> · <a href="README_ZH.md">简体中文</a> · <a href="README_ZH-TW.md">繁體中文</a> · <a href="README_DE.md">Deutsch</a> · <a href="README_FR.md">Français</a> · <a href="README_RU.md">Русский</a> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a> · <a href="README_AZ.md">Azərbaycanca</a> · <a href="README_UZ.md">Oʻzbekcha</a> · <a href="README_KK.md">Қазақша</a> · <a href="README_KY.md">Кыргызча</a> · <a href="README_TK.md">Türkmençe</a> · <a href="README_TT.md">Татарча</a> · <a href="README_UG.md">ئۇيغۇرچە</a> · Português · <a href="README_VI.md">Tiếng Việt</a> · <a href="README_ES.md">Español</a> · <a href="README_IT.md">Italiano</a> · <a href="README_ID.md">Bahasa Indonesia</a> · <a href="README_AR.md">العربية</a> · <a href="README_FA.md">فارسی</a> · <a href="README_HI.md">हिन्दी</a> · <a href="README_TH.md">ไทย</a> · <a href="https://github.com/erkamyaman/rust-anything/issues/425">+ add yours</a></sub></p>
-<p align="center"><sub>Esta tradução é mantida pela comunidade e pode estar desatualizada em relação ao <a href="../README.md">README em inglês</a>.</sub></p>
+<p align="center">
+<a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/v/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io" alt="crates.io version"></a>
+<a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/v/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm" alt="npm version"></a>
+<a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
+<a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
+<a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a>
+</p>
 
-<p align="center"><b>Reescreva a sua aplicação em Rust e prove que continua a comportar-se da mesma forma.</b><br>
-Não traduz código: o seu agente de programação (ou você) escreve o Rust, e o rust-anything verifica-o contra o original.</p>
+<p align="center">
+Reescreva a sua aplicação em Rust e prove que continua a comportar-se da mesma forma.
+</p>
 
 <p align="center"><b>Documentação:</b> <a href="https://rustanything.ai/pt">https://rustanything.ai/pt</a></p>
 
-<p align="center">
-  <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">
-  <img src="https://img.shields.io/badge/macOS%20·%20Linux%20·%20Windows-native-2563EB" alt="Native binaries for macOS, Linux and Windows">
-  <a href="../LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-555" alt="MIT or Apache-2.0 license"></a>
-  <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/v/rust-anything?color=E2862A&label=crates.io" alt="crates.io version"></a>
-  <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/v/rust-anything?color=E2862A&label=npm" alt="npm version"></a>
-  <br>
-  <a href="https://coderabbit.link/er-kam"><img src="https://img.shields.io/coderabbit/prs/github/erkamyaman/rust-anything?labelColor=171717&color=FF570A&label=Reviewed+by+CodeRabbit" alt="Pull requests reviewed by CodeRabbit"></a>
-  <a href="https://github.com/rust-unofficial/awesome-rust#development-tools"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Rust"></a>
-  <a href="https://github.com/AIshihzong/awesome-reverse-engineer-anything"><img src="https://img.shields.io/badge/Featured%20in-Awesome%20REA-f0b429" alt="Featured in Awesome REA"></a>
-  <a href="https://github.com/erkamyaman/rust-anything"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=social" alt="GitHub stars"></a>
-</p>
+<p align="center"><a href="translations.md">🌐 Outros idiomas</a></p>
 
-<p align="center"><a href="https://github.com/erkamyaman/rust-anything/discussions/127"><img src="https://img.shields.io/badge/Join%20the%20discussion-6E40C9?style=for-the-badge&logo=github&logoColor=white" alt="Join the discussion"></a> <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/Join%20the%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the Discord"></a></p>
-
-<p align="center"><a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/daily?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the day on Trendshift" width="250" height="55"/></a></p>
-
-<p align="center"><b><a href="#início-rápido">Início rápido</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#início-rápido">Claude Code plugin</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">Migrações reais</a> · <a href="faq.md#faq">Perguntas frequentes</a><br>
-<sub><a href="#linguagens">Linguagens</a> · <a href="how-it-works.md#how-it-works">Como funciona</a> · <a href="whole-apps.md#port-a-whole-app">Aplicações completas</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Feito na Turquia 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Patrocine-me</a> · Patrocinado por <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
-
-<p align="center">Novo na 2.0: <a href="real-world.md#prettier">Prettier, migrado para Rust</a>. 19x mais rápido · 15,861 de 17,224 execuções registadas inteiramente em Rust · todas idênticas byte a byte</p>
+<p align="center"><sub>Esta tradução é mantida pela comunidade e pode estar desatualizada em relação ao <a href="../README.md">README em inglês</a>.</sub></p>
 
 <p align="center">
-  <img src="assets/prettier.gif" alt="O Prettier e a sua migração para Rust formatam os mesmos 59 ficheiros reais, um processo por ficheiro: o Prettier demora 3.63 s, a migração para Rust 0.20 s, com a mesma saída byte a byte." width="820">
-  <br>
-  <sub>O Prettier contra a sua migração para Rust em 59 ficheiros reais do ms, Fuse.js e json-server (Apple M4). A mesma saída, byte a byte. <a href="real-world.md#prettier">Como foi medido</a>.</sub>
+<a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/daily?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the day on Trendshift" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/weekly?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the week on Trendshift" width="250" height="55"/></a>
 </p>
-
-<p align="center"><sub>PHP, C# e PowerShell: migração de unidades por FFI e P/Invoke.</sub></p>
-
-<table>
-  <tr>
-    <td width="25%" valign="top">
-      <b>Registar</b><br>
-      <code>record</code> executa o original sobre casos limite gerados, armadilhas semânticas e as suas próprias entradas, e guarda o que ele devolve ou lança.
-    </td>
-    <td width="25%" valign="top">
-      <b>Migrar</b><br>
-      <code>bridge</code> gera o crate Rust e um wrapper, para que quem chama mantenha a API original. Você ou o seu agente escrevem o Rust.
-    </td>
-    <td width="25%" valign="top">
-      <b>Verificar</b><br>
-      <code>diff</code> reproduz cada caso registado contra o Rust, e nada é publicado até todos coincidirem e o <code>gate</code> passar.
-    </td>
-    <td width="25%" valign="top">
-      <b>Lift</b><br>
-      Quando o replay passa sem fallback e todas as unidades passam o gate, <code>app lift</code> transforma-a numa aplicação em Rust puro. O original nunca é alterado.
-    </td>
-  </tr>
-</table>
-
-**Reescreva toda a sua aplicação em Rust, uma peça de cada vez.** O rust-anything regista o comportamento atual da sua aplicação Node.js (TypeScript/JavaScript), Python, C, Go, Ruby ou Java e, em seguida, compara cada parte da reescrita em Rust com esse registo antes de avançar, até que a aplicação seja totalmente escrita em Rust. CLIs, servidores HTTP e bibliotecas; o seu agente de programação (ou você) escreve o código Rust. A ferramenta só consegue detetar aquilo que o registo abrange: consulte [O que não consegue detetar](how-it-works.md#what-it-cant-catch). Ferramentas e servidores completos, ou apenas a parte lenta, um caminho crítico de cada vez:
-
-| Projeto real, mesma saída do original | Original | Com rust-anything |
-| --- | ---: | ---: |
-| [Prettier](real-world.md#prettier) 3.6.2, 2,360 ficheiros JS/TS na linha de comandos | 128.6 s | **6.9 s: 19x mais rápido** |
-| Prettier, 6,305 ficheiros Markdown na linha de comandos | 352 s | **22.5 s: 15.6x mais rápido** |
-| [json-server](real-world.md#json-server), um servidor Node completo: memória em repouso | 74 MB | **3.5 MB**, um único binário de 5.3 MB |
-| json-server, do arranque à primeira resposta | 79 a 85 ms | **8 a 10 ms** |
-| Pesquisa [Fuse.js](real-world.md#fusejs) em 50,000 strings, por consulta | 91.2 ms | **2.8 ms: 32x mais rápido** |
-
-Prettier: 15,861 de 17,224 execuções registadas são formatadas totalmente em Rust, em 10 linguagens (JavaScript, TypeScript, JSX, JSON, GraphQL, YAML, Markdown, CSS, SCSS, Less), e todas as 17,224 coincidem com o Prettier byte a byte, já que tudo o que ainda não foi migrado recorre ao Prettier. json-server: 514/514 casos HTTP registados coincidem num binário em Rust puro. Medições num Apple M4, duas execuções cada, com cada saída comparada antes da medição de tempo ([detalhes](real-world.md)). Chamar Rust uma vez por cada pequena função costuma ser *mais lento* do que utilizar um JIT; o rust-anything identifica o ciclo que realmente vale a pena migrar e transfere-o.
-
-## Apenas a parte lenta
-
-Não precisa de migrar a aplicação inteira. Aponte o `go` para um comando demasiado lento, e ele migra apenas a função que consome o tempo:
-
-```sh
-rust-anything go --agent claude -- python3 app.py
-```
-
-Analisa o perfil da execução, escolhe a função mais exterior que vale a pena mover (o ciclo, não a pequena chamada dentro dele, em lote quando o perfil o indica), regista-a sobre entradas geradas e sobre as chamadas que a sua execução faz, e entrega `src/port.rs` ao seu agente (`claude`, `codex` ou qualquer comando que leia um prompt do stdin; sem `--agent`, escreve `TASK.md` para si e termina aí). Só ativa a função quando todos os casos registados coincidem e o `gate` passa. Depois:
-
-```sh
-rust-anything report rust/dedupe-rs     # REPORT.md e card.svg para o pull request
-rust-anything disable rust/dedupe-rs    # de volta ao original, byte a byte
-```
-
-A linha [Fuse.js](real-world.md#fusejs) acima tem esta forma: a pontuação do Fuse para uma string, processada em lote sobre a lista, foi movida para Rust, enquanto as chaves de objeto, a pesquisa estendida e o resto ficam em JavaScript, passando de 91.2 ms para 2.8 ms por consulta em 50,000 strings. Experimente o `go` em [`tests/fixtures/go-fuzzy`](../tests/fixtures/go-fuzzy), uma deduplicação em Python com 20 linhas. Todas as formas de ativar e desativar uma migração: [Switch a port on and off](how-it-works.md#switch-a-port-on-and-off).
-
-<p align="center">
-  <img src="assets/json-server.gif" alt="json-server como servidor Node e como um único binário Rust: memória em repouso 74 MB e 3.5 MB, do arranque à primeira resposta 79 a 85 ms e 8 a 10 ms, e 514 de 514 casos HTTP registados coincidem." width="820">
-  <br>
-  <sub>json-server, um servidor Node completo, transformado num binário em Rust puro (Apple M4). <a href="real-world.md#json-server">Como foi medido</a>.</sub>
-</p>
-
-> O rust-anything é um projeto independente, sem qualquer afiliação ou aprovação do Rust Project ou da Rust Foundation. "Rust" é uma marca registada da Rust Foundation.
-
-> [!WARNING]
-> `record` e `app record` executam o seu código original, chamando cada função (ou a aplicação completa) com
-> muitas entradas geradas, e `app record` executa cada caso duas vezes. `diff`, `gate` e `app replay`
-> voltam a executar os mesmos casos, na migração ou no original. Código que escreve ficheiros, comunica com uma
-> base de dados ou acede à rede fá-lo uma vez por caso. Execute-os numa cópia do projeto, com uma
-> base de dados de teste e sem credenciais de produção no ambiente.
 
 ## Início rápido
 
-Cole isto no Claude Code, Codex, Cursor, Gemini CLI ou OpenCode e deixe o seu agente instalá-lo:
+Cole isto no seu agente de código:
 
 ```text
-Install rust-anything: run `cargo install rust-anything`, then `rust-anything setup`.
-Tell me when to restart you.
+Install Rust Anything with npm i -g rust-anything, then run rust-anything setup. Run rust-anything go -- <slow command of this app> and finish the port until rust-anything gate passes.
 ```
 
-Ou faça a instalação manualmente:
+Ou instale você mesmo:
 
 ```sh
-cargo install rust-anything   # a partir do crates.io
-rust-anything setup           # regista a ferramenta no Claude Code, Codex, Cursor, Gemini CLI e OpenCode
+cargo install rust-anything   # or: npm install -g rust-anything
+rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CLI and OpenCode
 ```
 
-Ainda não tem a toolchain do Rust? Os binários pré-compilados para macOS, Linux e Windows estão disponíveis em cada [lançamento no GitHub](https://github.com/erkamyaman/rust-anything/releases). Para projetos JavaScript, `npm install -g rust-anything` instala o mesmo binário.
-
-No Claude Code, também pode instalá-lo como plugin (o servidor MCP e a skill; a CLI acima deve estar disponível no seu `PATH`):
-
-```text
-/plugin install rust-anything --marketplace erkamyaman/rust-anything
-```
-
-O comando `setup` adiciona o servidor MCP a cada agente que encontrar e instala a skill do fluxo de trabalho no local onde o agente procura as suas skills. Preserva as suas outras configurações, pode ser executado novamente em segurança e `--remove` desfaz as alterações. Depois, peça ao seu agente algo como:
-
-- *"Reescreve esta CLI em Rust com rust-anything, de ponta a ponta, e comprova que se comporta da mesma forma."*
-- *"Esta pesquisa parece lenta. Analisa o desempenho com rust-anything e transfere o ciclo mais pesado para Rust."*
-- *"Planeia a migração de `src/parser/` para Rust com rust-anything; migra a primeira unidade e comprova que funciona."*
-- *"Compara o port Rust em `rust/text-rs` com o original e diz-me se está pronto para produção."*
-
-### Compatibilidade com agentes
-
-| Agente | O que `rust-anything setup` adiciona |
-| --- | --- |
-| Claude Code | Servidor MCP em `~/.claude.json`, skill em `~/.claude/skills/` |
-| Codex | Servidor MCP em `~/.codex/config.toml`, skill em `~/.codex/skills/` |
-| Cursor | Servidor MCP em `~/.cursor/mcp.json` |
-| Gemini CLI | Servidor MCP em `~/.gemini/settings.json` |
-| OpenCode | Servidor MCP em `~/.config/opencode/opencode.json` (`mcp.servers`), skill em `~/.config/opencode/skills/` |
-| Qualquer outro cliente MCP | Adicione manualmente `rust-anything mcp` como servidor stdio (consulte [Instalação](install.md#install)) |
-
-Antes de modificar um ficheiro existente, `setup` guarda uma cópia ao lado dele (`<file>.rust-anything.bak`).
-
-Para configurar o OpenCode manualmente, coloque o servidor em `~/.config/opencode/opencode.json` (`command` é o argv completo) e copie [`skills/rust-anything/`](../skills/rust-anything) para `~/.config/opencode/skills/rust-anything/`:
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "rust-anything": { "type": "local", "command": ["rust-anything", "mcp"] }
-    }
-  }
-}
-```
-
-Ou execute as etapas manualmente:
-
-```sh
-rust-anything profile . -- node bench.mjs              # o que está lento e quem o chama
-rust-anything bridge . src/fuzzy.ts --batch fuzzyScore:text
-# escreva src/port.rs (ou deixe o seu agente fazê-lo) e depois:
-rust-anything record rust/fuzzy-rs && rust-anything build rust/fuzzy-rs
-rust-anything diff rust/fuzzy-rs                       # todos os casos registados devem corresponder
-rust-anything bench rust/fuzzy-rs                      # está mais rápido? o resultado dirá
-rust-anything gate rust/fuzzy-rs                       # concluído significa que este teste passa
-```
-
-O rust-anything não traduz código: o seu agente de programação (Claude Code, Codex, Cursor, OpenCode, ...) ou você escreve o código Rust. O rust-anything fornece aquilo que um agente não consegue adivinhar de forma fiável: onde o tempo é gasto, o que deve ser migrado primeiro e em que ordem, uma ponte para que o restante código continue a chamar Rust com a mesma API, o comportamento exato que a migração deve preservar, uma forma segura de disponibilizar a nova implementação e uma verificação que determina quando a migração está concluída.
-
-A mesma saída não basta. Registe também o que a aplicação envia, e uma reescrita que envia o e-mail duas vezes falha:
-
-<p align="center">
-  <img src="assets/effects.gif" alt="app record com --effects smtp regista um e-mail de boas-vindas por registo de utilizador; app replay de uma reescrita que imprime a mesma saída mas envia o e-mail duas vezes indica 0/2 casos aprovados, com falha nos efeitos, e o relatório mostra o e-mail a mais." width="820">
-  <br>
-  <sub>Uma execução real de <code>app record --effects</code> e <code>app replay</code>. Consulte <a href="whole-apps.md#side-effects-email-webhooks-and-databases">Efeitos secundários</a>.</sub>
-</p>
-
-## Linguagens
-
-| Linguagem | Unidade | Ponte | Registado e reproduzido por |
-| --- | --- | --- | --- |
-| TypeScript/JavaScript | Pasta ou ficheiro | napi-rs ou wasm-bindgen com um protocolo binário gerado; inclui classes e operações assíncronas | Node, executando diretamente os ficheiros `.ts` |
-| Python | Pacote ou módulo | PyO3 (abi3), conversão direta, exceções tipadas | Python, importando o original |
-| C | Ficheiro `.c` | Funções `extern "C"` com os nomes originais e um header | O original compilado como biblioteca partilhada, chamado através de ctypes, uma execução independente por caso |
-| Go | Pacote | Chamadas cgo tipadas e um protocolo binário gerado, num pacote com a API original | Um driver Go gerado, compilado como módulo independente |
-| Ruby | Ficheiro ou pasta de funções de módulo | Uma extensão magnus nos módulos originais | Um driver Ruby gerado |
-| Java | Pacote de métodos `public static` | JNI tipado e um protocolo binário gerado, em classes wrapper com os métodos originais | Um driver de reflexão gerado |
-| Kotlin | Módulo Gradle de funções de topo e métodos `@JvmStatic` | A ponte Java: JNI tipado em classes wrapper Java que chamam os métodos estáticos Kotlin compilados | Um driver de reflexão gerado, com o código Kotlin compilado por `kotlinc` |
-| PHP | Ficheiro ou pasta de funções de topo (os métodos `public static` ficam em PHP) | Um despachante JSON sobre `ext-ffi`, num ficheiro que redeclara as funções com os parâmetros originais | Um condutor PHP gerado; aplicações completas com `app record`, `app replay` e a front door, para CLIs e servidores (`php -S`) |
-| PowerShell | Módulo `.psm1` ou script `.ps1` de funções com blocos `param()` (exportadas segundo `Export-ModuleMember`) | Um despachante JSON sobre P/Invoke, declarado no carregamento com Reflection.Emit, num `.ps1` que redeclara cada função com o seu bloco `param()` original | Um condutor `pwsh` gerado (PowerShell 7.4+) |
-| C# | Ficheiro ou pasta de métodos `public static` | Um despachante JSON sobre P/Invoke, em classes `<namespace>.Rust` com os métodos originais | Um condutor de reflexão gerado, compilado com o código do projeto por `dotnet build`; aplicações completas com `app record`, `app replay` e a front door, para CLIs e servidores ASP.NET (`dotnet <app>.dll`) |
-
-Todas as linguagens, exceto C, PHP, C# e PowerShell, também recebem classes de processamento em lote (`--batch`): os elementos atravessam a ponte uma única vez e permanecem em Rust, e cada chamada processa todos eles em todos os núcleos.
-
-A linguagem é detetada a partir do repositório (`go.mod`, `pom.xml`, `build.gradle`/`build.gradle.kts`, um `.csproj` ou `.sln`, `pyproject.toml`, `Gemfile`, `composer.json`, `package.json` ou, caso contrário, os ficheiros de código-fonte mais comuns); um módulo Gradle com fontes `.kt` e sem fontes `.java` é Kotlin, módulos mistos continuam Java. A opção `--lang` permite substituir essa deteção. Os tipos são obtidos a partir do código-fonte: tipos de TS, anotações de Python, assinaturas de C, Go, Java, Kotlin e C#, tags YARD de Ruby, tipos PHP e phpdoc. Parâmetros sem tipo que são utilizados como números são inferidos como números. [Tipos](types.md) indica em que se torna cada um na migração e quais mantêm uma função na sua linguagem.
-
-Para PHP, `analyze` planeia uma aplicação PHP (pacotes Composer e carregamento automático PSR-4, riscos como comparações flexíveis e overflow de inteiros para floats, pacotes Composer associados a crates), e uma CLI ou servidor PHP pode ser registado, reproduzido e colocado atrás de uma front door em Rust. As funções de topo de uma unidade, com parâmetros escalares, de texto, de lista e de array associativo, passam pela extensão FFI do PHP (`php` com `ext-ffi`, ativa por omissão na CLI): quando `diff` passar, carregue o `php/<crate>.php` gerado — o nome é o do crate com `-` escrito como `_`, pelo que `foo-rs` dá `php/foo_rs.php` — onde a aplicação carregava o original, e deixe os dois ficheiros no sítio: o invólucro carrega a biblioteca nativa relativamente à sua própria pasta. O invólucro declara cada função migrada sem qualquer guarda `function_exists`, por isso substitui o ficheiro original em vez de se lhe juntar. O resto do que esse ficheiro contém não vem com ele: classes, métodos `public static`, funções que a ponte mantém em PHP (um parâmetro `callable` ou `Closure`, por exemplo) e instruções de topo como `define('FEATURE_ENABLED', true)` não estão no invólucro, e carregar os dois ficheiros redeclara as funções migradas. Mantenha essas declarações num ficheiro que continue a ser carregado.
-Cada chamada atravessa a fronteira como JSON, cerca de 1 µs, por isso `bench` mostra funções pequenas mais lentas do que em PHP; ainda não há `shadow` para PHP ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
-
-O C# funciona da mesma forma: `analyze` lê projetos `.csproj` e os respetivos pacotes NuGet (associados a crates), resolve diretivas `using` para pastas e identifica diferenças do C# (`decimal`, `dynamic`, consultas adiadas do LINQ, `Task`, `lock` e reflexão). Uma CLI C# ou um servidor ASP.NET pode ser registado, reproduzido e colocado atrás de uma front door em Rust. Os métodos estáticos públicos de uma unidade, com parâmetros escalares, de texto, de array, de lista, de dicionário e de record ou classe simples, passam por P/Invoke (`dotnet` no `PATH` para gravar e comparar): quando `diff` passar, compile o invólucro gerado em `cs/` (um ficheiro com o nome do crate: `foo-rs` dá `cs/FooRs.cs`) para o projeto e mantenha a biblioteca nativa compilada ao lado da aplicação, depois chame as classes geradas no espaço de nomes `<namespace>.Rust` (`Acme.Text.Slug.Slugify` passa a `Acme.Text.Rust.Slug.Slugify`), ou dê-lhes um alias com `using`. Cada chamada atravessa a fronteira como JSON, cerca de 1-3 µs, por isso `bench` mostra métodos pequenos mais lentos do que em .NET; ainda não há `shadow` para C# ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
-
-## Saber mais
-
-- [Como funciona](how-it-works.md): o ciclo, o que `bridge` e `analyze` decidem, caminhos críticos, o que não consegue detetar, o que uma migração real exige e como acompanhar o original (`map`)
-- [Publicar uma migração como pacote](packaging.md): wheels do maturin e pacotes npm por plataforma do napi-rs, com a CI que os compila
-- [Migrar uma aplicação completa](whole-apps.md): servidores, CLIs e bibliotecas, da front door até ao `app lift`
-- [Tipos](types.md): em que se tornam os tipos de cada linguagem no `port.rs`, e porque é que um tipo é recusado
-- [Exemplos e estudos de caso](examples.md): x18n e código real em seis linguagens
-- [Migrações reais](real-world.md): json-server, Fuse.js, vercel/ms, com benchmarks
-- [Instalar, atualizar e desenvolver](install.md): todos os métodos de instalação, Windows e compilação a partir do código-fonte
-- [Perguntas frequentes](faq.md) · [Estado](STATUS.md) · [Ferramentas MCP](tools.md)
+> [!TIP]
+> **Agentes:** leiam [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) para os passos de instalação, todos os comandos e o fluxo de portabilidade.
 
 ## Patrocinadores
 
-<p align="center">
-  O <a href="https://github.com/erkamyaman/rust-anything">rust-anything</a> é gratuito e de código aberto. Se for útil para o seu trabalho, considere patrociná-lo.<br>
-  O seu apoio ajuda a manter o desenvolvimento.
-</p>
+<p align="center">Feito na Türkiye 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yaman</a><br>
+O Rust Anything é gratuito e de código aberto. Se ele ajuda no seu trabalho, seu patrocínio o mantém em andamento.</p>
 
 <p align="center">
   <a href="https://coderabbit.link/er-kam">
@@ -259,10 +83,6 @@ O C# funciona da mesma forma: `analyze` lê projetos `.csproj` e os respetivos p
   <a href="https://github.com/sponsors/erkamyaman"><img src="https://img.shields.io/badge/Tornar--se_patrocinador-%E2%9D%A4-db61a2?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Tornar-se patrocinador"></a>
   <a href="https://buymeacoffee.com/erkamyaman"><img src="https://img.shields.io/badge/Buy_me_a_coffee-%E2%98%95-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 </p>
-
-## Contribuir
-
-Issues e pull requests são bem-vindos; [CONTRIBUTING.md](../CONTRIBUTING.md) explica a configuração, onde colocar os testes e como adicionar uma linguagem. As decisões de design e as respetivas justificações estão em [DECISIONS.md](../DECISIONS.md). Estudos de caso de migrações reais são especialmente bem-vindos. Por favor, comunique problemas de segurança de forma privada ([SECURITY.md](../SECURITY.md)) e consulte o [código de conduta](../CODE_OF_CONDUCT.md).
 
 ## Licença
 

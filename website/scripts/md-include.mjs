@@ -12,6 +12,8 @@ const LINK_MAP = {
   'docs/install.md#install': '/docs/introduction/install',
   'README.md#works-with': '/docs/introduction/agents',
   'README.md#languages': '/docs/languages/overview',
+  'docs/languages.md': '/docs/languages/overview',
+  'docs/languages.md#languages': '/docs/languages/overview',
   'docs/how-it-works.md#how-it-works': '/docs/concepts/the-loop',
   'docs/how-it-works.md#the-loop': '/docs/concepts/the-loop',
   'docs/whole-apps.md#port-a-whole-app': '/docs/whole-apps/overview',

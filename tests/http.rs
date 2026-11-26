@@ -543,7 +543,7 @@ fn a_ready_request_waits_until_the_routes_answer() {
 
 /// Answers 503 to every request and writes its pid next to itself, so a test can check it is gone.
 #[cfg(unix)]
-const NEVER_READY: &str = r#"import os
+const NEVER_READY: &str = r#"import os, socketserver
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.pid"), "w").write(str(os.getpid()))
@@ -559,7 +559,13 @@ class H(BaseHTTPRequestHandler):
         pass
 
 
-HTTPServer(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
+class S(HTTPServer):
+    def server_bind(self):
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = "127.0.0.1", self.server_address[1]
+
+
+S(("127.0.0.1", int(os.environ["PORT"])), H).serve_forever()
 "#;
 
 #[cfg(unix)]

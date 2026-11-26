@@ -1139,6 +1139,12 @@ pub const JS_RS: &str = concat!(
 
 /// Reads a structured argument sent by `index.cjs`.
 pub fn from_json<T: serde::de::DeserializeOwned>(text: &str) -> Result<T, String> {
+    if text == "{\"$undefined\":true}" {
+        if let Ok(value) = serde_json::from_str::<T>(text) {
+            return Ok(value);
+        }
+        return serde_json::from_str::<T>("null").map_err(|e| format!("TypeError: {e}"));
+    }
     let mut de = serde_json::Deserializer::from_str(text);
     de.disable_recursion_limit();
     let value = <T as serde::Deserialize>::deserialize(&mut de).map_err(|e| format!("TypeError: {e}"))?;

@@ -1149,6 +1149,66 @@ Promise.all([m.direct(null), m.aliased(null), m.later(null), m.loose(null), m.di
 }
 
 #[test]
+fn napi_async_call_without_an_optional_array_gets_none() {
+    if !common::have("node") {
+        return;
+    }
+    let root = project(
+        "napi-omitted",
+        &[
+            ("package.json", r#"{"name":"omitted","version":"0.1.0"}"#),
+            (
+                "src/refusal.ts",
+                "export async function refusalAsync(raw: string, names: readonly string[] | undefined): Promise<\"long\" | \"named\" | null> {\n\
+                 \x20 if (raw.length > 5) return \"long\"\n\
+                 \x20 return names?.some((n) => raw.includes(n)) ? \"named\" : null\n\
+                 }\n",
+            ),
+        ],
+    );
+    let dir = root.join("port");
+    bridge::bridge(&bridge::Options {
+        root: &root,
+        unit: "src/refusal.ts",
+        kind: Some(Kind::Napi),
+        out: Some(dir.clone()),
+        name: None,
+        force: false,
+        keep: Vec::new(),
+        lang: None,
+        batch: Vec::new(),
+        as_json: Vec::new(),
+        allocator: Default::default(),
+    })
+    .unwrap();
+    let body = "if raw.encode_utf16().count() > 5 { return Ok(Some(\"long\".into())); }\n    \
+                Ok(names.unwrap_or_default().iter().any(|n| raw.contains(n.as_str())).then(|| \"named\".into()))";
+    let port = std::fs::read_to_string(dir.join("src/port.rs")).unwrap();
+    let stub = "unimplemented!(\"port `refusalAsync` from src/refusal.ts\")";
+    assert!(port.contains(stub), "{port}");
+    std::fs::write(dir.join("src/port.rs"), port.replacen(stub, body, 1)).unwrap();
+    harness::build(&dir).unwrap();
+    let script = r#"
+const m = require(process.argv[1])
+const show = v => v === null ? 'null' : v === undefined ? 'undefined' : v
+Promise.all([m.refusalAsync('HELLO'), m.refusalAsync('HELLO', undefined), m.refusalAsync('HELLO', null), m.refusalAsync('HELLO', ['ELL']), m.refusalAsync('LONGER')])
+  .then(vs => console.log(vs.map(show).join(',')), e => console.log('error: ' + e.message))
+"#;
+    let output = Command::new("node")
+        .args(["-e", script])
+        .arg(dir.join("index.cjs"))
+        .output()
+        .unwrap();
+    std::fs::remove_dir_all(&root).unwrap();
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout).trim(),
+        "null,null,null,named,long",
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn napi_substring_keeps_half_a_surrogate_pair() {
     // JS `slice` can cut a surrogate pair and hand back the lone half. A port that follows the
     // bridge's advice for string offsets must give the same string, not U+FFFD.

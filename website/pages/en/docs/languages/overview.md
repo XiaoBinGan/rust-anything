@@ -7,7 +7,7 @@ description: TypeScript/JavaScript, Python, C, Go, Ruby and Java, with PHP and C
 
 Six languages go through the whole loop: Node.js (TypeScript/JavaScript), Python, C, Go, Ruby and Java. PHP and C# are in preview: `analyze` and whole apps today, unit bridges next.
 
-<!-- include: README.md#languages -->
+<!-- include: docs/languages.md#languages -->
 
 ## Status per language
 

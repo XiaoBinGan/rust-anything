@@ -3,8 +3,8 @@ import { basename, dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import satori from 'satori'
 import { Resvg, initWasm } from '@resvg/resvg-wasm'
-import { REPO_ROOT, WEBSITE_ROOT } from './md-include.mjs'
-import { docPages } from './pages.mjs'
+import { REPO_ROOT, WEBSITE_ROOT, expandIncludes } from './md-include.mjs'
+import { docPages, PAGES_DIR } from './pages.mjs'
 
 const require = createRequire(import.meta.url)
 const LOGO_FILE = join(REPO_ROOT, 'docs', 'assets', 'icon.svg')
@@ -183,6 +183,45 @@ export function notFoundPlugin() {
         join(options.dir, '404.html'),
         readFileSync(join(WEBSITE_ROOT, 'content', '404.html'), 'utf8'),
       )
+    },
+  }
+}
+
+const SITE = 'https://rustanything.ai'
+
+export function llmsFull(order = []) {
+  const rank = new Map(order.map((path, i) => [path, i]))
+  const pages = docPages('en')
+    .filter((p) => p.route.startsWith('/docs/'))
+    .sort((a, b) => (rank.get(a.route) ?? 1e9) - (rank.get(b.route) ?? 1e9) || a.route.localeCompare(b.route))
+  const parts = pages.map((p) => {
+    const src = readFileSync(join(PAGES_DIR, 'en', `${p.route.slice(1)}.md`), 'utf8')
+    const body = expandIncludes(src.replace(/^---\n[\s\S]*?\n---\n?/, ''))
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/\]\(\//g, `](${SITE}/`)
+      .replace(/(href|src)="\//g, `$1="${SITE}/`)
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+    return `<!-- ${SITE}${p.route} -->\n\n${body}`
+  })
+  return `# Rust Anything: full documentation\n\n> Every page of ${SITE}/docs in one file. The short index is ${SITE}/llms.txt.\n\n${parts.join('\n\n---\n\n')}\n`
+}
+
+export function llmsFullPlugin(order) {
+  return {
+    name: 'rust-anything-llms-full',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split('?')[0] !== '/llms-full.txt') return next()
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.end(llmsFull(order))
+      })
+    },
+    writeBundle(options) {
+      if (!isClientDir(this, options)) return
+      const text = llmsFull(order)
+      writeFileSync(join(options.dir, 'llms-full.txt'), text)
+      console.log(`llms-full: ${text.length} chars`)
     },
   }
 }

@@ -24,6 +24,7 @@ Install Rust Anything (npm i -g rust-anything, or cargo install rust-anything) a
 
 ## Docs
 
+- [Full documentation in one file](https://rustanything.ai/llms-full.txt)
 - [Quick start](https://rustanything.ai/docs/introduction/quick-start)
 - [Install](https://rustanything.ai/docs/introduction/install)
 - [Set up your agent](https://rustanything.ai/docs/introduction/agents)

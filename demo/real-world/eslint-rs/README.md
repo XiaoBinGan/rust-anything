@@ -8,7 +8,7 @@ The case study is in [`docs/real-world.md`](../../../docs/real-world.md#eslint).
 
 Install it as a command: `npm install -g eslint-rs` runs this front door (macOS and Linux;
 Windows runs ESLint itself) and depends on ESLint 10.15.0 for everything it hands back
-([what runs where](../../../README.md#install-the-ports)). `rust-anything package app` lays out
+([what runs where](../../../docs/packaging.md)). `rust-anything package app` lays out
 the packages ([how](../../../docs/packaging.md#a-whole-cli-front-door)).
 
 ESLint is MIT licensed, Copyright OpenJS Foundation and other contributors; its license is in

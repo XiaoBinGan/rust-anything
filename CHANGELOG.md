@@ -7,6 +7,10 @@
   has no `_` passes. A separator next to a part both runs agree on stays, so `id=[..]` keeps its
   `=`. Recordings made before keep their wildcards until the next `app record`
   (#680, #692 by @XiaoBinGan).
+- A napi export called without an optional structured argument, such as an array, now gets
+  `None` on the JSON path that async calls always take, instead of failing with
+  `invalid type: map, expected a sequence` before the port runs. A `serde_json::Value` parameter
+  still receives the `undefined` marker (#681, reported by @antont).
 - The MCP `app_replay` tool refuses a `build` or `case`, and `app_drift` a `build`, that is not a
   string with `` `case` must be a string, not 5 ``, instead of dropping it and replaying every case
   or the original. A missing or `null` value still means not given

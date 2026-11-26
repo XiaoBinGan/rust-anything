@@ -1,291 +1,56 @@
 <p align="center">
-  <img src="assets/logo.png" width="160" height="160" alt="rust-anything yengeci">
+  <a href="https://rustanything.ai/">
+    <img src="assets/logo.png" width="140" height="140" alt="rust-anything yengeci">
+  </a>
 </p>
 
 <h1 align="center">Rust Anything</h1>
 
-<p align="center"><sub><a href="../README.md">English</a> · Türkçe · <a href="README_UK.md">Українська</a> · <a href="README_ZH.md">简体中文</a> · <a href="README_ZH-TW.md">繁體中文</a> · <a href="README_DE.md">Deutsch</a> · <a href="README_FR.md">Français</a> · <a href="README_RU.md">Русский</a> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a> · <a href="README_AZ.md">Azərbaycanca</a> · <a href="README_UZ.md">Oʻzbekcha</a> · <a href="README_KK.md">Қазақша</a> · <a href="README_KY.md">Кыргызча</a> · <a href="README_TK.md">Türkmençe</a> · <a href="README_TT.md">Татарча</a> · <a href="README_UG.md">ئۇيغۇرچە</a> · <a href="README_PT.md">Português</a> · <a href="README_VI.md">Tiếng Việt</a> · <a href="README_ES.md">Español</a> · <a href="README_IT.md">Italiano</a> · <a href="README_ID.md">Bahasa Indonesia</a> · <a href="README_AR.md">العربية</a> · <a href="README_FA.md">فارسی</a> · <a href="README_HI.md">हिन्दी</a> · <a href="README_TH.md">ไทย</a> · <a href="https://github.com/erkamyaman/rust-anything/issues/425">+ add yours</a></sub></p>
-<p align="center"><sub>Bu çeviri topluluk tarafından sürdürülmektedir ve <a href="../README.md">İngilizce README</a>'nin gerisinde kalabilir.</sub></p>
+<p align="center">
+<a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/v/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io" alt="crates.io version"></a>
+<a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/v/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm" alt="npm version"></a>
+<a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
+<a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
+<a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a>
+</p>
 
-<p align="center"><b>Uygulamanızı Rust ile yeniden yazın ve hâlâ aynı davrandığını kanıtlayın.</b><br>
-Kodu kendisi çevirmez: Rust'ı kodlama ajanınız (ya da siz) yazar, rust-anything onu orijinaline karşı doğrular.</p>
+<p align="center">
+Uygulamanızı Rust ile yeniden yazın ve hâlâ aynı davrandığını kanıtlayın.
+</p>
 
 <p align="center"><b>Dokümantasyon:</b> <a href="https://rustanything.ai/tr">https://rustanything.ai/tr</a></p>
 
-<p align="center">
-  <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">
-  <img src="https://img.shields.io/badge/macOS%20·%20Linux%20·%20Windows-native-2563EB" alt="Native binaries for macOS, Linux and Windows">
-  <a href="../LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-555" alt="MIT or Apache-2.0 license"></a>
-  <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/v/rust-anything?color=E2862A&label=crates.io" alt="crates.io version"></a>
-  <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/v/rust-anything?color=E2862A&label=npm" alt="npm version"></a>
-  <br>
-  <a href="https://coderabbit.link/er-kam"><img src="https://img.shields.io/coderabbit/prs/github/erkamyaman/rust-anything?labelColor=171717&color=FF570A&label=Reviewed+by+CodeRabbit" alt="Pull requests reviewed by CodeRabbit"></a>
-  <a href="https://github.com/rust-unofficial/awesome-rust#development-tools"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Rust"></a>
-  <a href="https://github.com/AIshihzong/awesome-reverse-engineer-anything"><img src="https://img.shields.io/badge/Featured%20in-Awesome%20REA-f0b429" alt="Featured in Awesome REA"></a>
-  <a href="https://github.com/erkamyaman/rust-anything"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=social" alt="GitHub stars"></a>
-</p>
+<p align="center"><a href="translations.md">🌐 Diğer diller</a></p>
 
-<p align="center"><a href="https://github.com/erkamyaman/rust-anything/discussions/127"><img src="https://img.shields.io/badge/Join%20the%20discussion-6E40C9?style=for-the-badge&logo=github&logoColor=white" alt="Join the discussion"></a> <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/Join%20the%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the Discord"></a></p>
-
-<p align="center"><a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/daily?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the day on Trendshift" width="250" height="55"/></a></p>
-
-<p align="center"><b><a href="#hızlı-başlangıç">Hızlı başlangıç</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#hızlı-başlangıç">Claude Code plugin</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">Gerçek dünya portları</a> · <a href="faq.md#faq">SSS</a><br>
-<sub><a href="#diller">Diller</a> · <a href="how-it-works.md#how-it-works">Nasıl çalışır</a> · <a href="whole-apps.md#port-a-whole-app">Tüm uygulamalar</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Türkiye'de 🇹🇷 <a href="https://github.com/erkamyaman">erKam Yaman</a> tarafından yapıldı · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Sponsor olun</a> · Sponsor: <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
-
-<p align="center">2.0'da yeni: <a href="real-world.md#prettier">Prettier, Rust'a port edildi</a>. 19x daha hızlı · 17,224 kayıtlı çalıştırmanın 15,861'si tamamen Rust'ta · hepsi bayt bayt aynı</p>
+<p align="center"><sub>Bu çeviri topluluk tarafından sürdürülmektedir ve <a href="../README.md">İngilizce README</a>'nin gerisinde kalabilir.</sub></p>
 
 <p align="center">
-  <img src="assets/prettier.gif" alt="Prettier ve Rust portu aynı 59 gerçek dosyayı, dosya başına bir süreçle biçimlendiriyor: Prettier 3.63 s, Rust portu 0.20 s sürüyor ve çıktı bayt bayt aynı." width="820">
-  <br>
-  <sub>ms, Fuse.js ve json-server'dan alınan 59 gerçek dosyada Prettier ve Rust portu (Apple M4). Bayt bayt aynı çıktı. <a href="real-world.md#prettier">Nasıl ölçüldü</a>.</sub>
+<a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/daily?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the day on Trendshift" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/363468" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/363468/weekly?language=Rust" alt="erkamyaman/rust-anything: #1 Rust repository of the week on Trendshift" width="250" height="55"/></a>
 </p>
-
-<p align="center"><sub>PHP, C# ve PowerShell: FFI ve P/Invoke üzerinden birim portları.</sub></p>
-
-<table>
-  <tr>
-    <td width="25%" valign="top">
-      <b>Kaydet</b><br>
-      <code>record</code>, orijinali üretilmiş uç durumlar, anlamsal tuzaklar ve sizin girdilerinizle çalıştırır; döndürdüğünü ya da fırlattığını kaydeder.
-    </td>
-    <td width="25%" valign="top">
-      <b>Port et</b><br>
-      <code>bridge</code>, Rust crate'ini ve bir wrapper üretir; böylece çağıranlar orijinal API'yi kullanmaya devam eder. Rust'ı siz ya da ajanınız yazar.
-    </td>
-    <td width="25%" valign="top">
-      <b>Kontrol et</b><br>
-      <code>diff</code>, kaydedilen her vakayı Rust'a karşı yeniden oynatır; hepsi eşleşip <code>gate</code> geçene kadar hiçbir şey yayınlanmaz.
-    </td>
-    <td width="25%" valign="top">
-      <b>Lift</b><br>
-      Yeniden oynatma fallback olmadan geçtiğinde ve her birim gate'i geçtiğinde, <code>app lift</code> onu saf bir Rust uygulamasına dönüştürür. Orijinale asla dokunulmaz.
-    </td>
-  </tr>
-</table>
-
-**Uygulamanızın tamamını Rust ile, parça parça yeniden yazın.** rust-anything, Node.js
-(TypeScript/JavaScript), Python, C, Go, Ruby veya Java uygulamanızın bugün ne yaptığını kaydeder,
-ardından Rust ile yeniden yazılan her parçayı bir sonrakine geçmeden önce bu kayda karşı kontrol
-eder; ta ki uygulama tamamen Rust olana kadar. CLI'lar, HTTP sunucuları ve kütüphaneler; Rust'ı
-kodlama ajanınız (ya da siz) yazar. Yalnızca kaydın kapsadığını yakalayabilir: bkz.
-[Neyi yakalayamaz](how-it-works.md#what-it-cant-catch). Araçların ve sunucuların tamamı ya da
-yalnızca yavaş kısım, her seferinde bir hot path:
-
-| Gerçek proje, orijinaliyle aynı çıktı | Orijinal | rust-anything ile |
-| --- | ---: | ---: |
-| [Prettier](real-world.md#prettier) 3.6.2, komut satırından 2,360 JS/TS dosyası | 128.6 s | **6.9 s: 19x daha hızlı** |
-| Prettier, komut satırından 6,305 Markdown dosyası | 352 s | **22.5 s: 15.6x daha hızlı** |
-| [json-server](real-world.md#json-server), bir Node sunucusunun tamamı: boştayken bellek | 74 MB | **3.5 MB**, tek bir 5.3 MB binary |
-| json-server, başlatmadan ilk yanıta | 79 ila 85 ms | **8 ila 10 ms** |
-| 50,000 string üzerinde [Fuse.js](real-world.md#fusejs) araması, sorgu başına | 91.2 ms | **2.8 ms: 32x daha hızlı** |
-
-Prettier: 17,224 kayıtlı çalıştırmanın 15,861'si 10 dilde (JavaScript, TypeScript, JSX, JSON,
-GraphQL, YAML, Markdown, CSS, SCSS, Less) tamamen Rust'ta biçimlendirilir ve 17,224'ünün tamamı
-Prettier ile bayt bayt eşleşir; henüz port edilmemiş her şey Prettier'a geri düşer. json-server:
-kaydedilen 514/514 HTTP vakası saf bir Rust binary'si üzerinde eşleşir. Apple M4 üzerinde, her biri
-iki kez çalıştırılarak ölçülmüştür; her çıktı, süre ölçülmeden önce karşılaştırılır
-([ayrıntılar](real-world.md)). Her küçük fonksiyon için Rust'ı ayrı ayrı çağırmak genellikle bir
-JIT'ten *daha yavaştır*; rust-anything taşımaya değer döngüyü bulur ve onu taşır.
-
-## Sadece yavaş kısım
-
-Uygulamanın tamamını port etmeniz gerekmez. `go`'yu fazla yavaş çalışan bir komuta yöneltin,
-zamanı yiyen tek fonksiyonu port etsin:
-
-```sh
-rust-anything go --agent claude -- python3 app.py
-```
-
-Çalıştırmayı profiller, taşımaya değer en dıştaki fonksiyonu seçer (içindeki küçük çağrıyı değil
-döngüyü; profil öyle diyorsa batch olarak), onu üretilen girdiler ve çalıştırmanızın yaptığı
-çağrılarla kaydeder ve `src/port.rs` dosyasını ajanınıza verir (`claude`, `codex` ya da istemi
-stdin'den okuyan herhangi bir komut; `--agent` olmadan sizin için `TASK.md` yazar ve durur).
-Fonksiyonu ancak kaydedilen her vaka eşleştiğinde ve `gate` geçtiğinde devreye alır. Sonra:
-
-```sh
-rust-anything report rust/dedupe-rs     # pull request için REPORT.md ve card.svg
-rust-anything disable rust/dedupe-rs    # bayt bayt orijinale geri dönüş
-```
-
-Yukarıdaki [Fuse.js](real-world.md#fusejs) satırı da bu biçimdedir: Fuse'un tek bir string için
-skoru, listenin tamamı üzerinde batch olarak Rust'a taşındı; nesne anahtarları, genişletilmiş
-arama ve geri kalan her şey JavaScript'te kaldı. 50,000 string üzerinde sorgu başına 91.2 ms'den
-2.8 ms'ye. `go`'yu 20 satırlık bir Python dedupe olan
-[`tests/fixtures/go-fuzzy`](../tests/fixtures/go-fuzzy) üzerinde deneyin. Bir portu açıp
-kapatmanın bütün yolları: [Switch a port on and off](how-it-works.md#switch-a-port-on-and-off).
-
-<p align="center">
-  <img src="assets/json-server.gif" alt="Node sunucusu olarak ve tek bir Rust binary'si olarak json-server: boştayken bellek 74 MB ve 3.5 MB, başlatmadan ilk yanıta 79 ila 85 ms ve 8 ila 10 ms, kaydedilen 514 HTTP vakasının 514'ü eşleşiyor." width="820">
-  <br>
-  <sub>Bir Node sunucusunun tamamı olan json-server, saf bir Rust binary'sine dönüştürüldü (Apple M4). <a href="real-world.md#json-server">Nasıl ölçüldü</a>.</sub>
-</p>
-
-> rust-anything bağımsız bir projedir; Rust Project veya Rust Foundation ile bağlantılı değildir ve
-> onlar tarafından desteklenmez. "Rust", Rust Foundation'ın ticari markasıdır.
-
-> [!WARNING]
-> `record` ve `app record` orijinal kodunuzu çalıştırır; her fonksiyonu (ya da uygulamanın
-> tamamını) çok sayıda üretilmiş girdiyle çağırır ve `app record` her vakayı iki kez çalıştırır.
-> `diff`, `gate` ve `app replay` aynı vakaları port ya da orijinal üzerinde yeniden çalıştırır.
-> Dosya yazan, bir veritabanıyla konuşan veya ağa çağrı yapan kod bunu her vaka için bir kez yapar.
-> Bunları projenin bir kopyası üzerinde, bir test veritabanıyla ve ortamda hiçbir production
-> kimlik bilgisi olmadan çalıştırın.
 
 ## Hızlı başlangıç
 
-Bunu Claude Code, Codex, Cursor, Gemini CLI veya OpenCode'a yapıştırın ve kurulumu ajanınıza bırakın:
+Bunu kodlama ajanınıza yapıştırın:
 
 ```text
-rust-anything'i kur: `cargo install rust-anything`, ardından `rust-anything setup` çalıştır.
-Seni ne zaman yeniden başlatmam gerektiğini söyle.
+Install Rust Anything with npm i -g rust-anything, then run rust-anything setup. Run rust-anything go -- <slow command of this app> and finish the port until rust-anything gate passes.
 ```
 
-Ya da kendiniz:
+Ya da kendiniz kurun:
 
 ```sh
-cargo install rust-anything   # crates.io'dan
-rust-anything setup           # Claude Code, Codex, Cursor, Gemini CLI ve OpenCode'a kaydeder
+cargo install rust-anything   # or: npm install -g rust-anything
+rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CLI and OpenCode
 ```
 
-Henüz Rust toolchain'iniz yok mu? macOS, Linux ve Windows için hazır derlenmiş binary'ler her
-[GitHub release](https://github.com/erkamyaman/rust-anything/releases)'e eklenmiştir; JavaScript
-projeleri için `npm install -g rust-anything` aynı binary'yi kurar.
-
-Claude Code'da bunu bir plugin olarak da kurabilirsiniz (MCP sunucusu ve skill; yukarıdaki CLI
-`PATH` içinde olmalıdır):
-
-```text
-/plugin install rust-anything --marketplace erkamyaman/rust-anything
-```
-
-`setup`, bulduğu her ajana MCP sunucusunu ekler ve iş akışı skill'ini ajanın skill'leri okuduğu
-yere kurar. Diğer ayarlarınızı korur, tekrar çalıştırmak güvenlidir ve `--remove` yaptıklarını geri alır.
-Ardından ajanınıza örneğin şunları sorun:
-
-- *"Bu CLI'ı rust-anything ile baştan sona Rust'ta yeniden yaz ve aynı davrandığını kanıtla."*
-- *"Bu arama yavaş geliyor. rust-anything ile profilini çıkar ve sıcak döngüyü Rust'a taşı."*
-- *"`src/parser/`'ın rust-anything ile Rust'a geçişini planla; ilk birimi port et ve kanıtla."*
-- *"`rust/text-rs` içindeki Rust portunu orijinaline karşı benchmark'la ve yayınlamaya değer mi söyle."*
-
-### Desteklenen ajanlar
-
-| Ajan | `rust-anything setup` şunları ekler |
-| --- | --- |
-| Claude Code | `~/.claude.json` içinde MCP sunucusu, `~/.claude/skills/` içinde skill |
-| Codex | `~/.codex/config.toml` içinde MCP sunucusu, `~/.codex/skills/` içinde skill |
-| Cursor | `~/.cursor/mcp.json` içinde MCP sunucusu |
-| Gemini CLI | `~/.gemini/settings.json` içinde MCP sunucusu |
-| OpenCode | `~/.config/opencode/opencode.json` içinde MCP sunucusu (`mcp.servers`), `~/.config/opencode/skills/` içinde skill |
-| Diğer herhangi bir MCP istemcisi | `rust-anything mcp`'yi elle stdio sunucusu olarak ekleyin (bkz. [Kurulum](install.md#install)) |
-
-Var olan bir dosyayı değiştirmeden önce `setup` yanına bir kopyasını kaydeder (`<file>.rust-anything.bak`).
-
-OpenCode'u elle bağlamak için sunucuyu `~/.config/opencode/opencode.json` içine koyun (`command`
-argv'nin tamamıdır) ve [`skills/rust-anything/`](../skills/rust-anything) klasörünü
-`~/.config/opencode/skills/rust-anything/` içine kopyalayın:
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "rust-anything": { "type": "local", "command": ["rust-anything", "mcp"] }
-    }
-  }
-}
-```
-
-Ya da adımları kendiniz çalıştırın:
-
-```sh
-rust-anything profile . -- node bench.mjs              # sıcak olan ne, onu kim çağırıyor
-rust-anything bridge . src/fuzzy.ts --batch fuzzyScore:text
-# src/port.rs'i yazın (ya da ajanınıza yazdırın), ardından:
-rust-anything record rust/fuzzy-rs && rust-anything build rust/fuzzy-rs
-rust-anything diff rust/fuzzy-rs                       # kaydedilen her vaka eşleşmeli
-rust-anything bench rust/fuzzy-rs                      # daha mı hızlı? karar söyler
-rust-anything gate rust/fuzzy-rs                       # bitti demek, bunun geçmesi demek
-```
-
-rust-anything kodu çevirmez: Rust'ı kodlama ajanınız (Claude Code, Codex, Cursor, OpenCode, ...) ya da siz
-yazarsınız. rust-anything, bir ajanın güvenilir biçimde tahmin edemeyeceği şeyleri sağlar: zamanın
-nereye gittiğini, önce neyin ve hangi sırayla port edileceğini, kodun geri kalanının Rust'ı API'si
-değişmeden çağırabilmesi için bir köprüyü (bridge), portun eşleşmesi gereken davranışın tam halini,
-onu yayına almanın güvenli bir yolunu ve bir portun ne zaman bittiğini söyleyen bir gate'i.
-
-Aynı çıktı yetmez. Uygulamanın dışarı gönderdiklerini de kaydedin; iki kez e-posta atan bir yeniden yazım başarısız olur:
-
-<p align="center">
-  <img src="assets/effects.gif" alt="--effects smtp ile app record, her kayıt için bir hoş geldin e-postası kaydediyor; aynı çıktıyı basan ama iki kez e-posta atan bir yeniden yazımda app replay 0/2 vakanın geçtiğini, efektlerde başarısız olduğunu bildiriyor ve rapor fazladan e-postayı gösteriyor." width="820">
-  <br>
-  <sub><code>app record --effects</code> ve <code>app replay</code>'in gerçek bir çalıştırması. Bkz. <a href="whole-apps.md#side-effects-email-webhooks-and-databases">Yan etkiler</a>.</sub>
-</p>
-
-## Diller
-
-| Dil | Birim | Köprü | Kaydeden ve yeniden oynatan |
-| --- | --- | --- | --- |
-| TypeScript/JavaScript | klasör veya dosya | üretilmiş bir binary wire ile napi-rs veya wasm-bindgen; sınıflar ve async dahil | `.ts` kaynaklarını çalıştıran Node |
-| Python | paket veya modül | PyO3 (abi3), doğrudan dönüşüm, tipli exception'lar | orijinali import eden Python |
-| C | `.c` dosyası | orijinal adlarla `extern "C"` fonksiyonlar ve bir header | paylaşımlı kütüphane olarak derlenmiş orijinal, ctypes üzerinden çağrılır, vaka başına bir fork |
-| Go | paket | orijinal API'ye sahip bir pakette tipli cgo çağrıları ve üretilmiş bir binary wire | kendi modülü olarak derlenen, üretilmiş bir Go sürücüsü |
-| Ruby | modül fonksiyonlarından oluşan dosya veya klasör | orijinal modüllerin altında bir magnus eklentisi | üretilmiş bir Ruby sürücüsü |
-| Java | `public static` metotlardan oluşan paket | orijinal metotlara sahip wrapper sınıflarda tipli JNI ve üretilmiş bir binary wire | üretilmiş bir reflection sürücüsü |
-| Kotlin | üst düzey fonksiyonlar ve `@JvmStatic` metotlardan oluşan Gradle modülü | Java köprüsü: derlenmiş Kotlin statiklerini çağıran Java wrapper sınıflarında tipli JNI | Kotlin kaynakları `kotlinc` ile derlenen, üretilmiş bir reflection sürücüsü |
-| PHP | üst düzey fonksiyonlardan oluşan dosya veya klasör (`public static` metotlar PHP'de kalır) | fonksiyonları orijinal parametreleriyle yeniden tanımlayan bir dosyada, `ext-ffi` üzerinden bir JSON dağıtıcı | üretilmiş bir PHP sürücüsü; CLI'lar ve sunucular (`php -S`) için `app record`, `app replay` ve front door ile tüm uygulamalar |
-| PowerShell | `param()` bloklu fonksiyonlardan oluşan `.psm1` modülü veya `.ps1` betiği (`Export-ModuleMember`'a göre dışa aktarılır) | her fonksiyonu orijinal `param()` bloğuyla yeniden tanımlayan bir `.ps1` içinde, yükleme anında Reflection.Emit ile tanımlanan, P/Invoke üzerinden bir JSON dağıtıcı | üretilmiş bir `pwsh` sürücüsü (PowerShell 7.4+) |
-| C# | `public static` metotlardan oluşan dosya veya klasör | orijinal metotlara sahip `<namespace>.Rust` sınıflarında, P/Invoke üzerinden bir JSON dağıtıcı | projenin kaynaklarıyla birlikte `dotnet build` ile derlenen, üretilmiş bir reflection sürücüsü; CLI'lar ve ASP.NET sunucuları (`dotnet <app>.dll`) için `app record`, `app replay` ve front door ile tüm uygulamalar |
-
-C, PHP, C# ve PowerShell hariç her dil batch sınıfları da alır (`--batch`): öğeler köprüyü bir kez geçer ve Rust'ta kalır,
-her çağrı tüm çekirdeklerde hepsinin üzerinden çalışır.
-
-Dil, repodan tespit edilir (`go.mod`, `pom.xml`, `build.gradle`/`build.gradle.kts`, bir `.csproj` veya `.sln`,
-`pyproject.toml`, `Gemfile`, `composer.json`, `package.json`, aksi halde en yaygın kaynak dosyalar);
-`.kt` kaynakları olan ve `.java` kaynağı bulunmayan bir Gradle modülü Kotlin'dir, karma modüller Java
-olarak kalır. `--lang` bunu geçersiz kılar. Tipler kaynaktan gelir: TS tipleri, Python type hint'leri, C, Go,
-Java, Kotlin ve C# imzaları, Ruby YARD etiketleri, PHP tipleri ve phpdoc; sayı olarak kullanılan tipsiz parametreler
-sayı olarak çıkarılır.
-[Tipler](types.md) her birinin portta neye dönüştüğünü ve hangilerinin bir fonksiyonu kendi dilinde tuttuğunu
-listeler.
-
-PHP için `analyze` bir PHP uygulamasını planlar (Composer paketleri ve PSR-4 autoloading,
-gevşek karşılaştırma ve tam sayı taşmasının float'a dönüşmesi gibi riskler, crate'lere eşlenmiş
-Composer paketleri) ve bir PHP CLI'ı ya da sunucusu kaydedilebilir, yeniden oynatılabilir ve bir
-Rust front door'unun arkasına konabilir. Bir birimin skaler, dize, liste ve ilişkisel dizi
-parametrelerine sahip üst düzey fonksiyonları PHP'nin FFI eklentisi (`php` `ext-ffi` ile, CLI için
-varsayılan olarak açıktır) üzerinden köprülenir: `diff` geçtiğinde, orijinal dosya yerine üretilen
-`php/<crate>.php` dosyasını dahil edin. Her çağrı JSON olarak sınırı geçer, yaklaşık 1 µs, bu
-nedenle `bench` küçük fonksiyonları PHP'den daha yavaş gösterir; PHP için henüz `shadow` yoktur
-([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
-
-C# da aynı şekilde çalışır: `analyze` `.csproj` projelerini ve NuGet paketlerini okur
-(crate'lere eşlenmiş olarak), `using` yönergelerini klasörlere çözümler ve C#'ın farklı yaptığı
-şeyleri işaretler (`decimal`, `dynamic`, LINQ'in ertelenmiş sorguları, `Task`, `lock`, reflection).
-Bir C# CLI'ı veya ASP.NET sunucusu kaydedilebilir, yeniden oynatılabilir ve bir Rust front door'unun
-arkasına konabilir. Bir birimin skaler, dize, dizi, liste, sözlük ve record ya da düz sınıf
-parametrelerine sahip public static metotları P/Invoke üzerinden köprülenir (kaydetmek ve
-karşılaştırmak için `PATH`'te `dotnet`): `diff` geçtiğinde, üretilen `<namespace>.Rust` sınıflarını
-çağırın ya da `using` ile onlara takma ad verin. Her çağrı JSON olarak sınırı geçer, yaklaşık 1-3 µs,
-bu nedenle `bench` küçük metotları .NET'ten daha yavaş gösterir; C# için henüz `shadow` yoktur
-([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
-
-## Daha fazlası
-
-- [Nasıl çalışır](how-it-works.md): döngü, `bridge` ve `analyze` neye karar verir, hot path'ler, neyi yakalayamaz, gerçek bir portun neler gerektirdiği ve orijinale ayak uydurmak (`map`)
-- [Bir portu paket olarak yayınlamak](packaging.md): maturin wheel'leri ve napi-rs'in platforma özel npm paketleri, bunları derleyen CI ile birlikte
-- [Tüm uygulamayı port etmek](whole-apps.md): sunucular, CLI'lar ve kütüphaneler, front door'dan `app lift`'e kadar
-- [Tipler](types.md): her dilin tiplerinin `port.rs` içinde neye dönüştüğü ve bir tipin neden reddedildiği
-- [Örnekler ve vaka çalışmaları](examples.md): x18n ve altı dilde gerçek kod
-- [Gerçek dünya portları](real-world.md): json-server, Fuse.js, vercel/ms, benchmark'larıyla
-- [Kurulum, güncelleme ve geliştirme](install.md): tüm kurulum yöntemleri, Windows ve kaynaktan derleme
-- [SSS](faq.md) · [Durum](STATUS.md) · [MCP araçları](tools.md)
+> [!TIP]
+> **Ajanlar:** kurulum adımları, tüm komutlar ve port etme akışı için [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) dosyasını okuyun.
 
 ## Sponsorlar
 
-<p align="center">
-  <a href="https://github.com/erkamyaman/rust-anything">rust-anything</a> ücretsiz ve açık kaynaklıdır. İşinize yarıyorsa lütfen sponsor olmayı düşünün.<br>
-  Desteğiniz geliştirmenin sürmesini sağlar.
-</p>
+<p align="center">Türkiye'de 🇹🇷 <a href="https://github.com/erkamyaman">erKam Yaman</a> tarafından yapıldı<br>
+Rust Anything ücretsiz ve açık kaynaktır. İşinize yarıyorsa, sponsor olmanız geliştirmeyi sürdürür.</p>
 
 <p align="center">
   <a href="https://coderabbit.link/er-kam">
@@ -318,14 +83,6 @@ bu nedenle `bench` küçük metotları .NET'ten daha yavaş gösterir; C# için 
   <a href="https://github.com/sponsors/erkamyaman"><img src="https://img.shields.io/badge/Sponsor_olun-%E2%9D%A4-db61a2?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor olun"></a>
   <a href="https://buymeacoffee.com/erkamyaman"><img src="https://img.shields.io/badge/Buy_me_a_coffee-%E2%98%95-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
 </p>
-
-## Katkıda bulunma
-
-Issue'lar ve pull request'ler memnuniyetle karşılanır; [CONTRIBUTING.md](../CONTRIBUTING.md) kurulumu,
-testlerin nereye gittiğini ve yeni bir dilin nasıl ekleneceğini anlatır. Tasarım kararları ve
-gerekçeleri [DECISIONS.md](../DECISIONS.md) içindedir. Gerçek portların vaka çalışmaları özellikle
-memnuniyetle karşılanır. Lütfen güvenlik sorunlarını gizli olarak bildirin ([SECURITY.md](../SECURITY.md))
-ve [davranış kurallarına](../CODE_OF_CONDUCT.md) göz atın.
 
 ## Lisans
 
