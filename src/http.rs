@@ -82,7 +82,8 @@ pub(crate) fn merge_config(
     if opts.http == Some(false) {
         ensure!(
             !asked,
-            "--no-http cannot be combined with --http, --port, --arg, --pace or --ready-timeout"
+            "--no-http cannot be combined with --http, --port, --arg, --pace, --ready-timeout or \
+             --ready"
         );
         return Ok(None);
     }
@@ -107,25 +108,9 @@ pub(crate) fn merge_config(
         config.ready_secs = (secs > 0).then_some(secs);
     }
     if let Some(request) = opts.ready_request {
-        check_ready_request(request)?;
-        config.ready_request = Some(request.to_string());
+        config.ready_request = Some(check_ready_request(request)?.to_string());
     }
     Ok(Some(config))
-}
-
-/// `--ready` is `/path` (a `GET`) or `METHOD /path`. A value a server can never answer 2xx to,
-/// such as `health` or `get /health`, is refused here, before a server is started, instead of
-/// failing only after the whole `--ready-timeout`.
-fn check_ready_request(request: &str) -> Result<()> {
-    let (method, path) = request.split_once(' ').unwrap_or(("GET", request));
-    ensure!(
-        !method.is_empty()
-            && method.bytes().all(|b| b.is_ascii_uppercase())
-            && path.starts_with('/')
-            && !path.contains(char::is_whitespace),
-        "--ready takes `METHOD /path`, e.g. `GET /health`, not `{request}`"
-    );
-    Ok(())
 }
 
 pub(crate) const FILES_DIR: &str = "files";
@@ -435,6 +420,30 @@ fn connect(addr: SocketAddr, req: &Req, host: &str, timeout: Duration) -> Result
     Ok(stream)
 }
 
+/// Refuses a `--ready` value that is not `METHOD /path`: sent as it is, the server answers 4xx and the
+/// run waits out the whole timeout for an error that does not name the flag.
+pub(crate) fn check_ready_request(request: &str) -> Result<&str> {
+    // A bare path is `GET`, the same fallback `wait_ready` uses: `--ready /health` is a request.
+    let (method, path) = request
+        .split_once(' ')
+        .map_or(("GET", request), |(m, p)| (m, p));
+    if method.is_empty() || !method.chars().all(|c| c.is_ascii_uppercase()) {
+        bail!("`--ready {request}`: `{method}` is not an uppercase HTTP method, e.g. `GET`");
+    }
+    let path = path.trim();
+    if !path.starts_with('/') {
+        bail!("`--ready {request}`: `{path}` is not a path; it has to start with `/`");
+    }
+    if path.contains(char::is_whitespace) {
+        // `GET /health extra` would put a second space in the request line; a strict server rejects
+        // every probe, and the run waits out the whole timeout.
+        bail!(
+            "`--ready {request}`: `{path}` has a space in it; a request is a method and one path"
+        );
+    }
+    Ok(request)
+}
+
 /// Polls `request` (`"GET /health"`) until it answers 2xx, so a server that opens its port
 /// before its routes work is not recorded against half-initialised responses.
 fn wait_ready(addr: SocketAddr, request: &str, deadline: Option<Instant>) -> Result<()> {
@@ -443,7 +452,9 @@ fn wait_ready(addr: SocketAddr, request: &str, deadline: Option<Instant>) -> Res
         .map_or(("GET", request), |(m, p)| (m, p));
     let probe = Req {
         method: method.to_string(),
-        path: path.to_string(),
+        // A trailing or doubled space would go into the request line as it is, and a strict server
+        // answers 400 to a probe the user did not mean to send.
+        path: path.trim().to_string(),
         headers: BTreeMap::new(),
         body: None,
         body_base64: None,
@@ -2272,51 +2283,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ready_request_needs_an_uppercase_method_and_a_path_from_root() {
-        for good in ["/health", "GET /health", "HEAD /", "POST /api/ready?x=1"] {
-            assert!(check_ready_request(good).is_ok(), "{good}");
-        }
-        for bad in [
-            "health",
-            "get /health",
-            "GET health",
-            "GET  /health",
-            " /health",
-            "GET /health ",
-            "GET /health extra",
-            "GÉT /h",
-        ] {
-            let err = check_ready_request(bad).unwrap_err().to_string();
-            assert_eq!(
-                err,
-                format!("--ready takes `METHOD /path`, e.g. `GET /health`, not `{bad}`")
-            );
-        }
-        let opts = |ready_request| RecordOptions {
-            repo: Path::new("."),
-            run: &[],
-            inputs: None,
-            normalize: &[],
-            name: None,
-            traps: false,
-            timeout_secs: None,
-            http: None,
-            server_args: None,
-            fresh: None,
-            pace_ms: None,
-            port: None,
-            float_tolerance: None,
-            float_files: &[],
-            effects: None,
-            ready_secs: None,
-            ready_request: Some(ready_request),
-        };
-        assert!(merge_config(None, &opts("get /health")).is_err());
-        let good = merge_config(None, &opts("GET /health")).unwrap().unwrap();
-        assert_eq!(good.ready_request.as_deref(), Some("GET /health"));
-    }
-
-    #[test]
     fn a_ready_timeout_is_saved_kept_and_reset() {
         let opts = |ready_secs| RecordOptions {
             repo: Path::new("."),
@@ -3217,5 +3183,79 @@ mod tests {
             .expect("empty command must fail after retrying past busy port");
         assert!(err.downcast_ref::<PortInUse>().is_none(), "{err:#}");
         assert!(format!("{err:#}").contains("empty command"), "{err:#}");
+    }
+
+    fn opts(ready: &'static str) -> RecordOptions<'static> {
+        RecordOptions {
+            repo: Path::new("."),
+            run: &[],
+            inputs: None,
+            normalize: &[],
+            name: None,
+            traps: false,
+            timeout_secs: None,
+            http: Some(true),
+            server_args: None,
+            fresh: None,
+            pace_ms: None,
+            port: None,
+            float_tolerance: None,
+            float_files: &[],
+            effects: None,
+            ready_secs: None,
+            ready_request: Some(ready),
+        }
+    }
+
+    #[test]
+    fn the_record_path_refuses_a_bad_ready_request() {
+        // The wiring matters as much as the rule: `record` merges through `merge_config`, and that
+        // is where the message has to come from.
+        let bad = merge_config(None, &opts("get /health"))
+            .unwrap_err()
+            .to_string();
+        assert!(bad.contains("uppercase HTTP method"), "{bad}");
+        let good = merge_config(None, &opts("GET /health")).unwrap().unwrap();
+        assert_eq!(good.ready_request.as_deref(), Some("GET /health"));
+    }
+
+    #[test]
+    fn a_ready_request_names_a_method_and_a_path() {
+        // Issue #657: an unchecked value is saved and sent as is, so the server answers 4xx and the
+        // run waits out the whole timeout for an error that does not name the flag.
+        assert_eq!(check_ready_request("GET /health").unwrap(), "GET /health");
+        assert_eq!(check_ready_request("HEAD /").unwrap(), "HEAD /");
+        assert_eq!(
+            check_ready_request("GET /health ").unwrap(),
+            "GET /health ",
+            "trailing space is not a mistake worth refusing"
+        );
+
+        assert_eq!(
+            check_ready_request("/health").unwrap(),
+            "/health",
+            "a bare path is GET, as `wait_ready` reads it"
+        );
+        let bad_path = check_ready_request("health").unwrap_err().to_string();
+        assert!(bad_path.contains("has to start with `/`"), "{bad_path}");
+        let lowercase = check_ready_request("get /health").unwrap_err().to_string();
+        assert!(
+            lowercase.contains("not an uppercase HTTP method"),
+            "{lowercase}"
+        );
+        let no_path = check_ready_request("GET health").unwrap_err().to_string();
+        assert!(no_path.contains("has to start with `/`"), "{no_path}");
+        let empty = check_ready_request("").unwrap_err().to_string();
+        assert!(empty.contains("has to start with `/`"), "{empty}");
+        let two_paths = check_ready_request("GET /health extra")
+            .unwrap_err()
+            .to_string();
+        assert!(two_paths.contains("has a space in it"), "{two_paths}");
+        // `" /health"` splits into an empty method, which `all()` would accept.
+        let blank_method = check_ready_request(" /health").unwrap_err().to_string();
+        assert!(
+            blank_method.contains("not an uppercase HTTP method"),
+            "{blank_method}"
+        );
     }
 }
