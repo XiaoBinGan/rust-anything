@@ -35,7 +35,7 @@
 
 <p align="center"><b><a href="#البدء-السريع">البدء السريع</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#البدء-السريع">Claude Code plugin</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">نقول حقيقية</a> · <a href="faq.md#faq">الأسئلة الشائعة</a><br>
 <sub><a href="#اللغات">اللغات</a> · <a href="how-it-works.md#how-it-works">كيف يعمل</a> · <a href="whole-apps.md#port-a-whole-app">تطبيقات كاملة</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-صُنع في تركيا 🇹🇷 بواسطة <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ ادعمني</a> · برعاية <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+صُنع في تركيا 🇹🇷 بواسطة <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ ادعمني</a> · برعاية <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">جديد في 2.0: <a href="real-world.md#prettier">Prettier بعد نقله إلى Rust</a>. أسرع 19 مرة · 15,861 من أصل 17,224 تشغيلًا مسجلًا تعمل بالكامل في Rust · وكلها مطابقة بايتًا ببايت</p>
 
@@ -284,6 +284,15 @@ rust-anything gate rust/fuzzy-rs                       # النجاح يعني: 
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="راعي الشركات: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>

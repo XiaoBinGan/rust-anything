@@ -31,7 +31,7 @@
 
 <p align="center"><b><a href="#жылдам-бастау">Жылдам бастау</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#жылдам-бастау">Claude Code plugin</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">Нақты порттар</a> · <a href="faq.md#faq">Жиі қойылатын сұрақтар</a><br>
 <sub><a href="#тілдер">Тілдер</a> · <a href="how-it-works.md#how-it-works">Қалай жұмыс істейді</a> · <a href="whole-apps.md#port-a-whole-app">Бүкіл қолданбалар</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Түркияда 🇹🇷 <a href="https://github.com/erkamyaman">erKam Yaman</a> жасаған · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Маған демеуші болыңыз</a> · Демеуші: <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+Түркияда 🇹🇷 <a href="https://github.com/erkamyaman">erKam Yaman</a> жасаған · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Маған демеуші болыңыз</a> · Демеуші: <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">2.0 нұсқасындағы жаңалық: <a href="real-world.md#prettier">Prettier, Rust-қа портталды</a>. 19x жылдамырақ · 17,224 жазылған іске қосудың 15,861-сі толығымен Rust-та · барлығы байтпа-байт бірдей</p>
 
@@ -277,6 +277,15 @@ reflection). C# CLI немесе ASP.NET серверін жазып алуға,
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="Компания демеушісі: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>

@@ -31,7 +31,7 @@ Não traduz código: o seu agente de programação (ou você) escreve o Rust, e 
 
 <p align="center"><b><a href="#início-rápido">Início rápido</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#início-rápido">Claude Code plugin</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">Migrações reais</a> · <a href="faq.md#faq">Perguntas frequentes</a><br>
 <sub><a href="#linguagens">Linguagens</a> · <a href="how-it-works.md#how-it-works">Como funciona</a> · <a href="whole-apps.md#port-a-whole-app">Aplicações completas</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Feito na Turquia 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Patrocine-me</a> · Patrocinado por <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+Feito na Turquia 🇹🇷 por <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Patrocine-me</a> · Patrocinado por <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">Novo na 2.0: <a href="real-world.md#prettier">Prettier, migrado para Rust</a>. 19x mais rápido · 15,861 de 17,224 execuções registadas inteiramente em Rust · todas idênticas byte a byte</p>
 
@@ -233,6 +233,15 @@ O C# funciona da mesma forma: `analyze` lê projetos `.csproj` e os respetivos p
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="Patrocinador empresarial: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>

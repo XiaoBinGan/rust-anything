@@ -32,7 +32,7 @@ e ogni pezzo viene verificato rispetto a quella registrazione prima di proseguir
 
 <p align="center"><b><a href="#avvio-rapido">Installa</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Release</a> · <a href="#avvio-rapido">Plugin per Claude Code</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">Registro MCP</a> · <a href="real-world.md">Port reali</a> · <a href="faq.md#faq">FAQ</a><br>
 <sub><a href="#linguaggi">Linguaggi</a> · <a href="how-it-works.md#how-it-works">Come funziona</a> · <a href="whole-apps.md#port-a-whole-app">Applicazioni intere</a> · <a href="#sponsor">Sponsor</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Fatto in Türkiye 🇹🇷 da <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Sostienimi</a> · Con il supporto di <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+Fatto in Türkiye 🇹🇷 da <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Sostienimi</a> · Con il supporto di <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">Novità della 2.0: <a href="real-world.md#prettier">Prettier, portato in Rust</a>. 19 volte più veloce · 15.861 delle 17.224 esecuzioni registrate interamente in Rust · ogni esecuzione identica byte per byte</p>
 
@@ -338,6 +338,15 @@ per C# ([issue #200](https://github.com/erkamyaman/rust-anything/issues/200)).
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="Sponsor aziendale: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>

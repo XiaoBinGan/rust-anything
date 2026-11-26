@@ -1,11 +1,13 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 const OUT = join(dirname(new URL(import.meta.url).pathname), '..', 'docs', 'assets', 'sponsors')
 const MAINTAINER = 'erkamyaman'
 
 const COMPANIES = [{ login: 'coderabbitai', name: 'CodeRabbit', url: 'coderabbit.ai' }]
+
+const DOMAIN = { name: 'Atak Domain', logo: join(OUT, 'atak-domain.svg'), dark: { '#352e76': '#ffffff', '#404040': '#e6e6e6' } }
 
 const KNOWN_ORDER = ['santoshyadavdev', 'hakansoyturk', 'aliyilmazco', 'ashley-hunter', 'fatihuzuntas', 'bugrcvi']
 const rank = (login) => {
@@ -67,6 +69,23 @@ function companySvg(c, img, t) {
 `
 }
 
+function domainSvg(d, name, t) {
+  const W = 800
+  const H = 150
+  const h = 72
+  let logo = readFileSync(d.logo, 'utf8')
+  if (name === 'dark') for (const [from, to] of Object.entries(d.dark)) logo = logo.replaceAll(from, to)
+  const [, , vw, vh] = logo.match(/viewBox="([^"]+)"/)[1].split(/\s+/).map(Number)
+  const w = (h * vw) / vh
+  logo = logo.replace(/^<svg /, `<svg x="${(W - w) / 2}" y="${46}" width="${w}" height="${h}" `)
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" ${FONT}>
+  <text x="${W / 2}" y="26" text-anchor="middle" font-size="13" font-weight="600" letter-spacing="1.5" fill="${t.muted}">DOMAIN SPONSOR</text>
+  <title>${esc(d.name)}</title>
+  ${logo.trim()}
+</svg>
+`
+}
+
 function peopleSvg(people, imgs, t) {
   const W = 800
   const R = 36
@@ -101,5 +120,6 @@ const peopleImgs = await Promise.all(people.map((p) => avatar(p.login, 160)))
 for (const [name, t] of Object.entries(THEMES)) {
   writeFileSync(join(OUT, `company-${name}.svg`), companySvg(COMPANIES[0], companyImgs[0], t))
   writeFileSync(join(OUT, `sponsors-${name}.svg`), peopleSvg(people, peopleImgs, t))
+  writeFileSync(join(OUT, `domain-${name}.svg`), domainSvg(DOMAIN, name, t))
 }
 console.log(`sponsors: ${COMPANIES.length} company, ${people.length} individual -> ${OUT}`)

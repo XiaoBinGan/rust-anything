@@ -35,7 +35,7 @@
 
 <p align="center"><b><a href="#quick-start">ติดตั้ง</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Releases</a> · <a href="#quick-start">ปลั๊กอิน Claude Code</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">การพอร์ตในโลกจริง</a> · <a href="faq.md#faq">คำถามที่พบบ่อย (FAQ)</a><br>
 <sub><a href="#languages">ภาษาที่รองรับ</a> · <a href="how-it-works.md#how-it-works">การทำงาน</a> · <a href="whole-apps.md#port-a-whole-app">พอร์ตทั้งแอป</a> · <a href="#sponsors">ผู้สนับสนุน</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Made in Türkiye 🇹🇷 by <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ สนับสนุนฉัน</a> · สนับสนุนโดย <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+Made in Türkiye 🇹🇷 by <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ สนับสนุนฉัน</a> · สนับสนุนโดย <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">ผลงานอื่นของผู้พัฒนา: <a href="https://github.com/erkamyaman/safe-anything"><b>safe-anything</b></a> เครื่องมือสแกนความปลอดภัยด้วย Rust 100% สำหรับโค้ด คีย์ความลับ การตั้งค่า และระบบ AI agent ตรวจหาช่องโหว่ก่อนที่จะมีคนอื่นพบ</p>
 
@@ -266,6 +266,15 @@ rust-anything ไม่ได้ทำหน้าที่แปลภาษา
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="Company sponsor: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>

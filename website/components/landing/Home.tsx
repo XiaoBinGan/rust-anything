@@ -94,6 +94,7 @@ const LANGS = [
 const TRENDSHIFT = ['daily', 'daily?language=Rust', 'weekly', 'weekly?language=Rust']
 
 const CODERABBIT = 'https://coderabbit.link/er-kam'
+const ATAK_DOMAIN = 'https://www.atakdomain.com/'
 
 const BENCH = [
   ['GET /posts', '11.1k / 10.8k', '27.3k / 23.9k', '19.7k / 20.4k', '115.0k / 110.7k'],
@@ -382,6 +383,10 @@ export default function Home({ hero, install, locale = 'en' }: { hero: React.Rea
                 <span className="who">CodeRabbit</span>
                 <span className="role">{m.companySponsor}</span>
               </span>
+            </a>
+            <a href={ATAK_DOMAIN} className="sponsor-company sponsor-logo">
+              <img className="only-light" src="/brands/atak-domain.svg" width={178} height={40} alt="Atak Domain" loading="lazy" />
+              <img className="only-dark" src="/brands/atak-domain-dark.svg" width={178} height={40} alt="Atak Domain" loading="lazy" />
             </a>
             <a className="btn btn-quiet" href="https://github.com/sponsors/erkamyaman">
               {m.becomeSponsor}

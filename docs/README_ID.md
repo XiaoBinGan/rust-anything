@@ -35,7 +35,7 @@ dan setiap potongan diperiksa terhadap rekaman itu sebelum lanjut. rust-anything
 
 <p align="center"><b><a href="#mulai-cepat">Instal</a></b> · <a href="https://github.com/erkamyaman/rust-anything/releases">Rilis</a> · <a href="#mulai-cepat">Plugin Claude Code</a> · <a href="https://registry.modelcontextprotocol.io/v0.1/servers?search=rust-anything">MCP Registry</a> · <a href="real-world.md">Port di dunia nyata</a> · <a href="faq.md#faq">FAQ</a><br>
 <sub><a href="#bahasa">Bahasa</a> · <a href="how-it-works.md#how-it-works">Cara kerjanya</a> · <a href="whole-apps.md#port-a-whole-app">Aplikasi utuh</a> · <a href="#sponsor">Sponsor</a> · <a href="../LICENSE-MIT">MIT / Apache-2.0</a></sub><br>
-Dibuat di Türkiye 🇹🇷 oleh <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Sponsori saya</a> · Disponsori oleh <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a></p>
+Dibuat di Türkiye 🇹🇷 oleh <a href="https://github.com/erkamyaman">erKam Yaman</a> · <a href="https://github.com/sponsors/erkamyaman">❤️ Sponsori saya</a> · Disponsori oleh <a href="https://coderabbit.link/er-kam"><img src="assets/brands/coderabbit.png" width="22" height="22" align="absmiddle" alt=""> <b>CodeRabbit</b></a> · <a href="https://www.atakdomain.com/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/atak-domain-dark.svg"><img src="assets/sponsors/atak-domain.svg" height="22" align="absmiddle" alt="Domain sponsor: Atak Domain"></picture></a></p>
 
 <p align="center">Proyek lain dari pembuatnya: <a href="https://github.com/erkamyaman/safe-anything"><b>safe-anything</b></a>, pemindai keamanan 100% Rust untuk kode, secret, konfigurasi, dan setup agen AI. Temukan celahnya sebelum orang lain menemukannya.</p>
 
@@ -368,6 +368,15 @@ apa pun: biarkan satu shell tetap terbuka dan kirimkan perintah ke sana (lihat [
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/company-dark.svg">
       <img src="assets/sponsors/company-light.svg" width="800" alt="Company sponsor: CodeRabbit">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.atakdomain.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/sponsors/domain-dark.svg">
+      <img src="assets/sponsors/domain-light.svg" width="800" alt="Domain sponsor: Atak Domain">
     </picture>
   </a>
 </p>
