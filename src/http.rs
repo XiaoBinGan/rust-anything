@@ -422,10 +422,10 @@ fn connect(addr: SocketAddr, req: &Req, host: &str, timeout: Duration) -> Result
 /// Refuses a `--ready` value that is not `METHOD /path`: sent as it is, the server answers 4xx and the
 /// run waits out the whole timeout for an error that does not name the flag.
 pub(crate) fn check_ready_request(request: &str) -> Result<&str> {
-    let (method, path) = request.split_once(' ').unwrap_or(("", request));
-    if method.is_empty() {
-        bail!("`--ready {request}`: give a method and a path, e.g. `--ready \"GET /health\"`");
-    }
+    // A bare path is `GET`, the same fallback `wait_ready` uses: `--ready /health` is a request.
+    let (method, path) = request
+        .split_once(' ')
+        .map_or(("GET", request), |(m, p)| (m, p));
     if !method.chars().all(|c| c.is_ascii_uppercase()) {
         bail!("`--ready {request}`: `{method}` is not an uppercase HTTP method, e.g. `GET`");
     }
@@ -3228,19 +3228,21 @@ mod ready_request_tests {
             "trailing space is not a mistake worth refusing"
         );
 
-        let no_method = check_ready_request("health").unwrap_err().to_string();
-        assert!(
-            no_method.contains("give a method and a path"),
-            "{no_method}"
+        assert_eq!(
+            check_ready_request("/health").unwrap(),
+            "/health",
+            "a bare path is GET, as `wait_ready` reads it"
         );
+        let bad_path = check_ready_request("health").unwrap_err().to_string();
+        assert!(bad_path.contains("has to start with `/`"), "{bad_path}");
         let lowercase = check_ready_request("get /health").unwrap_err().to_string();
         assert!(
             lowercase.contains("not an uppercase HTTP method"),
             "{lowercase}"
         );
-        let no_slash = check_ready_request("GET health").unwrap_err().to_string();
-        assert!(no_slash.contains("has to start with `/`"), "{no_slash}");
+        let no_path = check_ready_request("GET health").unwrap_err().to_string();
+        assert!(no_path.contains("has to start with `/`"), "{no_path}");
         let empty = check_ready_request("").unwrap_err().to_string();
-        assert!(empty.contains("give a method and a path"), "{empty}");
+        assert!(empty.contains("has to start with `/`"), "{empty}");
     }
 }
