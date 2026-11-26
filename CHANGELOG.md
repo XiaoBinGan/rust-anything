@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `docs/whole-apps.md` says six of the seven `app` commands are MCP tools and that `app shadow` is
+  CLI only, instead of "All six are MCP tools too" (#672, #674 by @XiaoBinGan).
 - The table of saved settings in `docs/whole-apps.md` names the flag that clears `http`
   (`--no-http`), `http.port` (`--port 0`), `http.args` (`--no-args`) and `http.fresh` / `fresh`
   (`--no-fresh`) instead of saying they cannot be cleared
