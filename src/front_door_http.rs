@@ -305,6 +305,7 @@ impl Original {{
                 // A framework opens the port before its routes answer, so the configured request
                 // has to succeed: an open port alone is not ready.
                 let (method, path) = request.split_once(' ').unwrap_or((\"GET\", request));
+                let path = path.trim();
                 let method = reqwest::Method::from_bytes(method.as_bytes())
                     .unwrap_or(reqwest::Method::GET);
                 let url = format!(\"http://127.0.0.1:{{port}}{{path}}\");
