@@ -278,21 +278,22 @@ rebuild, since `app front-door` never overwrites an existing `rust/app`.
 | `timeout_secs` | `--timeout` | Replaces if passed; keeps saved (default `30`) otherwise |
 | `normalize` | `--normalize NAME` | Merges (appends new built-in normalizer names) |
 | `normalizers` | `--normalize NAME=REGEX` | Merges (inserts or updates by `NAME`) |
-| `http` | `--http`, `--port`, `--arg`, `--pace`, `--ready-timeout`, `--ready` | Sticky once set; `--no-http` drops it and records as a CLI again |
-| `http.port` | `--port` | Replaces if passed; `--port 0` removes it; keeps saved otherwise |
-| `http.args` | `--arg` | Replaces if passed; `--no-args` clears it; keeps saved otherwise |
+| `http` | `--http`, `--port`, `--arg`, `--pace`, `--ready-timeout`, `--ready` | Sticky once set; `--no-http` drops a saved server recording |
+| `http.port` | `--port` | Replaces if passed; keeps saved otherwise |
+| `http.args` | `--arg` | Replaces if passed; keeps saved otherwise; `--no-args` clears it |
 | `http.pace_ms` | `--pace` | Replaces if passed; `--pace 0` clears it |
 | `http.ready_secs` | `--ready-timeout` | Replaces if passed; `--ready-timeout 0` restores the default `60` |
-| `http.ready_request` | `--ready` | Replaces if passed; keeps saved (cannot be cleared via CLI) |
-| `http.fresh` / `fresh` | `--fresh` | Replaces if passed; `--no-fresh` clears it and removes the saved snapshot; keeps saved otherwise |
+| `http.ready_request` | `--ready` | Replaces if passed; keeps saved otherwise |
+| `http.fresh` / `fresh` | `--fresh` | Replaces if passed; keeps saved otherwise; `--no-fresh` clears it and removes the snapshot |
 | `effects` | `--effects`, `--effect-env`, `--effect-response`, `--db-reset`, `--db-dump` | Merges with saved sink and database settings; `--effect-response` replaces the saved rules |
 | `float_tolerance` | `--float-tolerance` | Replaces if passed; `--float-tolerance 0` clears it |
 | `float_files` | `--float-file` | Replaces if passed; keeps saved otherwise |
 | `unordered` | *(written by `app record`)* | Recomputed from `order` noise; tells `replay` to compare those lines in any order |
 | `recorded` | *(written by `app record`)* | Tracks generated case names so stale cases are cleaned up on the next `app record` |
 
-All six are MCP tools too: `app_record`, `app_replay`, `app_front_door`, `app_wire`,
-`app_lift` and `app_drift`.
+Six of the seven are MCP tools: `app_record`, `app_replay`, `app_front_door`, `app_wire`, `app_lift`
+and `app_drift`. `app shadow` is CLI only: it holds a proxy open in front of two servers, so a call has
+nothing to return until the session ends.
 
 ### Keep up with the original
 
