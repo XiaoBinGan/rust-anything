@@ -107,7 +107,7 @@ pub(crate) fn merge_config(
         config.ready_secs = (secs > 0).then_some(secs);
     }
     if let Some(request) = opts.ready_request {
-        config.ready_request = Some(request.to_string());
+        config.ready_request = Some(check_ready_request(request)?.to_string());
     }
     Ok(Some(config))
 }
@@ -417,6 +417,23 @@ fn connect(addr: SocketAddr, req: &Req, host: &str, timeout: Duration) -> Result
     stream.write_all(head.as_bytes())?;
     stream.write_all(body)?;
     Ok(stream)
+}
+
+/// Refuses a `--ready` value that is not `METHOD /path`: sent as it is, the server answers 4xx and the
+/// run waits out the whole timeout for an error that does not name the flag.
+pub(crate) fn check_ready_request(request: &str) -> Result<&str> {
+    let (method, path) = request.split_once(' ').unwrap_or(("", request));
+    if method.is_empty() {
+        bail!("`--ready {request}`: give a method and a path, e.g. `--ready \"GET /health\"`");
+    }
+    if !method.chars().all(|c| c.is_ascii_uppercase()) {
+        bail!("`--ready {request}`: `{method}` is not an uppercase HTTP method, e.g. `GET`");
+    }
+    let path = path.trim();
+    if !path.starts_with('/') {
+        bail!("`--ready {request}`: `{path}` is not a path; it has to start with `/`");
+    }
+    Ok(request)
 }
 
 /// Polls `request` (`"GET /health"`) until it answers 2xx, so a server that opens its port
@@ -3156,5 +3173,74 @@ mod tests {
             .expect("empty command must fail after retrying past busy port");
         assert!(err.downcast_ref::<PortInUse>().is_none(), "{err:#}");
         assert!(format!("{err:#}").contains("empty command"), "{err:#}");
+    }
+}
+
+#[cfg(test)]
+mod ready_request_tests {
+    use super::{check_ready_request, merge_config};
+    use crate::app::RecordOptions;
+    use std::path::Path;
+
+    fn opts(ready: &'static str) -> RecordOptions<'static> {
+        RecordOptions {
+            repo: Path::new("."),
+            run: &[],
+            inputs: None,
+            normalize: &[],
+            name: None,
+            traps: false,
+            timeout_secs: None,
+            http: Some(true),
+            server_args: None,
+            fresh: None,
+            pace_ms: None,
+            port: None,
+            float_tolerance: None,
+            float_files: &[],
+            effects: None,
+            ready_secs: None,
+            ready_request: Some(ready),
+        }
+    }
+
+    #[test]
+    fn the_record_path_refuses_a_bad_ready_request() {
+        // The wiring matters as much as the rule: `record` merges through `merge_config`, and that
+        // is where the message has to come from.
+        let bad = merge_config(None, &opts("get /health"))
+            .unwrap_err()
+            .to_string();
+        assert!(bad.contains("uppercase HTTP method"), "{bad}");
+        let good = merge_config(None, &opts("GET /health")).unwrap().unwrap();
+        assert_eq!(good.ready_request.as_deref(), Some("GET /health"));
+    }
+
+    #[test]
+    fn a_ready_request_names_a_method_and_a_path() {
+        // Issue #657: an unchecked value is saved and sent as is, so the server answers 4xx and the
+        // run waits out the whole timeout for an error that does not name the flag.
+        assert_eq!(check_ready_request("GET /health").unwrap(), "GET /health");
+        assert_eq!(check_ready_request("HEAD /").unwrap(), "HEAD /");
+        assert_eq!(
+            check_ready_request("GET /health ").unwrap(),
+            "GET /health ",
+            "trailing space is not a mistake worth refusing"
+        );
+
+        let no_method = check_ready_request("health").unwrap_err().to_string();
+        assert!(
+            no_method.contains("give a method and a path"),
+            "{no_method}"
+        );
+        let lowercase = check_ready_request("get /health").unwrap_err().to_string();
+        assert!(
+            lowercase.contains("not an uppercase HTTP method"),
+            "{lowercase}"
+        );
+        let no_slash = check_ready_request("GET health").unwrap_err().to_string();
+        assert!(no_slash.contains("has to start with `/`"), "{no_slash}");
+        let empty = check_ready_request("").unwrap_err().to_string();
+        assert!(empty.contains("give a method and a path"), "{empty}");
     }
 }
