@@ -64,8 +64,9 @@ Shell scripts (bash) are not a supported language. PowerShell modules and script
 functions can be bridged, recorded and switched on like any other unit, but that pays off only for
 functions whose own logic is slow, since each call into Rust costs about 0.1 ms or more of
 PowerShell-side encoding. `profile` does not run PowerShell workloads yet, but for Node and Python
-workloads it already reports the time spent waiting on child processes ([issue #208](https://github.com/erkamyaman/rust-anything/issues/208)),
-so it can tell when start-up is the cost. The code around the calls
+workloads it already reports the time spent waiting on child processes, by call site
+([issue #208](https://github.com/erkamyaman/rust-anything/issues/208)). That wait covers start-up
+and the child's own work together; it does not tell the two apart. The code around the calls
 (an Electron main process, a Node or Python tool runner) can be ported as usual.
 
 **My code is numeric; will the floats match exactly?** Often not: operation order, fused
