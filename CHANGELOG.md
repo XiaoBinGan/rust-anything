@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The MCP `app_record` tool refuses a `ready`, `name`, `db_reset` or `db_dump` that is not a string,
+  with `` `ready` must be a string, not 42 ``, instead of recording as if it had not been given
+  (#671, #673 by @XiaoBinGan).
 - The table of saved settings in `docs/whole-apps.md` names the flag that clears `http`
   (`--no-http`), `http.port` (`--port 0`), `http.args` (`--no-args`) and `http.fresh` / `fresh`
   (`--no-fresh`) instead of saying they cannot be cleared
