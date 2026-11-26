@@ -240,7 +240,7 @@ pub(crate) struct Normalizers {
 }
 
 impl Normalizers {
-    fn new(config: &Config) -> Result<Self> {
+    pub(crate) fn new(config: &Config) -> Result<Self> {
         let mut sources: Vec<(&str, &str)> = Vec::new();
         let mut key_order = false;
         for name in &config.normalize {
@@ -1229,6 +1229,31 @@ fn find_examples(repo: &Path, names: &[String]) -> Vec<Case> {
     scan_examples(repo, |line, doc_dir| {
         parse_example(line, names, repo, doc_dir)
     })
+}
+
+/// The documented examples no recorded case runs, as the command line the docs show.
+pub(crate) fn unrecorded_examples(repo: &Path, config: &Config) -> Result<Vec<String>> {
+    if config.http.is_some() {
+        return crate::http::unrecorded_examples(repo);
+    }
+    let recorded: BTreeSet<String> = load_specs(&cases_dir(repo))?
+        .iter()
+        .map(|s| s.case.key())
+        .collect();
+    let mut seen = BTreeSet::new();
+    Ok(
+        find_examples(repo, &app_names(repo, &config.run, Some(&config.name)))
+            .into_iter()
+            .filter(|case| !recorded.contains(&case.key()) && seen.insert(case.key()))
+            .map(|case| {
+                std::iter::once(config.name.as_str())
+                    .chain(case.args.iter().map(String::as_str))
+                    .map(shell_quote)
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect(),
+    )
 }
 
 /// Shell lines in the repository's Markdown code blocks and `.sh` files, each given to `parse`
@@ -2419,6 +2444,105 @@ pub(crate) fn compare(
     })
 }
 
+/// Where `compare` found the outputs to part: the first changed line and the column where its
+/// literal text stops matching, or the first difference inside JSON; the channel is left to the
+/// caller.
+pub(crate) fn locate(
+    norm: &Normalizers,
+    expected: &[u8],
+    actual: &[u8],
+    binary: bool,
+    unordered: bool,
+) -> crate::mismatch::At {
+    use crate::mismatch::{At, text_at};
+    let (false, Ok(e), Ok(a)) = (
+        binary,
+        std::str::from_utf8(expected),
+        std::str::from_utf8(actual),
+    ) else {
+        return At {
+            expected_len: Some(expected.len()),
+            actual_len: Some(actual.len()),
+            ..At::new("binary")
+        };
+    };
+    let e = norm.canonical(&norm.apply(e));
+    let a = norm.canonical(&norm.apply(a));
+    let structured = |v: &serde_json::Value| v.is_object() || v.is_array();
+    if !unordered
+        && let (Ok(ej), Ok(aj)) = (
+            serde_json::from_str::<serde_json::Value>(&e),
+            serde_json::from_str::<serde_json::Value>(&a),
+        )
+        && structured(&ej)
+        && structured(&aj)
+    {
+        return crate::mismatch::locate_in(&ej, &aj);
+    }
+    let tol = norm.float_tolerance;
+    let (mut el, mut al) = (lines(&e), lines(&a));
+    if unordered {
+        el.sort_unstable();
+        al.sort_unstable();
+    }
+    let ops = diff_ops(&el, &al, |x, y| line_matches_within(x, y, tol));
+    let lengths = |at: At| At {
+        expected_len: Some(e.chars().count()),
+        actual_len: Some(a.chars().count()),
+        ..at
+    };
+    let changed = ops.iter().position(|op| !matches!(op, Op::Equal(..)));
+    let Some(first) = changed else {
+        let trail = |s: &str| s.ends_with('\n') || s.is_empty();
+        let kind = if trail(&e) == trail(&a) {
+            "text"
+        } else {
+            "trailing newline"
+        };
+        return lengths(At {
+            line: Some(el.len().max(1)),
+            ..At::new(kind)
+        });
+    };
+    match ops[first] {
+        Op::Delete(i) => {
+            let insert = ops[first..]
+                .iter()
+                .take_while(|op| !matches!(op, Op::Equal(..)))
+                .find_map(|op| match op {
+                    Op::Insert(j) => Some(*j),
+                    _ => None,
+                });
+            let Some(j) = insert else {
+                return lengths(At {
+                    line: Some(i + 1),
+                    ..At::new("lines missing")
+                });
+            };
+            let literal = el[i].split("[..]").next().unwrap_or_default();
+            let at = text_at("text", literal, al[j]);
+            let column = at.column.unwrap_or(1);
+            let before: usize = el[..i].iter().map(|l| l.chars().count() + 1).sum();
+            let before_bytes: usize = el[..i].iter().map(|l| l.len() + 1).sum();
+            let offset = at.offset.unwrap_or_default();
+            lengths(At {
+                line: Some(i + 1),
+                column: Some(column),
+                offset: Some(crate::mismatch::Offset {
+                    char: before + offset.char,
+                    byte: before_bytes + offset.byte,
+                }),
+                context: at.context,
+                ..At::new("text")
+            })
+        }
+        Op::Insert(j) | Op::Equal(_, j) => lengths(At {
+            line: Some(j + 1),
+            ..At::new("lines added")
+        }),
+    }
+}
+
 pub struct ReplayOptions<'a> {
     pub repo: &'a Path,
     /// Command line of the build to test; the original's command when `None`.
@@ -2452,6 +2576,28 @@ pub(crate) fn only_case<T>(
 pub struct Problem {
     pub field: String,
     pub detail: String,
+    /// Where the output first differs.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub at: Option<crate::mismatch::At>,
+}
+
+impl Problem {
+    pub fn new(field: impl Into<String>, detail: impl Into<String>) -> Problem {
+        Problem {
+            field: field.into(),
+            detail: detail.into(),
+            at: None,
+        }
+    }
+
+    /// With the first difference, its channel the field when it has none.
+    pub fn at(mut self, mut at: crate::mismatch::At) -> Problem {
+        if at.channel.is_empty() {
+            at.channel.clone_from(&self.field);
+        }
+        self.at = Some(at);
+        self
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -2481,6 +2627,9 @@ pub struct ReplayOutcome {
     pub failures: Vec<Failure>,
     pub fallback: Option<Fallback>,
     pub report: PathBuf,
+    /// The distinct differences among the failing cases, most cases first.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<crate::mismatch::Group>,
 }
 
 fn check(
@@ -2507,10 +2656,24 @@ fn check(
             Expect::Killed => "killed by a signal".to_string(),
             Expect::Skip => String::new(),
         };
-        problems.push(Problem {
-            field: "status".to_string(),
-            detail: format!("expected {expected}, got {}\n", run.status),
-        });
+        let short = |s: &str| s.trim_start_matches("exit code ").to_string();
+        let kind = match &spec.status {
+            Expect::Failed => "non-zero".to_string(),
+            Expect::Killed => "killed".to_string(),
+            _ => short(&expected),
+        } + "→"
+            + &match run.status {
+                Status::Killed => "killed".to_string(),
+                Status::Timeout => "timeout".to_string(),
+                Status::Code(c) => c.to_string(),
+            };
+        problems.push(
+            Problem::new(
+                "status",
+                format!("expected {expected}, got {}\n", run.status),
+            )
+            .at(crate::mismatch::At::new(&kind)),
+        );
     }
     let no_effects = Vec::new();
     for (field, expected, actual) in [
@@ -2522,19 +2685,17 @@ fn check(
             run.effects.as_ref().unwrap_or(&no_effects),
         ),
     ] {
+        let unordered = norm.unordered(&spec.name, field);
         if let Some(expected) = expected
-            && let Some(detail) = compare(
+            && let Some(detail) = compare(norm, expected, actual, spec.binary, unordered)
+        {
+            problems.push(Problem::new(field, detail).at(locate(
                 norm,
                 expected,
                 actual,
                 spec.binary,
-                norm.unordered(&spec.name, field),
-            )
-        {
-            problems.push(Problem {
-                field: field.to_string(),
-                detail,
-            });
+                unordered,
+            )));
         }
     }
     if let Some(expected) = &spec.removed
@@ -2546,33 +2707,45 @@ fn check(
                 .map(|p| format!("  {}\n", p.display()))
                 .collect()
         };
-        problems.push(Problem {
-            field: "removed files".to_string(),
-            detail: format!(
-                "expected removed:\n{}got removed:\n{}",
-                list(expected),
-                list(&run.removed)
-            ),
-        });
+        problems.push(
+            Problem::new(
+                "removed files",
+                format!(
+                    "expected removed:\n{}got removed:\n{}",
+                    list(expected),
+                    list(&run.removed)
+                ),
+            )
+            .at(crate::mismatch::At {
+                expected_len: Some(expected.len()),
+                actual_len: Some(run.removed.len()),
+                ..crate::mismatch::At::new("value")
+            }),
+        );
     }
     if let Some(out_dir) = &spec.out_dir {
         for (path, expected) in read_files(out_dir) {
             let field = format!("file {}", path.display());
             match run.files.get(&path) {
-                None => problems.push(Problem {
-                    field,
-                    detail: "not written\n".to_string(),
-                }),
+                None => problems.push(
+                    Problem::new(field, "not written\n")
+                        .at(crate::mismatch::At::new("not written")),
+                ),
                 Some(actual) => {
                     let unordered = norm.unordered(&spec.name, &field);
-                    let detail = match norm.float_files.get(&path) {
-                        Some(&width) => {
+                    let width = norm.float_files.get(&path).copied();
+                    let detail = match width {
+                        Some(width) => {
                             compare_floats(&expected, actual, width, norm.float_tolerance)
                         }
                         None => compare(norm, &expected, actual, false, unordered),
                     };
                     if let Some(detail) = detail {
-                        problems.push(Problem { field, detail });
+                        let at = match width {
+                            Some(_) => crate::mismatch::At::new("value"),
+                            None => locate(norm, &expected, actual, false, unordered),
+                        };
+                        problems.push(Problem::new(field, detail).at(at));
                     }
                 }
             }
@@ -2587,7 +2760,7 @@ pub(crate) fn report_markdown(outcome: &ReplayOutcome) -> String {
 
 /// The report with the per-run sandbox paths replaced, so two replays of the same build write the
 /// same file and CI can commit it and fail on `git diff --exit-code`.
-fn stable_paths(text: &str) -> String {
+pub(crate) fn stable_paths(text: &str) -> String {
     static SANDBOX: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     let tmp = std::env::temp_dir();
     let tmp = tmp.to_string_lossy();
@@ -2631,6 +2804,23 @@ fn report_body(outcome: &ReplayOutcome) -> String {
         out += "Every case matches.\n";
         return out;
     }
+    if !outcome.groups.is_empty() {
+        out += "## Distinct differences\n\n| Cases | Id | Where | Kind |\n| ---: | --- | --- | --- |\n";
+        for g in &outcome.groups {
+            let place = match &g.path {
+                Some(path) => format!("{} {path}", g.channel),
+                None => g.channel.clone(),
+            };
+            out += &format!(
+                "| {} | `{}` | `{}` | {} |\n",
+                g.cases,
+                g.id,
+                place.replace('`', "'").replace('|', "\\|"),
+                g.kind
+            );
+        }
+        out += "\n";
+    }
     out += "## Failing cases\n";
     for f in &outcome.failures {
         out += &format!(
@@ -2643,6 +2833,9 @@ fn report_body(outcome: &ReplayOutcome) -> String {
                 .join(" ")
         );
         for p in &f.problems {
+            if let Some(at) = &p.at {
+                out += &format!("\n{}\n", at.describe().replace("```", "`\u{200b}``"));
+            }
             out += &format!(
                 "\n{}:\n\n```diff\n{}```\n",
                 p.field,
@@ -2687,6 +2880,39 @@ pub(crate) fn recorded_args(repo: &Path) -> Result<Vec<(Vec<String>, bool)>> {
 }
 
 pub fn replay(opts: &ReplayOptions) -> Result<ReplayOutcome> {
+    write_report(replay_unwritten(opts)?)
+}
+
+/// `replay` with `--redact`: the report is only ever written as shapes.
+pub fn replay_redacted(opts: &ReplayOptions) -> Result<ReplayOutcome> {
+    redacted(replay_unwritten(opts)?)
+}
+
+/// Writes the outcome's report (`replay-report.md`).
+pub(crate) fn write_report(outcome: ReplayOutcome) -> Result<ReplayOutcome> {
+    std::fs::write(&outcome.report, report_markdown(&outcome))
+        .with_context(|| format!("writing {}", outcome.report.display()))?;
+    Ok(outcome)
+}
+
+/// The outcome as shapes only (`--redact`), its report written again from them.
+pub fn redacted(mut outcome: ReplayOutcome) -> Result<ReplayOutcome> {
+    crate::mismatch::redact_replay(&mut outcome);
+    write_report(outcome)
+}
+
+/// The outcome with its distinct differences counted.
+pub(crate) fn grouped(mut outcome: ReplayOutcome) -> ReplayOutcome {
+    outcome.groups = crate::mismatch::replay_groups(&outcome.failures);
+    outcome
+}
+
+/// `replay` without writing the report, for a caller that must leave the last one in place.
+pub(crate) fn replay_unwritten(opts: &ReplayOptions) -> Result<ReplayOutcome> {
+    replay_cases(opts).map(grouped)
+}
+
+fn replay_cases(opts: &ReplayOptions) -> Result<ReplayOutcome> {
     check_timeout(opts.timeout_secs)?;
     let repo = opts
         .repo
@@ -2703,7 +2929,7 @@ pub fn replay(opts: &ReplayOptions) -> Result<ReplayOutcome> {
             "{} is a library: its cases replay through each unit's bindings, so --build does not apply",
             state.name
         );
-        return crate::library::replay(&repo, &state, opts.case);
+        return crate::library::replay_unwritten(&repo, &state, opts.case);
     }
     let command = match (opts.build, &config) {
         (Some(build), _) => shell_split(build)?,
@@ -2782,6 +3008,7 @@ pub fn replay(opts: &ReplayOptions) -> Result<ReplayOutcome> {
         failures: Vec::new(),
         fallback: None,
         report: dir.join(REPORT_FILE),
+        groups: Vec::new(),
     };
     let (mut reported, mut fell_back) = (false, Vec::new());
     for (spec, result) in specs.iter().zip(results) {
@@ -2813,8 +3040,6 @@ pub fn replay(opts: &ReplayOptions) -> Result<ReplayOutcome> {
             names: fell_back,
         });
     }
-    std::fs::write(&outcome.report, report_markdown(&outcome))
-        .with_context(|| format!("writing {}", outcome.report.display()))?;
     Ok(outcome)
 }
 
