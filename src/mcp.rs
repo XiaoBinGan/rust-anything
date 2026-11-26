@@ -1285,6 +1285,25 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_string_argument_is_none_when_it_is_absent_or_null() {
+        // Issue #671: an absent or `null` argument means "not given", so the tool keeps the saved value
+        // instead of failing; only a value of another type is refused.
+        assert_eq!(opt_string(&json!({}), "ready").unwrap(), None);
+        assert_eq!(
+            opt_string(&json!({ "ready": null }), "ready").unwrap(),
+            None
+        );
+        assert_eq!(
+            opt_string(&json!({ "ready": "GET /health" }), "ready").unwrap(),
+            Some("GET /health".to_string())
+        );
+        let err = opt_string(&json!({ "ready": 42 }), "ready")
+            .unwrap_err()
+            .to_string();
+        assert_eq!(err, "`ready` must be a string, not 42");
+    }
+
+    #[test]
     fn a_fuzz_time_too_large_for_a_duration_is_an_error_not_a_panic() {
         // The conversion used to be `Duration::from_secs_f64`, which panics above ~1.8e19 s.
         let err = call("fuzz", &json!({ "crate": ".", "time": 1e30 }))
