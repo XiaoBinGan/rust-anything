@@ -10,7 +10,7 @@
 <p align="center"><b>ئەپىڭىزنى Rust دا قايتا يېزىڭ، ھەمدە ئۇنىڭ يەنىلا ئوخشاش ئىشلەيدىغانلىقىنى ئىسپاتلاڭ.</b><br>
 ئۇ كودنى ئۆزى تەرجىمە قىلمايدۇ: Rust نى كود يېزىش ۋاكالەتچىڭىز (ياكى سىز) يازىدۇ، rust-anything ئۇنى ئەسلى نۇسخا بىلەن سېلىشتۇرۇپ تەكشۈرىدۇ.</p>
 
-<p align="center"><b>قوللانما:</b> <a href="https://rust-anything.com/ug">https://rust-anything.com/ug</a></p>
+<p align="center"><b>قوللانما:</b> <a href="https://rustanything.ai/ug">https://rustanything.ai/ug</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

@@ -11,7 +11,7 @@
 Puntalo sulla tua applicazione: registra ciò che fa l'originale, il tuo agente di programmazione scrive il Rust un pezzo alla volta,<br>
 e ogni pezzo viene verificato rispetto a quella registrazione prima di proseguire. Non traduce codice: dimostra la riscrittura.</p>
 
-<p align="center"><b>Documentazione:</b> <a href="https://rust-anything.com/">https://rust-anything.com/</a></p>
+<p align="center"><b>Documentazione:</b> <a href="https://rustanything.ai/">https://rustanything.ai/</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

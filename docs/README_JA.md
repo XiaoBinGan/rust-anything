@@ -10,7 +10,7 @@
 <p align="center"><b>アプリを Rust で書き直し、元と同じように動くことを証明する。</b><br>
 コードを自動翻訳するツールではありません。Rust はコーディングエージェント（またはあなた）が書き、rust-anything が元のプログラムと照合して検証します。</p>
 
-<p align="center"><b>ドキュメント:</b> <a href="https://rust-anything.com/ja">https://rust-anything.com/ja</a></p>
+<p align="center"><b>ドキュメント:</b> <a href="https://rustanything.ai/ja">https://rustanything.ai/ja</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

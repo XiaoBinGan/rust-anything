@@ -12,7 +12,7 @@
 <p align="center"><b>أعد كتابة تطبيقك بلغة Rust، وأثبت أنه ما زال يعمل بالطريقة نفسها.</b><br>
 هو لا يترجم الشيفرة: وكيل البرمجة لديك (أو أنت) يكتب Rust، ويتحقق rust-anything منه مقابل الأصل.</p>
 
-<p align="center"><b>التوثيق:</b> <a href="https://rust-anything.com/ar">https://rust-anything.com/ar</a></p>
+<p align="center"><b>التوثيق:</b> <a href="https://rustanything.ai/ar">https://rustanything.ai/ar</a></p>
 
 </div>
 

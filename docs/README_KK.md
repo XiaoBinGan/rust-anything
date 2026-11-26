@@ -10,7 +10,7 @@
 <p align="center"><b>Қолданбаңызды Rust тілінде қайта жазып, оның бұрынғыдай жұмыс істейтінін дәлелдеңіз.</b><br>
 Ол кодты өзі аудармайды: Rust-ты кодтау агентіңіз (немесе сіз) жазады, ал rust-anything оны түпнұсқамен тексереді.</p>
 
-<p align="center"><b>Құжаттама:</b> <a href="https://rust-anything.com/kk">https://rust-anything.com/kk</a></p>
+<p align="center"><b>Құжаттама:</b> <a href="https://rustanything.ai/kk">https://rustanything.ai/kk</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

@@ -521,7 +521,10 @@ impl Recorded {
                 }
             }
             serde_json::Value::Array(items) => items.iter().for_each(|v| self.add(v)),
-            serde_json::Value::Object(o) => o.values().for_each(|v| self.add(v)),
+            serde_json::Value::Object(o) => o
+                .iter()
+                .filter(|(k, _)| !matches!(k.as_str(), "error" | "error_type"))
+                .for_each(|(_, v)| self.add(v)),
             _ => {}
         }
     }
@@ -535,7 +538,10 @@ fn recorded_values(crate_dir: &Path) -> Option<Recorded> {
             continue;
         };
         for (key, value) in &case {
-            if !matches!(key.as_str(), "fn" | "class" | "module") {
+            if !matches!(
+                key.as_str(),
+                "fn" | "class" | "module" | "error" | "error_type"
+            ) {
                 recorded.add(value);
             }
         }
@@ -547,6 +553,8 @@ fn recorded_values(crate_dir: &Path) -> Option<Recorded> {
 /// out: a port that answers the recorded cases from a table passes `diff` without porting
 /// anything. Fails on `LITERALS_FAIL` or more, or on any read of the recording itself; fewer
 /// pass with their names. A literal on a line with `// recorded-literal: <reason>` is left out.
+/// Recorded error text is left out too: the runtime often writes it (`division by zero`), and the
+/// port has to reproduce it.
 pub fn literals_check(crate_dir: &Path, manifest: &Manifest) -> Option<Check> {
     let recorded = recorded_values(crate_dir)?;
     let original: String = source_files(manifest)
@@ -1464,6 +1472,36 @@ mod tests {
         for n in ["12345", "4294967299", "3.14159", "99999"] {
             assert!(!well_known(n), "{n}");
         }
+    }
+
+    #[test]
+    fn literals_leave_out_recorded_error_text() {
+        let dir = crate::app::temp_dir("gate-literals-errors").unwrap();
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(dir.join("words.py"), "def ratio(a, b):\n    return a / b\n").unwrap();
+        std::fs::write(
+            dir.join(CASES),
+            "{\"fn\":\"ratio\",\"args\":[1,0],\"error\":\"ZeroDivisionError: division by zero\",\"error_type\":\"ZeroDivisionError\"}\n\
+             {\"class\":\"Ratio\",\"ctor\":[0],\"calls\":[],\"results\":[{\"error\":\"OverflowError: stack is full\"}]}\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("src/port.rs"),
+            "pub fn ratio(a: f64, b: f64) -> Result<f64, String> {\n    if b == 0.0 { return Err(\"ZeroDivisionError: division by zero\".into()) }\n    if a > 1e9 { return Err(\"OverflowError: stack is full\".into()) }\n    Ok(a / b)\n}\n",
+        )
+        .unwrap();
+        let manifest: crate::bridge::Manifest = serde_json::from_value(serde_json::json!({
+            "schema": crate::bridge::SCHEMA,
+            "root": dir,
+            "unit": "words.py",
+            "crate_name": "demo",
+            "kind": "pyo3",
+            "exports": [],
+        }))
+        .unwrap();
+        let check = super::literals_check(&dir, &manifest).unwrap();
+        assert!(check.passed, "{check:?}");
+        assert_eq!(check.detail, "no recorded values written into the port");
     }
 
     #[test]

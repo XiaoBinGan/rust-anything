@@ -10,7 +10,7 @@
 <p align="center"><b>Перепишите своё приложение на Rust и докажите, что оно ведёт себя так же.</b><br>
 Он не переводит код: Rust пишет ваш агент для программирования (или вы), а rust-anything проверяет его по оригиналу.</p>
 
-<p align="center"><b>Документация:</b> <a href="https://rust-anything.com/ru">https://rust-anything.com/ru</a></p>
+<p align="center"><b>Документация:</b> <a href="https://rustanything.ai/ru">https://rustanything.ai/ru</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

@@ -10,7 +10,7 @@
 <p align="center"><b>앱을 Rust로 다시 작성하고, 여전히 똑같이 동작함을 증명하세요.</b><br>
 코드를 자동 번역하지 않습니다. Rust는 코딩 에이전트(또는 여러분)가 작성하고, rust-anything이 원본과 대조해 검증합니다.</p>
 
-<p align="center"><b>문서:</b> <a href="https://rust-anything.com/ko">https://rust-anything.com/ko</a></p>
+<p align="center"><b>문서:</b> <a href="https://rustanything.ai/ko">https://rustanything.ai/ko</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

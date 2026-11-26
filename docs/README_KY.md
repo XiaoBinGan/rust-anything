@@ -10,7 +10,7 @@
 <p align="center"><b>Колдонмоңузду Rust тилинде кайра жазып, анын мурункудай иштээрин далилдеңиз.</b><br>
 Ал кодду өзү которбойт: Rust'ту коддоо агентиңиз (же сиз) жазат, rust-anything аны түпнускага каршы текшерет.</p>
 
-<p align="center"><b>Документация:</b> <a href="https://rust-anything.com/ky">https://rust-anything.com/ky</a></p>
+<p align="center"><b>Документация:</b> <a href="https://rustanything.ai/ky">https://rustanything.ai/ky</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

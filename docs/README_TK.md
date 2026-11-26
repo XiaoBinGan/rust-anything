@@ -10,7 +10,7 @@
 <p align="center"><b>Programmaňyzy Rust-da täzeden ýazyň we onuň henizem öňküsi ýaly işleýändigini subut ediň.</b><br>
 Ol kody özi terjime etmeýär: Rust-y kodlaýyş agentiňiz (ýa-da siz) ýazýar, rust-anything bolsa ony asyl nusga bilen barlaýar.</p>
 
-<p align="center"><b>Resminamalar:</b> <a href="https://rust-anything.com/tk">https://rust-anything.com/tk</a></p>
+<p align="center"><b>Resminamalar:</b> <a href="https://rustanything.ai/tk">https://rustanything.ai/tk</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

@@ -10,7 +10,7 @@
 <p align="center"><b>अपने ऐप को Rust में दोबारा लिखें, और साबित करें कि वह अब भी ठीक वैसे ही चलता है।</b><br>
 यह कोड का अनुवाद नहीं करता: Rust आपका कोडिंग एजेंट (या आप) लिखते हैं, और rust-anything उसे मूल कोड से मिलाकर जाँचता है।</p>
 
-<p align="center"><b>दस्तावेज़:</b> <a href="https://rust-anything.com/hi">https://rust-anything.com/hi</a></p>
+<p align="center"><b>दस्तावेज़:</b> <a href="https://rustanything.ai/hi">https://rustanything.ai/hi</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

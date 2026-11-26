@@ -12,7 +12,7 @@
 <p align="center"><b>برنامه‌تان را به Rust بازنویسی کنید و ثابت کنید که هنوز دقیقاً مثل قبل رفتار می‌کند.</b><br>
 این ابزار کد را ترجمه نمی‌کند: عامل برنامه‌نویسی شما (یا خودتان) Rust را می‌نویسد، و rust-anything آن را با نسخهٔ اصلی مقایسه و راستی‌آزمایی می‌کند.</p>
 
-<p align="center"><b>مستندات:</b> <a href="https://rust-anything.com/fa">https://rust-anything.com/fa</a></p>
+<p align="center"><b>مستندات:</b> <a href="https://rustanything.ai/fa">https://rustanything.ai/fa</a></p>
 
 </div>
 

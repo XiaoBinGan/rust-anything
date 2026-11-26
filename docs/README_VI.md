@@ -10,7 +10,7 @@
 <p align="center"><b>Viết lại ứng dụng bằng Rust, và chứng minh nó vẫn hoạt động y như cũ.</b><br>
 Công cụ không tự dịch code: agent lập trình của bạn (hoặc chính bạn) viết Rust, còn rust-anything kiểm tra nó với bản gốc.</p>
 
-<p align="center"><b>Tài liệu:</b> <a href="https://rust-anything.com/">https://rust-anything.com/</a></p>
+<p align="center"><b>Tài liệu:</b> <a href="https://rustanything.ai/">https://rustanything.ai/</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

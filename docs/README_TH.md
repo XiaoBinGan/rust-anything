@@ -11,7 +11,7 @@
 เพียงชี้เครื่องมือไปที่แอปของคุณ: ระบบจะบันทึกสิ่งที่แอปเดิมทำ จากนั้น coding agent ของคุณจะเขียนโค้ด Rust ทีละส่วน<br>
 และทุกส่วนจะถูกตรวจสอบเทียบกับสิ่งที่บันทึกไว้ก่อนจะข้ามไปทำส่วนถัดไป มันไม่ได้แค่แปลโค้ด แต่มันพิสูจน์การเขียนใหม่</p>
 
-<p align="center"><b>เอกสารคู่มือ:</b> <a href="https://rust-anything.com/">https://rust-anything.com/</a></p>
+<p align="center"><b>เอกสารคู่มือ:</b> <a href="https://rustanything.ai/">https://rustanything.ai/</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

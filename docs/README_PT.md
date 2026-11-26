@@ -10,7 +10,7 @@
 <p align="center"><b>Reescreva a sua aplicação em Rust e prove que continua a comportar-se da mesma forma.</b><br>
 Não traduz código: o seu agente de programação (ou você) escreve o Rust, e o rust-anything verifica-o contra o original.</p>
 
-<p align="center"><b>Documentação:</b> <a href="https://rust-anything.com/pt">https://rust-anything.com/pt</a></p>
+<p align="center"><b>Documentação:</b> <a href="https://rustanything.ai/pt">https://rustanything.ai/pt</a></p>
 
 <p align="center">
   <img src="https://img.shields.io/github/languages/top/erkamyaman/rust-anything?logo=rust&label=Rust&color=CE422B" alt="Rust share of the code">

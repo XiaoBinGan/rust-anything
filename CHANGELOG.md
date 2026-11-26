@@ -7,6 +7,9 @@
   503. The request is saved with the cases and used by `app replay`, `app shadow` and the front
   door's own start of the original, within `--ready-timeout`; the MCP `app_record` tool takes it
   as `ready` (#332, #656 by @XiaoBinGan).
+- `gate`'s literals check no longer counts recorded error text. A port has to reproduce the
+  original's error messages, and the runtime often writes them (`ZeroDivisionError: division by zero`),
+  so they were wrongly flagged as copied answers and failed the demo gate on macOS.
 
 ## 5.0.1 (2026-11-26)
 
