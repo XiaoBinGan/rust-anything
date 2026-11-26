@@ -426,7 +426,7 @@ pub(crate) fn check_ready_request(request: &str) -> Result<&str> {
     let (method, path) = request
         .split_once(' ')
         .map_or(("GET", request), |(m, p)| (m, p));
-    if !method.chars().all(|c| c.is_ascii_uppercase()) {
+    if method.is_empty() || !method.chars().all(|c| c.is_ascii_uppercase()) {
         bail!("`--ready {request}`: `{method}` is not an uppercase HTTP method, e.g. `GET`");
     }
     let path = path.trim();
@@ -444,7 +444,9 @@ fn wait_ready(addr: SocketAddr, request: &str, deadline: Option<Instant>) -> Res
         .map_or(("GET", request), |(m, p)| (m, p));
     let probe = Req {
         method: method.to_string(),
-        path: path.to_string(),
+        // A trailing or doubled space would go into the request line as it is, and a strict server
+        // answers 400 to a probe the user did not mean to send.
+        path: path.trim().to_string(),
         headers: BTreeMap::new(),
         body: None,
         body_base64: None,
@@ -3174,13 +3176,6 @@ mod tests {
         assert!(err.downcast_ref::<PortInUse>().is_none(), "{err:#}");
         assert!(format!("{err:#}").contains("empty command"), "{err:#}");
     }
-}
-
-#[cfg(test)]
-mod ready_request_tests {
-    use super::{check_ready_request, merge_config};
-    use crate::app::RecordOptions;
-    use std::path::Path;
 
     fn opts(ready: &'static str) -> RecordOptions<'static> {
         RecordOptions {
@@ -3244,5 +3239,11 @@ mod ready_request_tests {
         assert!(no_path.contains("has to start with `/`"), "{no_path}");
         let empty = check_ready_request("").unwrap_err().to_string();
         assert!(empty.contains("has to start with `/`"), "{empty}");
+        // `" /health"` splits into an empty method, which `all()` would accept.
+        let blank_method = check_ready_request(" /health").unwrap_err().to_string();
+        assert!(
+            blank_method.contains("not an uppercase HTTP method"),
+            "{blank_method}"
+        );
     }
 }
