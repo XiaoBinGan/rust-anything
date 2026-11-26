@@ -433,6 +433,13 @@ pub(crate) fn check_ready_request(request: &str) -> Result<&str> {
     if !path.starts_with('/') {
         bail!("`--ready {request}`: `{path}` is not a path; it has to start with `/`");
     }
+    if path.contains(char::is_whitespace) {
+        // `GET /health extra` would put a second space in the request line; a strict server rejects
+        // every probe, and the run waits out the whole timeout.
+        bail!(
+            "`--ready {request}`: `{path}` has a space in it; a request is a method and one path"
+        );
+    }
     Ok(request)
 }
 
@@ -3239,6 +3246,10 @@ mod tests {
         assert!(no_path.contains("has to start with `/`"), "{no_path}");
         let empty = check_ready_request("").unwrap_err().to_string();
         assert!(empty.contains("has to start with `/`"), "{empty}");
+        let two_paths = check_ready_request("GET /health extra")
+            .unwrap_err()
+            .to_string();
+        assert!(two_paths.contains("has a space in it"), "{two_paths}");
         // `" /health"` splits into an empty method, which `all()` would accept.
         let blank_method = check_ready_request(" /health").unwrap_err().to_string();
         assert!(
