@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `app record` no longer keeps a separator that two runs' random values happen to share: request
+  ids `k2Pq_x9Lm4` and `Zt7w_bR3nV` now record as `[..]` instead of `[..]_[..]`, so a replay whose id
+  has no `_` passes. A separator next to a part both runs agree on stays, so `id=[..]` keeps its
+  `=`. Recordings made before keep their wildcards until the next `app record`
+  (#680, #692 by @XiaoBinGan).
 - `docs/whole-apps.md` says six of the seven `app` commands are MCP tools and that `app shadow` is
   CLI only, instead of "All six are MCP tools too" (#672, #674 by @XiaoBinGan).
 - The MCP `app_record` tool refuses a `ready`, `name`, `db_reset` or `db_dump` that is neither a

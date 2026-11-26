@@ -1026,7 +1026,7 @@ pub(crate) fn merge_line(a: &str, b: &str) -> String {
     }
     let same: Vec<bool> = ta.iter().zip(&tb).map(|(x, y)| x == y).collect();
     let mut out = String::new();
-    for (i, (x, y)) in ta.iter().zip(&tb).enumerate() {
+    for (i, x) in ta.iter().enumerate() {
         if same[i] {
             // A separator two random values happen to share (`k2Pq_x9Lm4` and `Zt7w_bR3nV` both hold
             // `_`) is part of the noise, not of the format: keeping it makes a replay fail on an id
@@ -1040,7 +1040,6 @@ pub(crate) fn merge_line(a: &str, b: &str) -> String {
             }
             continue;
         }
-        let _ = y;
         if !out.ends_with("[..]") {
             out += "[..]";
         }
@@ -3374,6 +3373,7 @@ mod tests {
             "x-id: [..]"
         );
         assert_eq!(merge_line("abc_def", "abc_xyz"), "abc_[..]");
+        assert_eq!(merge_line("k2Pq_x9Lm4", "Zt7w_bR3nV"), "[..]");
         let merged = merge_noise("x 1\n", "x 2\n");
         assert!(text_matches_exact(&merged, "x 3\n"));
     }
