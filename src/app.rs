@@ -1024,11 +1024,24 @@ pub(crate) fn merge_line(a: &str, b: &str) -> String {
     if ta.len() != tb.len() {
         return "[..]".to_string();
     }
+    let same: Vec<bool> = ta.iter().zip(&tb).map(|(x, y)| x == y).collect();
     let mut out = String::new();
-    for (x, y) in ta.iter().zip(&tb) {
-        if x == y {
-            out += x;
-        } else if !out.ends_with("[..]") {
+    for (i, (x, y)) in ta.iter().zip(&tb).enumerate() {
+        if same[i] {
+            // A separator two random values happen to share (`k2Pq_x9Lm4` and `Zt7w_bR3nV` both hold
+            // `_`) is part of the noise, not of the format: keeping it makes a replay fail on an id
+            // that has no `_`. It stays when a neighbour still matches, so `id=[..]` keeps its `=`.
+            let fixed_neighbour = [i.checked_sub(1), Some(i + 1)]
+                .into_iter()
+                .flatten()
+                .any(|j| same.get(j) == Some(&true));
+            if x.chars().all(char::is_alphanumeric) || fixed_neighbour {
+                out += x;
+            }
+            continue;
+        }
+        let _ = y;
+        if !out.ends_with("[..]") {
             out += "[..]";
         }
     }
@@ -3354,6 +3367,13 @@ mod tests {
         );
         assert_eq!(merge_noise("a\nb\nz\n", "a\nc\nd\nz\n"), "a\n...\nz\n");
         assert_eq!(merge_line("id=ab12 ok", "id=cd34 ok"), "id=[..] ok");
+        // Issue #680: two random ids that happen to share a separator must not keep it, or a replay
+        // fails on an id without one.
+        assert_eq!(
+            merge_line("x-id: k2Pq_x9Lm4", "x-id: Zt7w_bR3nV"),
+            "x-id: [..]"
+        );
+        assert_eq!(merge_line("abc_def", "abc_xyz"), "abc_[..]");
         let merged = merge_noise("x 1\n", "x 2\n");
         assert!(text_matches_exact(&merged, "x 3\n"));
     }
