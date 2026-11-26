@@ -208,9 +208,7 @@ pub(crate) fn original_rs(
     ready_secs: u64,
     ready_request: Option<&str>,
 ) -> String {
-    let ready = ready_request.map_or("None".to_string(), |r| {
-        format!("Some({})", format!("{r:?}"))
-    });
+    let ready = ready_request.map_or("None".to_string(), |r| format!("Some({r:?})"));
     let words: Vec<String> = run.iter().map(|w| format!("{w:?}")).collect();
     let cwd = if in_root {
         ".current_dir(ROOT)
@@ -291,6 +289,11 @@ impl Original {{
             .spawn()
             .expect(\"starting the original\");
         let deadline = Instant::now().checked_add(Duration::from_secs({ready_secs}));
+        let client = reqwest::Client::builder()
+            .no_proxy()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .expect(\"an HTTP client\");
         loop {{
             // Each attempt gets only the budget that is left, so a connect that never answers
             // still honours `--ready-timeout`.
@@ -308,7 +311,7 @@ impl Original {{
                 left > Duration::ZERO
                     && tokio::time::timeout(
                         left,
-                        reqwest::Client::new().request(method, url).send(),
+                        client.request(method, url).send(),
                     )
                     .await
                     .is_ok_and(|r| r.is_ok_and(|resp| resp.status().is_success()))
@@ -336,11 +339,6 @@ impl Original {{
             }}
             tokio::time::sleep(Duration::from_millis(50)).await;
         }}
-        let client = reqwest::Client::builder()
-            .no_proxy()
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .expect(\"an HTTP client\");
         Original {{
             base: format!(\"http://127.0.0.1:{{port}}\"),
             client,
@@ -633,6 +631,23 @@ mod tests {
         }
         let versions = main_rs_versions();
         assert!(!versions[1].contains("nodelay") && !versions[1].contains("ListenerExt"));
+    }
+
+    #[test]
+    fn the_original_waits_for_the_saved_ready_request() {
+        let run = ["python3".to_string(), "server.py".to_string()];
+        let code = original_rs(&run, true, 60, Some("GET /health"));
+        assert!(
+            code.contains("const READY: Option<&str> = Some(\"GET /health\");"),
+            "{code}"
+        );
+        assert!(code.contains("resp.status().is_success()"), "{code}");
+        assert!(!code.contains("reqwest::Client::new()"), "{code}");
+        let plain = original_rs(&run, true, 60, None);
+        assert!(
+            plain.contains("const READY: Option<&str> = None;"),
+            "{plain}"
+        );
     }
 
     #[test]
