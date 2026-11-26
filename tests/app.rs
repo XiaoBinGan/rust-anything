@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use rust_anything::app::{self, RecordOptions, ReplayOptions};
+use rust_anything::drift::{self, DriftOptions};
 use rust_anything::front_door::{self, FrontDoorOptions, WireOptions};
 use rust_anything::lift::{self, LiftOptions};
 
@@ -1116,5 +1117,103 @@ fn app_record_and_replay_cli_reject_zero_timeout_without_touching_cases() {
 
     assert_eq!(std::fs::read_to_string(&cfg_path).unwrap(), original_cfg);
     assert_eq!(std::fs::read_to_string(&case_path).unwrap(), original_case);
+    std::fs::remove_dir_all(&repo).unwrap();
+}
+
+#[test]
+fn drift_finds_upstream_changes_and_new_examples() {
+    if !common::have("node") {
+        return;
+    }
+    let repo = fixture("ts");
+    std::fs::copy(repo.join("tcli.js"), repo.join("tcli_copy.js")).unwrap();
+    std::fs::write(
+        repo.join("inputs.jsonl"),
+        "{\"args\": [\"div\", \"1\", \"0\"]}\n",
+    )
+    .unwrap();
+    let inputs = repo.join("inputs.jsonl");
+    app::record(&RecordOptions {
+        repo: &repo,
+        run: &words("node tcli.js"),
+        inputs: Some(&inputs),
+        normalize: &[],
+        name: None,
+        traps: false,
+        timeout_secs: None,
+        http: None,
+        server_args: None,
+        fresh: None,
+        pace_ms: None,
+        port: None,
+        float_tolerance: None,
+        float_files: &[],
+        effects: None,
+        ready_secs: None,
+        ready_request: None,
+    })
+    .unwrap();
+    let replay_report = app::cases_dir(&repo).join(app::REPORT_FILE);
+    std::fs::write(&replay_report, "kept\n").unwrap();
+    let run = || {
+        drift::drift(&DriftOptions {
+            repo: &repo,
+            build: Some("node tcli_copy.js"),
+            timeout_secs: None,
+        })
+        .unwrap()
+    };
+
+    let clean = run();
+    assert!(!clean.drifted, "{clean:?}");
+    assert!(clean.changed.is_empty() && clean.failing.is_empty() && clean.new.is_empty());
+    assert_eq!(std::fs::read_to_string(&replay_report).unwrap(), "kept\n");
+    let report = std::fs::read_to_string(&clean.report).unwrap();
+    assert!(report.contains("No drift"), "{report}");
+    assert!(
+        !report.contains(&*std::env::temp_dir().to_string_lossy()),
+        "{report}"
+    );
+
+    add_bug(&repo, "tcli.js", None);
+    let changed = run();
+    assert!(changed.drifted);
+    assert_eq!(
+        changed
+            .changed
+            .iter()
+            .map(|c| c.case.as_str())
+            .collect::<Vec<_>>(),
+        ["input-001-div"],
+        "{changed:?}"
+    );
+    assert_eq!(
+        changed.changed[0].verdict,
+        "original changed, port still old"
+    );
+    assert!(changed.failing.is_empty(), "{changed:?}");
+    assert_eq!(std::fs::read_to_string(&replay_report).unwrap(), "kept\n");
+    let report = std::fs::read_to_string(&changed.report).unwrap();
+    assert!(
+        report.contains("input-001-div") && report.contains("divide by zero"),
+        "{report}"
+    );
+
+    let readme = std::fs::read_to_string(repo.join("README.md")).unwrap();
+    std::fs::write(
+        repo.join("README.md"),
+        readme.replace("$ tcli nope\n", "$ tcli nope\n$ tcli upper again\n"),
+    )
+    .unwrap();
+    let out = Command::new(env!("CARGO_BIN_EXE_rust-anything"))
+        .args(["app", "drift", ".", "--build", "node tcli_copy.js"])
+        .current_dir(&repo)
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(1), "{out:?}");
+    let printed = String::from_utf8_lossy(&out.stdout);
+    assert!(printed.contains("tcli upper again"), "{printed}");
+    let fresh = run();
+    assert_eq!(fresh.new, ["tcli upper again"], "{fresh:?}");
     std::fs::remove_dir_all(&repo).unwrap();
 }
