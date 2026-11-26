@@ -341,7 +341,11 @@ class H(BaseHTTPRequestHandler):
         ready = STATE["health"] >= 3
         if self.path == "/health":
             STATE["health"] += 1
-        if not ready:
+        if not ready and self.path == "/health":
+            # Not registered yet: a 404 must not count as ready either.
+            body = b'{"error":"no route"}'
+            self.send_response(404)
+        elif not ready:
             body = b'{"ready":false}'
             self.send_response(503)
         elif self.path == "/health":
