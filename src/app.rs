@@ -1714,8 +1714,13 @@ pub(crate) fn drop_stale(outcome: &mut RecordOutcome, previous: &[String]) -> Re
 }
 
 fn any_base_reads(read: &BTreeSet<PathBuf>, path: &Path, resolved: Option<&Path>) -> bool {
-    read.iter()
-        .any(|base| base.starts_with(path) || resolved.is_some_and(|r| base.starts_with(r)))
+    read.iter().any(|base| {
+        // A base inside the snapshot reads it, and so does an ancestor base (`.`, the case folder):
+        // the snapshot is reachable from it, so removing the folder would break that case.
+        base.starts_with(path)
+            || path.starts_with(base)
+            || resolved.is_some_and(|r| base.starts_with(r) || r.starts_with(base))
+    })
 }
 
 /// The `fs.base` folders that the cases in `dir` other than `going` read, each as written (joined
