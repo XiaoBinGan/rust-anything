@@ -106,7 +106,7 @@ rust-anything app replay . --build "target/release/mytool"
   Name the folder without a trailing slash: `--fresh data/` puts the folder's *contents* at the root
   of the working directory (`x.json`, not `data/x.json`), so a CLI that opens `data/x.json` does not
   find it. `--no-fresh` clears the list and removes the snapshot, unless a case that stays reads it
-  through `fs.base`.
+  through an `fs.base` that is inside it or above it (`.` and the case folder included).
 - Recording again replaces what the last recording wrote: a case it no longer writes (its input
   was removed or renamed, or the original timed out on it) is deleted, in `http/` too. The names
   are kept in `rust-anything.json` as `recorded`, so a case you added by hand is left in place,
