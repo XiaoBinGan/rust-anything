@@ -774,22 +774,13 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
     };
     let reasons = notes.clone();
     if unit.parse_errors > 0 {
-        notes.push(format!(
-            "{} parse errors: results for this unit are partial.",
-            unit.parse_errors
-        ));
+        notes.push(parse_error_note(unit.parse_errors));
     }
     if unknown_deps > 0 {
-        notes.push(format!(
-            "{unknown_deps} {} dependencies not in the crate table: check them by hand.",
-            ctx.lang.registry()
-        ));
+        notes.push(unknown_deps_note(unknown_deps, ctx.lang.registry()));
     }
     if unit.unresolved > 0 {
-        notes.push(format!(
-            "{} imports use aliases or virtual modules and were not followed.",
-            unit.unresolved
-        ));
+        notes.push(unresolved_note(unit.unresolved));
     }
     if cycle.len() > 1 {
         let others: Vec<&str> = cycle
@@ -1046,6 +1037,36 @@ fn dependency_reports(units: &[UnitReport], lang: Lang) -> Vec<DependencyReport>
             .then(b.used_by.cmp(&a.used_by))
     });
     out
+}
+
+/// `1 parse error` and `2 parse errors`: the count stays a number, the noun follows it.
+fn parse_error_note(errors: usize) -> String {
+    let noun = if errors == 1 {
+        "parse error"
+    } else {
+        "parse errors"
+    };
+    format!("{errors} {noun}: results for this unit are partial.")
+}
+
+/// `1 TypeScript dependency … check it` and `3 … dependencies … check them`.
+fn unknown_deps_note(deps: usize, registry: &str) -> String {
+    let (noun, verb) = if deps == 1 {
+        ("dependency", "check it")
+    } else {
+        ("dependencies", "check them")
+    };
+    format!("{deps} {registry} {noun} not in the crate table: {verb} by hand.")
+}
+
+/// `1 import uses … and was not followed` and `2 imports use … and were not followed`.
+fn unresolved_note(imports: usize) -> String {
+    let noun = if imports == 1 {
+        "import uses an alias or virtual module and was"
+    } else {
+        "imports use aliases or virtual modules and were"
+    };
+    format!("{imports} {noun} not followed.")
 }
 
 /// Readiness balanced with how much a port would gain.
@@ -1325,6 +1346,35 @@ mod tests {
         // Readiness is the other half, and the result stays in 0 to 100.
         assert_eq!(priority(100.0, 0.0, 0, 0, 0), 50);
         assert_eq!(priority(100.0, 100.0, 79, 1, 1), 100, "clamped at 100");
+    }
+
+    #[test]
+    fn a_note_count_of_one_reads_singular() {
+        // Issue #786's review: a note said "1 parse errors" and "1 … dependencies … them".
+        assert_eq!(
+            parse_error_note(1),
+            "1 parse error: results for this unit are partial."
+        );
+        assert_eq!(
+            parse_error_note(2),
+            "2 parse errors: results for this unit are partial."
+        );
+        assert_eq!(
+            unknown_deps_note(1, "npm"),
+            "1 npm dependency not in the crate table: check it by hand."
+        );
+        assert_eq!(
+            unknown_deps_note(3, "npm"),
+            "3 npm dependencies not in the crate table: check them by hand."
+        );
+        assert_eq!(
+            unresolved_note(1),
+            "1 import uses an alias or virtual module and was not followed."
+        );
+        assert_eq!(
+            unresolved_note(2),
+            "2 imports use aliases or virtual modules and were not followed."
+        );
     }
 
     #[test]
