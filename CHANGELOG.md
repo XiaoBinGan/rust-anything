@@ -7,6 +7,17 @@
   has no `_` passes. A separator next to a part both runs agree on stays, so `id=[..]` keeps its
   `=`. Recordings made before keep their wildcards until the next `app record`
   (#680, #692 by @XiaoBinGan).
+- `analyze` flags three more TS/JS risks: `Intl and locale-aware strings` (high: `Intl.*`,
+  `localeCompare`, `toLocaleLowerCase`, `normalize("NFC")`), `Date parsing` (high: `Date.parse`,
+  `new Date(string)`) and `URL and encoding APIs` (medium: `new URL`, `URLSearchParams`,
+  `TextEncoder`/`TextDecoder`, `atob`/`btoa`), each with guidance on the traps a port must match
+  (#678, #711 by @antont).
+- On Windows, a debug build of the CLI (`cargo run`, and every test that runs the binary) no
+  longer overflows the 1 MB main-thread stack before it parses its arguments: the CLI runs on a
+  thread with an 8 MB stack on every OS. Release builds were not affected (#710 by @Layfate).
+- `package` refuses `--bin` and `--original` on a napi, wasm or PyO3 crate, and `--fallback` on a
+  wasm or PyO3 crate, naming the flag and what it is for, before anything is written (also with
+  `--dry-run`). They used to be dropped silently (#701, #708 by @Papito084).
 - `gate` starts every check's detail in the same column, padding names to the longest one, so
   `error cases` and `known diffs` line up with the rest (#700, #707 by @Papito084).
 - `gate` says "the 1 function that fails in the original has a recorded failing case" instead of

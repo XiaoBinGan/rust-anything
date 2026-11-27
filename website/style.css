@@ -133,3 +133,8 @@ details > summary::-webkit-details-marker {
   display: inline-block;
   transform: scaleX(-1);
 }
+
+html,
+body {
+  overflow-x: clip;
+}

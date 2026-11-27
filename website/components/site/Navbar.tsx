@@ -152,7 +152,7 @@ export default function Navbar({
         </a>
         <a
           href="https://github.com/sponsors/erkamyaman"
-          className="group inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2 text-sm text-fg/80 hover:text-fg"
+          className="group hidden h-9 items-center justify-center gap-1.5 rounded-md px-2 text-sm text-fg/80 hover:text-fg sm:inline-flex"
           aria-label={ui.sponsor}
           title={ui.sponsor}
         >
