@@ -1714,13 +1714,15 @@ pub(crate) fn drop_stale(outcome: &mut RecordOutcome, previous: &[String]) -> Re
 }
 
 fn any_base_reads(read: &BTreeSet<PathBuf>, path: &Path, resolved: Option<&Path>) -> bool {
-    read.iter().any(|base| {
-        // A base inside the snapshot reads it, and so does an ancestor base (`.`, the case folder):
-        // the snapshot is reachable from it, so removing the folder would break that case.
-        base.starts_with(path)
-            || path.starts_with(base)
-            || resolved.is_some_and(|r| base.starts_with(r) || r.starts_with(base))
-    })
+    read.iter()
+        .any(|base| base.starts_with(path) || resolved.is_some_and(|r| base.starts_with(r)))
+}
+
+fn any_base_reaches(read: &BTreeSet<PathBuf>, path: &Path, resolved: Option<&Path>) -> bool {
+    any_base_reads(read, path, resolved)
+        || read
+            .iter()
+            .any(|base| path.starts_with(base) || resolved.is_some_and(|r| r.starts_with(base)))
 }
 
 /// The `fs.base` folders that the cases in `dir` other than `going` read, each as written (joined
@@ -2239,7 +2241,7 @@ pub fn record(opts: &RecordOptions) -> Result<RecordOutcome> {
         let fresh_dir = dir.join(FRESH_DIR);
         let retained_reads = bases_read(&dir, &BTreeSet::new());
         let resolved = fresh_dir.canonicalize().ok();
-        if !any_base_reads(&retained_reads, &fresh_dir, resolved.as_deref()) {
+        if !any_base_reaches(&retained_reads, &fresh_dir, resolved.as_deref()) {
             let _ = std::fs::remove_dir_all(&fresh_dir);
         }
     }

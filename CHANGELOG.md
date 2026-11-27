@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `app record --no-fresh` keeps the `files/` snapshot when a case that stays reads it through a
+  folder above it (`fs.base = "."`), not only through one inside it (#739, #749 by @XiaoBinGan).
 - `analyze`'s empty-plan warnings say "1 TypeScript/JavaScript file under ... is excluded" and
   "only 1 compiled or packaged file" for one file, instead of "1 ... files ... are"
   (#738, #746 by @brixtonpham).
