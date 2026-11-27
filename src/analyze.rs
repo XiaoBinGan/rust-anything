@@ -774,13 +774,28 @@ fn score(u: usize, ctx: &Ctx) -> UnitReport {
     };
     let reasons = notes.clone();
     if unit.parse_errors > 0 {
-        notes.push(parse_error_note(unit.parse_errors));
+        notes.push(format!(
+            "{}: results for this unit are partial.",
+            crate::report::count(unit.parse_errors, "parse error")
+        ));
     }
     if unknown_deps > 0 {
-        notes.push(unknown_deps_note(unknown_deps, ctx.lang.registry()));
+        let reg = ctx.lang.registry();
+        notes.push(if unknown_deps == 1 {
+            format!("1 {reg} dependency not in the crate table: check it by hand.")
+        } else {
+            format!("{unknown_deps} {reg} dependencies not in the crate table: check them by hand.")
+        });
     }
     if unit.unresolved > 0 {
-        notes.push(unresolved_note(unit.unresolved));
+        notes.push(if unit.unresolved == 1 {
+            "1 import uses aliases or virtual modules and was not followed.".into()
+        } else {
+            format!(
+                "{} imports use aliases or virtual modules and were not followed.",
+                unit.unresolved
+            )
+        });
     }
     if cycle.len() > 1 {
         let others: Vec<&str> = cycle
@@ -1037,36 +1052,6 @@ fn dependency_reports(units: &[UnitReport], lang: Lang) -> Vec<DependencyReport>
             .then(b.used_by.cmp(&a.used_by))
     });
     out
-}
-
-/// `1 parse error` and `2 parse errors`: the count stays a number, the noun follows it.
-fn parse_error_note(errors: usize) -> String {
-    let noun = if errors == 1 {
-        "parse error"
-    } else {
-        "parse errors"
-    };
-    format!("{errors} {noun}: results for this unit are partial.")
-}
-
-/// `1 TypeScript dependency … check it` and `3 … dependencies … check them`.
-fn unknown_deps_note(deps: usize, registry: &str) -> String {
-    let (noun, verb) = if deps == 1 {
-        ("dependency", "check it")
-    } else {
-        ("dependencies", "check them")
-    };
-    format!("{deps} {registry} {noun} not in the crate table: {verb} by hand.")
-}
-
-/// `1 import uses … and was not followed` and `2 imports use … and were not followed`.
-fn unresolved_note(imports: usize) -> String {
-    let noun = if imports == 1 {
-        "import uses an alias or virtual module and was"
-    } else {
-        "imports use aliases or virtual modules and were"
-    };
-    format!("{imports} {noun} not followed.")
 }
 
 /// Readiness balanced with how much a port would gain.
@@ -1345,35 +1330,10 @@ mod tests {
         assert_eq!(priority(0.0, 0.0, 0, 1, 1), 15, "a direct test wins");
         // Readiness is the other half, and the result stays in 0 to 100.
         assert_eq!(priority(100.0, 0.0, 0, 0, 0), 50);
-        assert_eq!(priority(100.0, 100.0, 79, 1, 1), 100, "clamped at 100");
-    }
-
-    #[test]
-    fn a_note_count_of_one_reads_singular() {
-        // Issue #786's review: a note said "1 parse errors" and "1 … dependencies … them".
         assert_eq!(
-            parse_error_note(1),
-            "1 parse error: results for this unit are partial."
-        );
-        assert_eq!(
-            parse_error_note(2),
-            "2 parse errors: results for this unit are partial."
-        );
-        assert_eq!(
-            unknown_deps_note(1, "npm"),
-            "1 npm dependency not in the crate table: check it by hand."
-        );
-        assert_eq!(
-            unknown_deps_note(3, "npm"),
-            "3 npm dependencies not in the crate table: check them by hand."
-        );
-        assert_eq!(
-            unresolved_note(1),
-            "1 import uses an alias or virtual module and was not followed."
-        );
-        assert_eq!(
-            unresolved_note(2),
-            "2 imports use aliases or virtual modules and were not followed."
+            priority(100.0, 100.0, 79, 1, 1),
+            100,
+            "99.875 rounds to 100"
         );
     }
 
@@ -1470,5 +1430,59 @@ mod tests {
     #[test]
     fn sorts_packages_topologically() {
         assert_eq!(topological(&[vec![1], vec![], vec![0, 1]]), [1, 0, 2]);
+    }
+
+    #[test]
+    fn unit_notes_use_singular_for_one_parse_error_unknown_dep_or_unresolved_import() {
+        let root = std::env::temp_dir().join(format!("ra-unit-notes-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("src/errs")).unwrap();
+        for (path, text) in [
+            ("package.json", r#"{"name":"t"}"#),
+            ("src/err1.ts", "export const x = (\n"),
+            ("src/errs/a.ts", "export const a = (\n"),
+            ("src/errs/b.ts", "export const b = (\n"),
+            (
+                "src/one.ts",
+                "import 'mystery-pkg-1'\nimport 'virtual:mod-1'\nexport const x = 1\n",
+            ),
+            (
+                "src/two.ts",
+                "import 'mystery-pkg-1'\nimport 'mystery-pkg-2'\nimport 'virtual:mod-1'\nimport 'virtual:mod-2'\nexport const y = 2\n",
+            ),
+        ] {
+            std::fs::write(root.join(path), text).unwrap();
+        }
+        let report = analyze(&root).unwrap();
+        std::fs::remove_dir_all(&root).unwrap();
+        for (id, expected) in [
+            (
+                "src/err1.ts",
+                "1 parse error: results for this unit are partial.",
+            ),
+            (
+                "src/errs/",
+                "2 parse errors: results for this unit are partial.",
+            ),
+            (
+                "src/one.ts",
+                "1 npm dependency not in the crate table: check it by hand.",
+            ),
+            (
+                "src/one.ts",
+                "1 import uses aliases or virtual modules and was not followed.",
+            ),
+            (
+                "src/two.ts",
+                "2 npm dependencies not in the crate table: check them by hand.",
+            ),
+            (
+                "src/two.ts",
+                "2 imports use aliases or virtual modules and were not followed.",
+            ),
+        ] {
+            let notes = &report.units.iter().find(|u| u.id == id).unwrap().notes;
+            assert!(notes.iter().any(|n| n == expected), "{id}: {notes:?}");
+        }
     }
 }
