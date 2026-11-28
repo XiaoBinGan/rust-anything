@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>文档:</b> <a href="https://rustanything.ai/zh">https://rustanything.ai/zh</a></p>
 
 <p align="center"><a href="translations.md">🌐 其他语言</a></p>
+
+<p align="center">要把代码库迁移到 Rust？我提供 Rust 迁移咨询： <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>本译文由社区维护，可能落后于<a href="../README.md">英文 README</a>。</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **代理：**阅读 [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt)，了解安装步骤、全部命令和移植流程。
 
 ## 工作原理
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/zh-dark.svg">
+    <img src="assets/how-it-works/zh-light.svg" width="880" alt="analyze 规划要移植什么；rust-anything go 建立桥接、录制、让你的代理移植并用 gate 检查，循环直到每个录制的用例都匹配；然后 enable 把调用切换到 Rust">
+  </picture>
+</p>
 
 **怎样才算完成。** 看行为，而不是你的测试。`record` 用生成的和给定的输入运行原始代码，保存每次调用的返回值、抛出的异常和打印的输出。`gate` 通过时移植才算完成：每个录制的用例都匹配，并且 fmt、clippy、`cargo test`、`unsafe` 检查、桩代码检查，以及检查录制的答案是否被直接粘贴进移植代码，全部通过。你自己的测试也会运行。
 

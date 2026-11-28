@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>दस्तावेज़:</b> <a href="https://rustanything.ai/hi">https://rustanything.ai/hi</a></p>
 
 <p align="center"><a href="translations.md">🌐 अन्य भाषाएँ</a></p>
+
+<p align="center">किसी कोडबेस को Rust में ले जा रहे हैं? मैं Rust माइग्रेशन के लिए कंसल्टिंग देता हूँ: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>इस अनुवाद का रखरखाव समुदाय करता है, इसलिए यह <a href="../README.md">अंग्रेज़ी README</a> से पीछे हो सकता है।</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **एजेंट:** इंस्टॉल के चरण, सभी कमांड और पोर्टिंग का तरीका जानने के लिए [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) पढ़ें।
 
 ## यह कैसे काम करता है
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/hi-dark.svg">
+    <img src="assets/how-it-works/hi-light.svg" width="880" alt="analyze योजना बनाता है कि क्या पोर्ट करना है; rust-anything go ब्रिज बनाता है, रिकॉर्ड करता है, आपके एजेंट से पोर्ट करवाता है और gate से जाँचता है, तब तक दोहराता है जब तक रिकॉर्ड किया गया हर केस मेल न खाए; फिर enable कॉल को Rust पर स्विच करता है">
+  </picture>
+</p>
 
 **किसे पूरा माना जाता है।** व्यवहार, आपके टेस्ट नहीं। `record` मूल कोड को जनरेट किए गए और दिए गए इनपुट पर चलाता है, और हर कॉल जो लौटाती है, फेंकती है और प्रिंट करती है, उसे सहेजता है। पोर्ट तब पूरा होता है जब `gate` पास हो जाए: रिकॉर्ड किया गया हर केस मेल खाता है, और fmt, clippy, `cargo test`, `unsafe` जाँच, स्टब जाँच और पोर्ट में चिपकाए गए रिकॉर्ड किए गए जवाबों की जाँच, सब पास होते हैं। आपके अपने टेस्ट भी चलते हैं।
 

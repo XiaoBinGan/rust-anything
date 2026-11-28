@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -30,6 +31,8 @@
 <p align="center"><b>التوثيق:</b> <a href="https://rustanything.ai/ar">https://rustanything.ai/ar</a></p>
 
 <p align="center"><a href="translations.md">🌐 لغات أخرى</a></p>
+
+<p align="center">تنقل قاعدة شيفرة إلى Rust؟ أقدّم استشارات لعمليات الترحيل إلى Rust: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>هذه الترجمة يحافظ عليها المجتمع، وقد تتأخر عن <a href="../README.md">README الإنجليزي</a>.</sub></p>
 
@@ -92,6 +95,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **للوكلاء:** اقرأ [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) لخطوات التثبيت وكل الأوامر وسير عمل النقل.
 
 ## كيف يعمل
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/ar-dark.svg">
+    <img src="assets/how-it-works/ar-light.svg" width="880" alt="يخطط analyze لما يجب نقله؛ ثم يبني rust-anything go الجسر ويسجّل ويترك وكيلك ينقل ويمرّر النقل على gate، ويكرر ذلك حتى تتطابق كل حالة مسجّلة؛ ثم يحوّل enable الاستدعاءات إلى Rust">
+  </picture>
+</p>
 
 **ما الذي يُعدّ منجزًا.** السلوك، لا اختباراتك. يشغّل `record` الأصل على مدخلات مولّدة ومعطاة، ويحفظ ما يعيده كل استدعاء وما يرميه وما يطبعه. يكتمل النقل عندما ينجح `gate`: تتطابق كل حالة مسجّلة، وتنجح جميعها: fmt وclippy و`cargo test` وفحص `unsafe` وفحص البدائل الفارغة (stub) وفحص الإجابات المسجّلة الملصوقة في النقل. وتُشغَّل اختباراتك أيضًا.
 

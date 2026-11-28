@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -30,6 +31,8 @@
 <p align="center"><b>مستندات:</b> <a href="https://rustanything.ai/fa">https://rustanything.ai/fa</a></p>
 
 <p align="center"><a href="translations.md">🌐 زبان‌های دیگر</a></p>
+
+<p align="center">کدبیس‌تان را به Rust منتقل می‌کنید؟ برای مهاجرت به Rust مشاوره می‌دهم: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>این ترجمه را جامعه نگهداری می‌کند و ممکن است از <a href="../README.md">README انگلیسی</a> عقب بماند.</sub></p>
 
@@ -92,6 +95,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **ایجنت‌ها:** برای مراحل نصب، همهٔ دستورها و روند پورت، [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) را بخوانید.
 
 ## چطور کار می‌کند
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/fa-dark.svg">
+    <img src="assets/how-it-works/fa-light.svg" width="880" alt="analyze برنامه می‌ریزد چه چیزی پورت شود؛ rust-anything go پل می‌سازد، ضبط می‌کند، پورت را به ایجنت شما می‌سپارد و از gate می‌گذراند، و تا وقتی همهٔ موردهای ضبط‌شده مطابقت کنند تکرار می‌کند؛ سپس enable فراخوانی‌ها را به Rust می‌برد">
+  </picture>
+</p>
 
 **چه چیزی تمام‌شده حساب می‌شود.** رفتار، نه تست‌های شما. `record` نسخهٔ اصلی را روی ورودی‌های تولیدشده و داده‌شده اجرا می‌کند و آنچه هر فراخوانی برمی‌گرداند، پرتاب می‌کند و چاپ می‌کند را ذخیره می‌کند. پورت وقتی تمام است که `gate` پاس شود: همهٔ موردهای ضبط‌شده مطابقت دارند، و fmt، clippy، `cargo test`، بررسی `unsafe`، بررسی stub و بررسی پاسخ‌های ضبط‌شده‌ای که در پورت چسبانده شده‌اند همگی پاس می‌شوند. تست‌های خودتان هم اجرا می‌شوند.
 

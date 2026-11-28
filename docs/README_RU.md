@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>Документация:</b> <a href="https://rustanything.ai/ru">https://rustanything.ai/ru</a></p>
 
 <p align="center"><a href="translations.md">🌐 Другие языки</a></p>
+
+<p align="center">Переводите кодовую базу на Rust? Я консультирую по миграции на Rust: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>Этот перевод поддерживается сообществом и может отставать от <a href="../README.md">английского README</a>.</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **Агентам:** прочитайте [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt), там шаги установки, все команды и порядок портирования.
 
 ## Как это работает
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/ru-dark.svg">
+    <img src="assets/how-it-works/ru-light.svg" width="880" alt="analyze планирует, что портировать; rust-anything go строит мост, записывает, отдаёт порт вашему агенту и прогоняет через gate, повторяя, пока каждый записанный случай не совпадёт; затем enable переключает вызовы на Rust">
+  </picture>
+</p>
 
 **Что считается готовым.** Поведение, а не ваши тесты. `record` запускает оригинал на сгенерированных и заданных входных данных и сохраняет, что каждый вызов возвращает, выбрасывает и печатает. Порт готов, когда проходит `gate`: каждый записанный случай совпадает, а fmt, clippy, `cargo test`, проверка `unsafe`, проверка заглушек и проверка на записанные ответы, вставленные в порт, тоже проходят. Ваши собственные тесты тоже запускаются.
 

@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -30,6 +31,8 @@
 <p align="center"><b>قوللانما:</b> <a href="https://rustanything.ai/">https://rustanything.ai/</a></p>
 
 <p align="center"><a href="translations.md">🌐 باشقا تىللار</a></p>
+
+<p align="center">كود ئامبىرىڭىزنى Rust قا كۆچۈرمەكچىمۇ؟ Rust قا كۆچۈش توغرىسىدا مەسلىھەت مۇلازىمىتى بېرىمەن: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>بۇ تەرجىمىنى جامائەت ئاسرايدۇ، شۇڭا ئۇ <a href="../README.md">ئىنگلىزچە README</a> دىن ئارقىدا قېلىشى مۇمكىن.</sub></p>
 
@@ -92,6 +95,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **ۋاكالەتچىلەرگە:** ئورنىتىش قەدەملىرى، بارلىق بۇيرۇقلار ۋە كۆچۈرۈش جەريانى ئۈچۈن [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) نى ئوقۇڭ.
 
 ## قانداق ئىشلەيدۇ
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/ug-dark.svg">
+    <img src="assets/how-it-works/ug-light.svg" width="880" alt="analyze نېمىنى كۆچۈرۈشنى پىلانلايدۇ؛ rust-anything go كۆۋرۈك قۇرىدۇ، خاتىرىلەيدۇ، كۆچۈرۈشنى ۋاكالەتچىڭىزگە تاپشۇرىدۇ ۋە gate دىن ئۆتكۈزىدۇ، خاتىرىلەنگەن ھەر بىر ئەھۋال ماس كەلگۈچە تەكرارلايدۇ؛ ئاندىن enable چاقىرىقلارنى Rust قا ئالماشتۇرىدۇ">
+  </picture>
+</p>
 
 **نېمە تامام دەپ ھېسابلىنىدۇ.** سىزنىڭ سىناقلىرىڭىز ئەمەس، ھەرىكەت. `record` ئەسلىي پروگراممىنى ھاسىل قىلىنغان ۋە بېرىلگەن كىرگۈزمىلەر بىلەن ئىجرا قىلىپ، ھەر بىر چاقىرىقنىڭ قايتۇرغىنى، تاشلىغىنى ۋە بېسىپ چىقارغىنىنى ساقلايدۇ. `gate` ئۆتسە كۆچۈرۈش تامام بولىدۇ: خاتىرىلەنگەن ھەر بىر ئەھۋال ماس كېلىدۇ، ھەمدە fmt، clippy، `cargo test`، `unsafe` تەكشۈرۈشى، stub تەكشۈرۈشى ۋە كۆچۈرمىگە چاپلانغان خاتىرىلەنگەن جاۋابلارنى تەكشۈرۈش ھەممىسى ئۆتىدۇ. ئۆزىڭىزنىڭ سىناقلىرىمۇ ئىجرا قىلىنىدۇ.
 

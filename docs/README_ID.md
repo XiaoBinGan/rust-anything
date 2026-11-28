@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@ Tulis ulang aplikasi Anda dalam Rust, dan buktikan perilakunya tetap sama.
 <p align="center"><b>Dokumentasi:</b> <a href="https://rustanything.ai/id">https://rustanything.ai/id</a></p>
 
 <p align="center"><a href="translations.md">🌐 Bahasa lain</a></p>
+
+<p align="center">Memindahkan codebase ke Rust? Saya menawarkan konsultasi untuk migrasi ke Rust: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>Terjemahan ini dikelola oleh komunitas dan bisa tertinggal dari <a href="../README.md">README berbahasa Inggris</a>.</sub></p>
 
@@ -93,6 +96,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **Agen:** baca [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) untuk langkah instalasi, semua perintah, dan alur porting.
 
 ## Cara kerjanya
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/id-dark.svg">
+    <img src="assets/how-it-works/id-light.svg" width="880" alt="analyze merencanakan apa yang di-port; rust-anything go membuat jembatan, merekam, membiarkan agen Anda mem-port dan menjalankan gate, berulang sampai setiap kasus yang direkam cocok; lalu enable mengalihkan pemanggil ke Rust">
+  </picture>
+</p>
 
 **Apa yang dianggap selesai.** Perilaku, bukan tes Anda. `record` menjalankan versi asli dengan input yang dihasilkan dan yang diberikan, lalu menyimpan apa yang dikembalikan, dilempar, dan dicetak setiap panggilan. Port selesai saat `gate` lolos: setiap kasus yang direkam cocok, dan fmt, clippy, `cargo test`, pemeriksaan `unsafe`, pemeriksaan stub, serta pemeriksaan jawaban rekaman yang ditempel ke port semuanya lolos. Tes Anda sendiri juga dijalankan.
 

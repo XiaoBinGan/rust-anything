@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@ Reescreva a sua aplicação em Rust e prove que continua a comportar-se da mesma
 <p align="center"><b>Documentação:</b> <a href="https://rustanything.ai/pt">https://rustanything.ai/pt</a></p>
 
 <p align="center"><a href="translations.md">🌐 Outros idiomas</a></p>
+
+<p align="center">Vai migrar uma base de código para Rust? Ofereço consultoria para migrações para Rust: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>Esta tradução é mantida pela comunidade e pode estar desatualizada em relação ao <a href="../README.md">README em inglês</a>.</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **Agentes:** leiam [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) para os passos de instalação, todos os comandos e o fluxo de portabilidade.
 
 ## Como funciona
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/pt-dark.svg">
+    <img src="assets/how-it-works/pt-light.svg" width="880" alt="analyze planeja o que migrar; rust-anything go cria a ponte, grava, deixa seu agente migrar e passa pelo gate, repetindo até todos os casos gravados coincidirem; depois enable passa as chamadas para Rust">
+  </picture>
+</p>
 
 **O que conta como concluído.** O comportamento, não os seus testes. `record` executa o original com entradas geradas e fornecidas e guarda o que cada chamada devolve, lança e imprime. Uma migração está concluída quando `gate` passa: todos os casos gravados coincidem, e fmt, clippy, `cargo test`, a verificação de `unsafe`, a verificação de stubs e a verificação de respostas gravadas coladas na migração passam todas. Os seus próprios testes também são executados.
 

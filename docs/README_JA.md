@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>ドキュメント:</b> <a href="https://rustanything.ai/ja">https://rustanything.ai/ja</a></p>
 
 <p align="center"><a href="translations.md">🌐 他の言語</a></p>
+
+<p align="center">コードベースを Rust に移行しますか？ Rust 移行のコンサルティングを行っています: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>この翻訳はコミュニティによって管理されており、<a href="../README.md">英語版 README</a> より古い場合があります。</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **エージェント向け:** インストール手順、すべてのコマンド、移植の流れは [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) を読んでください。
 
 ## 仕組み
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/ja-dark.svg">
+    <img src="assets/how-it-works/ja-light.svg" width="880" alt="analyze が何を移植するかのプランを立て、rust-anything go がブリッジ、記録、エージェントによる移植、gate を、記録したすべてのケースが一致するまで繰り返し、最後に enable が呼び出しを Rust に切り替えます">
+  </picture>
+</p>
 
 **何をもって完了とするか。** あなたのテストではなく、振る舞いです。`record` は生成した入力と与えた入力でオリジナルを実行し、各呼び出しが返す値、投げる例外、出力する内容を保存します。`gate` が通れば移植は完了です。つまり、記録したすべてのケースが一致し、fmt、clippy、`cargo test`、`unsafe` チェック、スタブチェック、記録済みの答えを移植版に貼り付けていないかのチェックがすべて通ることです。あなた自身のテストも実行されます。
 

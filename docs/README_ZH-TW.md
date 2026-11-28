@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>文件:</b> <a href="https://rustanything.ai/zh-tw">https://rustanything.ai/zh-tw</a></p>
 
 <p align="center"><a href="translations.md">🌐 其他語言</a></p>
+
+<p align="center">要把程式碼庫遷移到 Rust？我提供 Rust 遷移諮詢： <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>本譯文由社群維護，可能落後於<a href="../README.md">英文 README</a>。</sub></p>
 
@@ -91,6 +94,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **代理：**閱讀 [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt)，了解安裝步驟、所有指令和移植流程。
 
 ## 運作方式
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/zh-tw-dark.svg">
+    <img src="assets/how-it-works/zh-tw-light.svg" width="880" alt="analyze 規劃要移植什麼；rust-anything go 建立橋接、錄製、讓你的代理移植並用 gate 檢查，循環直到每個錄製的案例都相符；接著 enable 把呼叫切換到 Rust">
+  </picture>
+</p>
 
 **怎樣才算完成。** 看行為，而不是你的測試。`record` 用產生的和給定的輸入執行原始程式，儲存每次呼叫的回傳值、拋出的例外和印出的輸出。`gate` 通過時移植才算完成：每個錄製的案例都相符，而且 fmt、clippy、`cargo test`、`unsafe` 檢查、stub 檢查，以及檢查錄製的答案是否被直接貼進移植程式碼，全部通過。你自己的測試也會執行。
 

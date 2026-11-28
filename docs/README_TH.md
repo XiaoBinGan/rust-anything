@@ -12,6 +12,7 @@
 <a href="https://github.com/erkamyaman/rust-anything/stargazers"><img src="https://img.shields.io/github/stars/erkamyaman/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=stars" alt="GitHub stars"></a>
 <a href="https://discord.gg/FXhUEA8eBR"><img src="https://img.shields.io/badge/discord-join-111111?style=flat&colorA=111111&colorB=b34a1a" alt="Discord"></a>
 <a href="https://github.com/erkamyaman/rust-anything#license"><img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-111111?style=flat&colorA=111111&colorB=b34a1a" alt="MIT or Apache-2.0 license"></a><br>
+<a href="https://rustanything.ai/"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Frustanything.ai%2Fbadge-downloads.json&style=flat" alt="Total downloads, crates.io and npm"></a>
 <a href="https://crates.io/crates/rust-anything"><img src="https://img.shields.io/crates/d/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=crates.io%20downloads" alt="crates.io downloads"></a>
 <a href="https://www.npmjs.com/package/rust-anything"><img src="https://img.shields.io/npm/d18m/rust-anything?style=flat&colorA=111111&colorB=b34a1a&label=npm%20downloads" alt="npm downloads"></a>
 </p>
@@ -28,6 +29,8 @@
 <p align="center"><b>เอกสารคู่มือ:</b> <a href="https://rustanything.ai/">https://rustanything.ai/</a></p>
 
 <p align="center"><a href="translations.md">🌐 ภาษาอื่น</a></p>
+
+<p align="center">กำลังย้ายโค้ดเบสไปเป็น Rust อยู่หรือเปล่า? มีบริการให้คำปรึกษาด้านการย้ายระบบไปใช้ Rust: <a href="mailto:hello@rustanything.ai">hello@rustanything.ai</a></p>
 
 <p align="center"><sub>คำแปลนี้ดูแลโดยชุมชน และอาจอัปเดตช้ากว่า <a href="../README.md">README ภาษาอังกฤษ</a></sub></p>
 
@@ -93,6 +96,13 @@ rust-anything setup           # adds it to Claude Code, Codex, Cursor, Gemini CL
 > **สำหรับเอเจนต์:** อ่าน [rustanything.ai/llms.txt](https://rustanything.ai/llms.txt) เพื่อดูขั้นตอนติดตั้ง คำสั่งทั้งหมด และขั้นตอนการพอร์ต
 
 ## วิธีการทำงาน
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/how-it-works/th-dark.svg">
+    <img src="assets/how-it-works/th-light.svg" width="880" alt="analyze วางแผนว่าจะพอร์ตอะไร rust-anything go สร้างบริดจ์ บันทึก ให้เอเจนต์ของคุณพอร์ต และตรวจด้วย gate วนซ้ำจนทุกเคสที่บันทึกไว้ตรงกัน จากนั้น enable สลับการเรียกไปใช้ Rust">
+  </picture>
+</p>
 
 **อะไรนับว่าเสร็จ** พฤติกรรม ไม่ใช่เทสต์ของคุณ `record` รันโค้ดต้นฉบับกับอินพุตที่สร้างขึ้นและอินพุตที่กำหนดให้ แล้วบันทึกสิ่งที่แต่ละการเรียกคืนค่า โยนออกมา และพิมพ์ออกมา การพอร์ตถือว่าเสร็จเมื่อ `gate` ผ่าน: ทุกเคสที่บันทึกไว้ตรงกัน และ fmt, clippy, `cargo test`, การตรวจ `unsafe`, การตรวจ stub และการตรวจว่ามีคำตอบที่บันทึกไว้ถูกแปะลงในโค้ดที่พอร์ตหรือไม่ ผ่านทั้งหมด เทสต์ของคุณเองก็รันด้วย
 
