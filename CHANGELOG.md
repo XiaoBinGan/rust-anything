@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `app record` counts a single trap in the singular: a recording with one trap said
+  `(…, 1 traps)` (#854, #860 by @XiaoBinGan).
 - Java and Kotlin: `bridge` follows calls inside the unit. A function that calls one kept in the
   original for taking or returning an object of a class (a singleton's `instance()`, say), directly
   or through others, stays too, with a reason that names the chain
