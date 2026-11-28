@@ -276,11 +276,13 @@ pub fn exports_judged(
             })
             .collect()
     } else {
-        crate::lang::exports(lang, file, text)
-            .0
+        let functions = crate::lang::exports(lang, file, text).0;
+        let state = crate::bridge::state_through_calls(&functions);
+        functions
             .into_iter()
-            .map(|f| {
-                let reason = crate::bridge::js_only_reason(&f, &[]);
+            .zip(state)
+            .map(|(f, state)| {
+                let reason = crate::bridge::js_only_reason(&f, &[]).or(state);
                 (f, reason)
             })
             .collect()

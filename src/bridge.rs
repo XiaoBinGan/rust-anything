@@ -271,6 +271,53 @@ pub fn js_only_reason(f: &ExportedFn, local_types: &[LocalType]) -> Option<Strin
     None
 }
 
+/// For each of a unit's functions, why it reaches state the original owns: it takes or returns an
+/// object of a class, or calls a function of the unit that does, directly or through others
+/// ("calls `instance`, which uses the class `Config`"). A port in Rust has no such object to call
+/// it with, so a caller stays with it. A function kept for its signature alone (overloaded, takes
+/// a callback) can be ported along with its caller and keeps no one.
+pub fn state_through_calls(fns: &[ExportedFn]) -> Vec<Option<String>> {
+    let mut state: Vec<Option<String>> = fns
+        .iter()
+        .map(|f| f.blocker.clone().filter(|b| crate::lang::is_uses_class(b)))
+        .collect();
+    loop {
+        let before = state.clone();
+        for (i, f) in fns.iter().enumerate() {
+            if state[i].is_some() {
+                continue;
+            }
+            state[i] = f.calls.iter().find_map(|call| {
+                fns.iter()
+                    .zip(&before)
+                    .enumerate()
+                    .find_map(|(j, (g, why))| {
+                        let why = why.as_deref()?;
+                        (j != i && is_call_to(call, g))
+                            .then(|| format!("calls `{}`, which {why}", g.name))
+                    })
+            });
+        }
+        if state == before {
+            return state;
+        }
+    }
+}
+
+/// Whether `call`, as a plugin names it in [`ExportedFn::calls`], is a call to `f`: the bare
+/// name, or `Owner.name` matching the end of the qualified name in the prototype.
+fn is_call_to(call: &str, f: &ExportedFn) -> bool {
+    if !call.contains('.') {
+        return call == f.name;
+    }
+    let qualified = f
+        .prototype
+        .as_deref()
+        .and_then(|p| p.split('(').next())
+        .unwrap_or(&f.name);
+    qualified == call || qualified.ends_with(&format!(".{call}"))
+}
+
 impl Manifest {
     pub fn load(crate_dir: &Path) -> Result<Self> {
         let path = crate_dir.join(MANIFEST);
@@ -1330,6 +1377,7 @@ pub fn bridge(opts: &Options) -> Result<Outcome> {
     if lang == crate::lang::Lang::Csharp {
         crate::lang::csharp::use_shapes(&root);
     }
+    let mut foreign = Vec::new();
     for file in &unit.files {
         if file.ends_with(".vue") || file.ends_with(".svelte") || file.ends_with(".astro") {
             continue;
@@ -1338,6 +1386,7 @@ pub fn bridge(opts: &Options) -> Result<Outcome> {
             std::fs::read_to_string(root.join(file)).with_context(|| format!("reading {file}"))?;
         if lang != crate::lang::Lang::Ts {
             let (functions, foreign_classes) = crate::lang::exports(lang, file, &text);
+            foreign.extend(functions.iter().cloned());
             for f in functions {
                 // The overloads of one name (Java, Kotlin, C#) stay in the original together: one
                 // name in one file, not two exports that would replace each other, whether they
@@ -1408,6 +1457,21 @@ pub fn bridge(opts: &Options) -> Result<Outcome> {
                 }),
                 None => exports.push(f),
             }
+        }
+    }
+    for (f, reason) in foreign.iter().zip(state_through_calls(&foreign)) {
+        let Some(reason) = reason else { continue };
+        if let Some(i) = exports
+            .iter()
+            .position(|e| e.name == f.name && e.file == f.file && e.line == f.line)
+        {
+            let f = exports.remove(i);
+            js_only.push(JsOnly {
+                name: f.name,
+                file: f.file,
+                line: f.line,
+                reason,
+            });
         }
     }
     let mut defined: Vec<(&str, String)> = exports

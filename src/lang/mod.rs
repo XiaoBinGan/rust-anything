@@ -21,6 +21,17 @@ pub mod syntax;
 /// its name alone, so one name cannot carry several signatures.
 pub const OVERLOADED: &str = "overloaded: one name, several signatures";
 
+/// Why an export that takes or returns an object of a class stays in the original.
+pub fn uses_class(class: &str) -> String {
+    format!("uses the class `{class}`")
+}
+
+/// Whether `reason` is [`uses_class`]: the export hands over an object, and state the original
+/// owns with it.
+pub fn is_uses_class(reason: &str) -> bool {
+    reason.starts_with("uses the class `")
+}
+
 #[derive(
     Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize, clap::ValueEnum,
 )]

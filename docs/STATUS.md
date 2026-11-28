@@ -35,6 +35,7 @@ Details of every run: [real-world.md](real-world.md) (TS/JS) and
 | `build --profile android` | Tested | Kotlin fixture, one ABI per test run (all three built by hand), entry points and 16 KB alignment checked; `armeabi-v7a` library loaded on an Android 11 TV and called through JNI |
 | `record`/`diff --profile android` | Tested | Kotlin fixture on an Android 11 TV: record 291 cases under ART, then diff against the Android `.so` (12 of them did not match yet, not investigated); guarded test `tests/android_device.rs` skips without a device |
 | Types for untyped JS in `bridge` and `analyze` (sibling `.d.ts`/`.d.mts`/`.d.cts`, then JSDoc) | Tested | `tests/untyped_js_types.rs`; `analyze` uses `bridge`'s rules; tested there with a `.d.ts`, a class method and an alias (`tests/analyze.rs`) |
+| Calls followed in `bridge` and `analyze` (Java, Kotlin) | Tested | a function reaching a class object through another function of the unit stays in the original, chains named (`tests/state_through_calls.rs`); other languages do not list calls yet |
 | `bench` | Verified | the runs above; numbers in [real-world.md](real-world.md) |
 | `fuzz` | Tested | TS/JS: finds a planted mismatch the recording missed, `--keep` makes `gate` fail (`tests/fuzz.rs`); other languages share the record/diff path untested |
 | `record --pin-clock` | Tested | TS/JS (napi): a unit using `Date.now()` and `Math.random` recorded and matched by a Rust port (`tests/fuzz.rs`); Python driver shares the algorithm, untested on a real port |

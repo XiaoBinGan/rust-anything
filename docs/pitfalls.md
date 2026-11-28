@@ -53,6 +53,13 @@ command and the call, and `go` passes over a function that mostly waits (and sto
 is most of the run). An asynchronous `spawn` or `exec` waits while the thread is idle, so it
 makes nothing look hot and is not listed.
 
+**`bridge` scaffolded a function as pure that read app state through another.** Each export was
+judged by its own signature, so `instance()` stayed in Java for returning `Config` while
+`getContinuationQuery`, which calls it, was bridged with a clean `String -> String`. Plugins now
+list each export's calls, and `bridge::state_through_calls` keeps a caller of a function that hands
+over a class object, in `bridge`, `analyze` and `profile` alike. A plugin with such a reason fills
+`ExportedFn::calls` and builds the reason with `lang::uses_class`.
+
 **A bridge found no functions in a module that exports a list.** `export { a, b as c }` was not
 read. `ts/exports.rs` reads export lists; check `bridge` on a unit written that way.
 

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Java and Kotlin: `bridge` follows calls inside the unit. A function that calls one kept in the
+  original for taking or returning an object of a class (a singleton's `instance()`, say), directly
+  or through others, stays too, with a reason that names the chain
+  (``calls `instance`, which uses the class `Config` ``). It used to be scaffolded as a pure
+  function while its result depended on the app state behind that object. `analyze` counts
+  bridgeable exports by the same rule, and `profile` (so `go`) applies it within each file. A
+  function kept for its signature alone (overloaded, takes a callback) keeps no caller (#745,
+  reported by @ammar-alfifi).
 - `analyze` also flags TS/JS unary `~` and bitwise assignment operators (`&=`, `|=`, `^=`, `<<=`,
   `>>=`, `>>>=`) as `Number semantics`, alongside the binary bitwise operators: all of them
   truncate `f64` numbers to 32-bit integers (#789 by @brixtonpham).

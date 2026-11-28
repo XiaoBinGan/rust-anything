@@ -435,7 +435,7 @@ fn java_to_ts_inner(t: &str, in_param: bool) -> Result<String, String> {
         "Stream" | "Iterator" | "IntStream" => {
             return Err(format!("uses `{head}`, a lazy sequence"));
         }
-        other => return Err(format!("uses the class `{other}`")),
+        other => return Err(super::uses_class(other)),
     })
 }
 
@@ -617,6 +617,9 @@ pub fn exports(path: &str, source: &str) -> Vec<ExportedFn> {
                     signature.join(", ")
                 )),
                 blocker,
+                calls: method
+                    .child_by_field_name("body")
+                    .map_or_else(Vec::new, |body| calls(body, source, &class_name)),
                 ..Default::default()
             });
         }
@@ -632,6 +635,34 @@ pub fn exports(path: &str, source: &str) -> Vec<ExportedFn> {
             f.blocker = Some(super::OVERLOADED.into());
         }
     }
+    out
+}
+
+/// The methods a body of `class` calls, as `Owner.name`: `class.name` for an unqualified call,
+/// else through the class it names (`Config.instance()`, `mini.Config.instance()`). A call on the
+/// result of another call names no export and is left out.
+fn calls(body: Node, source: &str, class: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    syntax::walk(body, |node| {
+        if node.kind() != "method_invocation" {
+            return;
+        }
+        let Some(name) = node.child_by_field_name("name") else {
+            return;
+        };
+        let name = text(name, source);
+        let call = match node.child_by_field_name("object") {
+            None => format!("{class}.{name}"),
+            Some(object) if matches!(object.kind(), "identifier" | "field_access") => {
+                let owner: String = text(object, source).split_whitespace().collect();
+                format!("{owner}.{name}")
+            }
+            Some(_) => return,
+        };
+        if !out.contains(&call) {
+            out.push(call);
+        }
+    });
     out
 }
 

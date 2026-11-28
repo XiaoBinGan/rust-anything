@@ -49,6 +49,10 @@ pub struct ExportedFn {
     /// Why the function must stay in its language, found by the language plugin.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub blocker: Option<String>,
+    /// Functions the body calls, as the language plugin names them: `name`, or `Owner.name`
+    /// through a class (`Config.instance`). `bridge` follows them to the unit's other functions.
+    #[serde(skip)]
+    pub calls: Vec<String>,
     /// The exact source return type (C: `unsigned long`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub native_return: Option<String>,

@@ -353,6 +353,7 @@ fn check_bridgeable(root: &Path, report: &mut Report, lang: Lang) {
             continue;
         }
         let (mut exports, mut bridgeable) = (0, 0);
+        let mut foreign = Vec::new();
         for file in &unit.files {
             let Ok(text) = std::fs::read_to_string(root.join(file)) else {
                 continue;
@@ -361,10 +362,7 @@ fn check_bridgeable(root: &Path, report: &mut Report, lang: Lang) {
             if lang != Lang::Ts {
                 let (functions, classes) = crate::lang::exports(lang, file, &text);
                 exports += functions.len() + classes.len();
-                bridgeable += functions
-                    .iter()
-                    .filter(|f| crate::bridge::js_only_reason(f, &[]).is_none())
-                    .count();
+                foreign.extend(functions);
                 bridgeable += classes
                     .iter()
                     .filter(|c| crate::bridge::class_reason(c, &[], false).is_none())
@@ -381,6 +379,11 @@ fn check_bridgeable(root: &Path, report: &mut Report, lang: Lang) {
                     usize::from(crate::bridge::class_reason(&class, &types, true).is_none());
             }
         }
+        bridgeable += foreign
+            .iter()
+            .zip(crate::bridge::state_through_calls(&foreign))
+            .filter(|(f, state)| state.is_none() && crate::bridge::js_only_reason(f, &[]).is_none())
+            .count();
         unit.exports = exports;
         unit.bridgeable = bridgeable;
         if exports > 0 && bridgeable == 0 {

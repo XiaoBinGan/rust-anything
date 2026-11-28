@@ -431,7 +431,7 @@ fn kotlin_to_ts_inner(t: &str, in_param: bool) -> Result<String, String> {
             return Err("takes or returns a function".into());
         }
         other if other.contains(" -> ") => return Err("takes or returns a function".into()),
-        other => return Err(format!("uses the class `{other}`")),
+        other => return Err(super::uses_class(other)),
     })
 }
 
@@ -760,9 +760,34 @@ fn collect(
                 signature.join(", ")
             )),
             blocker,
+            calls: calls(function, source),
             ..Default::default()
         });
     }
+}
+
+/// The functions a declaration's body calls: `name`, or `Owner.name` through an object or class
+/// (`Config.instance()`). A call on the result of another call names no export and is left out.
+fn calls(function: Node, source: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    syntax::walk(function, |node| {
+        if node.kind() != "call_expression" {
+            return;
+        }
+        let Some(callee) = named_children(node).into_iter().next() else {
+            return;
+        };
+        let call: String = text(callee, source).split_whitespace().collect();
+        if !call.is_empty()
+            && call
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '_' || c == '.')
+            && !out.contains(&call)
+        {
+            out.push(call);
+        }
+    });
+    out
 }
 
 /// `@file:JvmName("Utils")`, which renames the class a file's top-level functions live on.
