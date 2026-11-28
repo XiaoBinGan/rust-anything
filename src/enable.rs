@@ -577,7 +577,13 @@ fn remove(text: &str, crate_name: &str) -> Option<String> {
 mod tests {
     use super::*;
 
-    const BLOCK: &str = "# >>> rust-anything: fuzzy-rs is on. `rust-anything disable x` removes this block.\nx = 1\n# <<< rust-anything: fuzzy-rs\n";
+    /// The block `enable` writes, built from the markers themselves so a change to `START` or `END`
+    /// keeps the fixture honest (issue #784's review).
+    fn block_text() -> String {
+        format!(
+            "# {START} fuzzy-rs is on. `rust-anything disable x` removes this block.\nx = 1\n# {END} fuzzy-rs\n"
+        )
+    }
 
     #[test]
     fn a_line_starts_at_every_byte_after_a_newline_but_not_past_the_end() {
@@ -604,11 +610,12 @@ mod tests {
 
     #[test]
     fn a_block_is_found_from_its_first_line_to_the_end_of_its_last() {
-        let text = format!("before\n{BLOCK}after\n");
+        let block = block_text();
+        let text = format!("before\n{block}after\n");
         let (start, end, added) = find_block(&text, "fuzzy-rs").expect("the block is there");
         assert_eq!(
             &text[start..end],
-            BLOCK,
+            &block_text(),
             "the range is the block and nothing else"
         );
         assert!(
@@ -623,7 +630,8 @@ mod tests {
     fn a_block_at_the_end_of_a_file_that_added_a_newline_says_so() {
         // `insert` marks the start line with EOF_NOTE when the file had no final newline, so that
         // `remove` can take the newline out again; `find_block` reports that flag.
-        let text = insert("x = 1", BLOCK, Lang::Python);
+        let block = block_text();
+        let text = insert("x = 1", &block, Lang::Python);
         let (start, end, added) = find_block(&text, "fuzzy-rs").expect("the block is there");
         assert!(
             added,
@@ -643,6 +651,18 @@ mod tests {
     }
 
     #[test]
+    fn an_end_marker_without_a_final_newline_ends_the_range_at_the_text() {
+        // Issue #784's review: `BLOCK` ends with `\n`, so the "no newline after the end marker" case
+        // was never covered.
+        let block = block_text();
+        let text = format!("before\n{}", block.trim_end_matches('\n'));
+        let (start, end, _) = find_block(&text, "fuzzy-rs").expect("the block is there");
+        assert_eq!(end, text.len(), "the range runs to the end of the text");
+        assert_eq!(&text[start..end], block.trim_end_matches('\n'));
+        assert_eq!(remove(&text, "fuzzy-rs").unwrap(), "before\n");
+    }
+
+    #[test]
     fn no_block_without_both_markers() {
         assert!(find_block("", "fuzzy-rs").is_none());
         assert!(
@@ -650,16 +670,16 @@ mod tests {
             "no start marker"
         );
         // The start marker without the end one is not a block to cut.
-        let half = BLOCK.split("\n").next().unwrap().to_string() + "\nx = 1\n";
+        let half = block_text().split('\n').next().unwrap().to_string() + "\nx = 1\n";
         assert!(find_block(&half, "fuzzy-rs").is_none(), "{half}");
         // Another crate's block is not this crate's block.
-        assert!(find_block(BLOCK, "other-rs").is_none());
+        assert!(find_block(&block_text(), "other-rs").is_none());
     }
 
     #[test]
     fn python_goes_before_the_main_guard_and_comes_out_byte_for_byte() {
         let text = "def f(a):\n    return a\n\nif __name__ == \"__main__\":\n    print(f(1))\n";
-        let on = insert(text, BLOCK, Lang::Python);
+        let on = insert(text, &block_text(), Lang::Python);
         assert!(
             on.find("x = 1").unwrap() < on.find("if __name__").unwrap(),
             "{on}"
@@ -671,7 +691,7 @@ mod tests {
     #[test]
     fn a_file_without_a_final_newline_gets_it_back_the_same() {
         let text = "def f(a):\n    return a";
-        let on = insert(text, BLOCK, Lang::Python);
+        let on = insert(text, &block_text(), Lang::Python);
         assert!(on.contains(EOF_NOTE), "{on}");
         assert_eq!(remove(&on, "fuzzy-rs").unwrap(), text);
     }
@@ -679,7 +699,7 @@ mod tests {
     #[test]
     fn js_goes_after_the_shebang_and_use_strict() {
         let text = "#!/usr/bin/env node\n'use strict'\nfunction f(a) { return a }\nmodule.exports = { f }\n";
-        let block = BLOCK.replace('#', "//");
+        let block = block_text().replace('#', "//");
         let on = insert(text, &block, Lang::Ts);
         assert!(
             on.starts_with("#!/usr/bin/env node\n'use strict'\n// >>>"),
