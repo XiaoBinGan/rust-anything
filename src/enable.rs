@@ -580,6 +580,83 @@ mod tests {
     const BLOCK: &str = "# >>> rust-anything: fuzzy-rs is on. `rust-anything disable x` removes this block.\nx = 1\n# <<< rust-anything: fuzzy-rs\n";
 
     #[test]
+    fn a_line_starts_at_every_byte_after_a_newline_but_not_past_the_end() {
+        // Issue #784: `line_starts` is what `find_block` walks, so an off-by-one here would move
+        // every block by a line.
+        assert_eq!(
+            line_starts("").collect::<Vec<_>>(),
+            Vec::<usize>::new(),
+            "empty text has no start: the filter drops `0`, which is not below the length"
+        );
+        assert_eq!(line_starts("a").collect::<Vec<_>>(), vec![0]);
+        assert_eq!(
+            line_starts("a\nb").collect::<Vec<_>>(),
+            vec![0, 2],
+            "no start one past the end"
+        );
+        assert_eq!(
+            line_starts("a\nb\n").collect::<Vec<_>>(),
+            vec![0, 2],
+            "a trailing newline does not add a start"
+        );
+        assert_eq!(line_starts("\n\n").collect::<Vec<_>>(), vec![0, 1]);
+    }
+
+    #[test]
+    fn a_block_is_found_from_its_first_line_to_the_end_of_its_last() {
+        let text = format!("before\n{BLOCK}after\n");
+        let (start, end, added) = find_block(&text, "fuzzy-rs").expect("the block is there");
+        assert_eq!(
+            &text[start..end],
+            BLOCK,
+            "the range is the block and nothing else"
+        );
+        assert!(
+            !added,
+            "a block written into a file that ends with a newline adds none"
+        );
+        // The range has to include the newline of the end line: `remove` cuts on it.
+        assert_eq!(remove(&text, "fuzzy-rs").unwrap(), "before\nafter\n");
+    }
+
+    #[test]
+    fn a_block_at_the_end_of_a_file_that_added_a_newline_says_so() {
+        // `insert` marks the start line with EOF_NOTE when the file had no final newline, so that
+        // `remove` can take the newline out again; `find_block` reports that flag.
+        let text = insert("x = 1", BLOCK, Lang::Python);
+        let (start, end, added) = find_block(&text, "fuzzy-rs").expect("the block is there");
+        assert!(
+            added,
+            "the block ends the file, so `remove` has to undo the newline it added"
+        );
+        assert_eq!(
+            start,
+            "x = 1\n".len(),
+            "the range starts on the block's first line"
+        );
+        assert_eq!(end, text.len(), "and runs to the end of the file");
+        assert!(
+            text[start..end].contains(EOF_NOTE.trim()),
+            "the start line carries the note that `remove` takes out again"
+        );
+        assert_eq!(remove(&text, "fuzzy-rs").unwrap(), "x = 1");
+    }
+
+    #[test]
+    fn no_block_without_both_markers() {
+        assert!(find_block("", "fuzzy-rs").is_none());
+        assert!(
+            find_block("x = 1\n", "fuzzy-rs").is_none(),
+            "no start marker"
+        );
+        // The start marker without the end one is not a block to cut.
+        let half = BLOCK.split("\n").next().unwrap().to_string() + "\nx = 1\n";
+        assert!(find_block(&half, "fuzzy-rs").is_none(), "{half}");
+        // Another crate's block is not this crate's block.
+        assert!(find_block(BLOCK, "other-rs").is_none());
+    }
+
+    #[test]
     fn python_goes_before_the_main_guard_and_comes_out_byte_for_byte() {
         let text = "def f(a):\n    return a\n\nif __name__ == \"__main__\":\n    print(f(1))\n";
         let on = insert(text, BLOCK, Lang::Python);
